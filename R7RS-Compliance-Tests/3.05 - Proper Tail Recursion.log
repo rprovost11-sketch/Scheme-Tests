@@ -1,0 +1,478 @@
+; Section 3.5 - Proper Tail Recursion
+;
+; R7RS requires implementations to be properly tail-recursive: a tail call
+; must not consume unbounded stack space regardless of how many active tail
+; calls are in progress.
+;
+; Each test runs a tail-recursive loop 1,000,000 iterations.  A conformant
+; implementation returns the base-case value.  A non-tail-recursive
+; implementation stack-overflows before completing.
+;
+; The spec enumerates the syntactic positions that are tail positions.
+; We test each one.
+
+; ==========================================================================
+; Self tail call — basic case
+; The last call in a lambda body is a tail call.
+; ==========================================================================
+
+>>> (define (count-down n)
+...   (if (= n 0)
+...       'done
+...       (count-down (- n 1))))
+
+>>> (count-down 1000000)
+
+==> done
+
+; Accumulator variant — tail call with multiple arguments
+
+>>> (define (sum-to n acc)
+...   (if (= n 0)
+...       acc
+...       (sum-to (- n 1) (+ acc n))))
+
+>>> (sum-to 1000000 0)
+
+==> 500000500000
+
+; ==========================================================================
+; Mutual tail calls
+; A tail call to a different procedure is also a tail call.
+; ==========================================================================
+
+>>> (define (my-even? n)
+...   (if (= n 0) #t (my-odd? (- n 1))))
+
+>>> (define (my-odd? n)
+...   (if (= n 0) #f (my-even? (- n 1))))
+
+>>> (my-even? 1000000)
+
+==> #t
+
+>>> (my-odd? 1000001)
+
+==> #t
+
+>>> (my-even? 1000001)
+
+==> #f
+
+>>> (my-odd? 1000000)
+
+==> #f
+
+; ==========================================================================
+; Tail call in if — both branches are tail positions
+; ==========================================================================
+
+; Tail call in the consequent of if
+
+>>> (define (if-consequent n)
+...   (if (> n 0)
+...       (if-consequent (- n 1))
+...       'done))
+
+>>> (if-consequent 1000000)
+
+==> done
+
+; Tail call in the alternate of if
+
+>>> (define (if-alternate n)
+...   (if (= n 0)
+...       'done
+...       (if-alternate (- n 1))))
+
+>>> (if-alternate 1000000)
+
+==> done
+
+; Nested if — both levels in tail position
+
+>>> (define (nested-if n)
+...   (if (> n 0)
+...       (if (even? n)
+...           (nested-if (- n 2))
+...           (nested-if (- n 1)))
+...       'done))
+
+>>> (nested-if 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in cond
+; The last expression in a selected cond clause is a tail call.
+; ==========================================================================
+
+>>> (define (loop-cond n)
+...   (cond
+...     ((= n 0) 'done)
+...     ((> n 0) (loop-cond (- n 1)))))
+
+>>> (loop-cond 1000000)
+
+==> done
+
+; cond with else clause
+
+>>> (define (loop-cond-else n)
+...   (cond
+...     ((= n 0) 'done)
+...     (else (loop-cond-else (- n 1)))))
+
+>>> (loop-cond-else 1000000)
+
+==> done
+
+; cond with => clause — the procedure applied to the test result is a tail call
+
+>>> (define (loop-cond-arrow n)
+...   (cond
+...     ((= n 0) 'done)
+...     ((- n 1) => loop-cond-arrow)))
+
+>>> (loop-cond-arrow 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in case
+; The last expression in a selected case clause is a tail call.
+; ==========================================================================
+
+>>> (define (loop-case n)
+...   (case n
+...     ((0) 'done)
+...     (else (loop-case (- n 1)))))
+
+>>> (loop-case 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in and
+; The last expression in and is a tail call.
+; ==========================================================================
+
+>>> (define (loop-and n)
+...   (if (= n 0)
+...       #t
+...       (and #t (loop-and (- n 1)))))
+
+>>> (loop-and 1000000)
+
+==> #t
+
+; and short-circuits on #f — only the final expression is a tail call
+
+>>> (define (loop-and-count n)
+...   (and (> n -1)
+...        (if (= n 0) 'done (loop-and-count (- n 1)))))
+
+>>> (loop-and-count 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in or
+; The last expression in or is a tail call.
+; ==========================================================================
+
+>>> (define (loop-or n)
+...   (if (= n 0)
+...       #t
+...       (or #f (loop-or (- n 1)))))
+
+>>> (loop-or 1000000)
+
+==> #t
+
+; ==========================================================================
+; Tail call in when
+; The last body expression of when is a tail call when the test is true.
+; ==========================================================================
+
+>>> (define (loop-when n)
+...   (if (= n 0)
+...       'done
+...       (when #t (loop-when (- n 1)))))
+
+>>> (loop-when 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in unless
+; The last body expression of unless is a tail call when the test is false.
+; ==========================================================================
+
+>>> (define (loop-unless n)
+...   (if (= n 0)
+...       'done
+...       (unless #f (loop-unless (- n 1)))))
+
+>>> (loop-unless 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in begin
+; The last expression in begin is a tail call when begin is in tail position.
+; ==========================================================================
+
+>>> (define (loop-begin n)
+...   (if (= n 0)
+...       'done
+...       (begin
+...         (loop-begin (- n 1)))))
+
+>>> (loop-begin 1000000)
+
+==> done
+
+; begin with multiple expressions — only the last is the tail call
+
+>>> (define side-count 0)
+
+>>> (define (loop-begin-multi n)
+...   (if (= n 0)
+...       side-count
+...       (begin
+...         (set! side-count (+ side-count 1))
+...         (loop-begin-multi (- n 1)))))
+
+>>> (loop-begin-multi 1000000)
+
+==> 1000000
+
+; ==========================================================================
+; Tail call in let body
+; The last body expression of let is a tail call.
+; ==========================================================================
+
+>>> (define (loop-let n)
+...   (if (= n 0)
+...       'done
+...       (let ((m (- n 1)))
+...         (loop-let m))))
+
+>>> (loop-let 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in let* body
+; ==========================================================================
+
+>>> (define (loop-let* n)
+...   (if (= n 0)
+...       'done
+...       (let* ((a (- n 1))
+...              (b a))
+...         (loop-let* b))))
+
+>>> (loop-let* 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in letrec body
+; ==========================================================================
+
+>>> (define (loop-letrec n)
+...   (letrec ((go (lambda (k)
+...                  (if (= k 0)
+...                      'done
+...                      (go (- k 1))))))
+...     (go n)))
+
+>>> (loop-letrec 1000000)
+
+==> done
+
+; ==========================================================================
+; Named let — the idiomatic Scheme loop
+; The recursive call in named let is a tail call.
+; ==========================================================================
+
+>>> (let loop ((n 1000000))
+...   (if (= n 0)
+...       'done
+...       (loop (- n 1))))
+
+==> done
+
+; Named let with accumulator
+
+>>> (let loop ((n 1000000) (acc 0))
+...   (if (= n 0)
+...       acc
+...       (loop (- n 1) (+ acc n))))
+
+==> 500000500000
+
+; ==========================================================================
+; Tail call in do
+; The body expressions of do are in tail position relative to each iteration.
+; The expressions in the result list are in tail position.
+; ==========================================================================
+
+>>> (do ((n 1000000 (- n 1)))
+...     ((= n 0) 'done))
+
+==> done
+
+>>> (do ((n 1000000 (- n 1))
+...      (acc 0 (+ acc n)))
+...     ((= n 0) acc))
+
+==> 500000500000
+
+; ==========================================================================
+; Tail call in letrec* body
+; ==========================================================================
+
+>>> (define (loop-letrec* n)
+...   (letrec* ((go (lambda (k)
+...                   (if (= k 0)
+...                       'done
+...                       (go (- k 1))))))
+...     (go n)))
+
+>>> (loop-letrec* 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in let-values body
+; ==========================================================================
+
+>>> (define (loop-let-values n)
+...   (if (= n 0)
+...       'done
+...       (let-values (((a) (values (- n 1))))
+...         (loop-let-values a))))
+
+>>> (loop-let-values 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in let*-values body
+; ==========================================================================
+
+>>> (define (loop-let*-values n)
+...   (if (= n 0)
+...       'done
+...       (let*-values (((a) (values (- n 1)))
+...                     ((b) (values a)))
+...         (loop-let*-values b))))
+
+>>> (loop-let*-values 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in let-syntax body
+; ==========================================================================
+
+>>> (define (loop-let-syntax n)
+...   (if (= n 0)
+...       'done
+...       (let-syntax ((dec (syntax-rules ()
+...                           ((dec x) (- x 1)))))
+...         (loop-let-syntax (dec n)))))
+
+>>> (loop-let-syntax 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in letrec-syntax body
+; ==========================================================================
+
+>>> (define (loop-letrec-syntax n)
+...   (if (= n 0)
+...       'done
+...       (letrec-syntax ((dec (syntax-rules ()
+...                              ((dec x) (- x 1)))))
+...         (loop-letrec-syntax (dec n)))))
+
+>>> (loop-letrec-syntax 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in parameterize body
+; ==========================================================================
+
+>>> (define p (make-parameter 0))
+
+>>> (define (loop-parameterize n)
+...   (if (= n 0)
+...       'done
+...       (parameterize ((p n))
+...         (loop-parameterize (- n 1)))))
+
+>>> (loop-parameterize 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in guard body (normal execution path — no exception raised)
+; ==========================================================================
+
+>>> (define (loop-guard n)
+...   (if (= n 0)
+...       'done
+...       (guard (exn (#t 'error))
+...         (loop-guard (- n 1)))))
+
+>>> (loop-guard 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call in case-lambda clause body
+; ==========================================================================
+
+>>> (define loop-case-lambda
+...   (case-lambda
+...     ((n) (if (= n 0)
+...              'done
+...              (loop-case-lambda (- n 1))))))
+
+>>> (loop-case-lambda 1000000)
+
+==> done
+
+; case-lambda with multiple clauses — tail call in each
+
+>>> (define loop-cl2
+...   (case-lambda
+...     (() 'done)
+...     ((n) (if (= n 0)
+...              (loop-cl2)
+...              (loop-cl2 (- n 1))))))
+
+>>> (loop-cl2 1000000)
+
+==> done
+
+; ==========================================================================
+; Tail call through a higher-order procedure
+; A tail call is still a tail call even when the callee is passed as an argument.
+; ==========================================================================
+
+>>> (define (call-tail f n)
+...   (if (= n 0)
+...       'done
+...       (f f (- n 1))))
+
+>>> (call-tail call-tail 1000000)
+
+==> done
+

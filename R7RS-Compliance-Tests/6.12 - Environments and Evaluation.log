@@ -1,0 +1,418 @@
+; Section 6.12 - Environments and Evaluation
+;
+; (eval expr environment)
+;   Evaluates expr (a datum representing a Scheme expression) in the
+;   given environment.  Returns the result.
+;
+; (environment <library-name> ...)  [from (scheme eval)]
+;   Returns an environment containing the exports of the named libraries.
+;
+; (scheme-report-environment version)  [from (scheme r5rs)]
+;   Returns an environment corresponding to the given RnRS report.
+;   Currently only version 5 is required to be supported.
+;
+; (null-environment version)  [from (scheme r5rs)]
+;   Returns a minimal environment containing only syntax keywords
+;   (no standard procedures).
+;
+; (interaction-environment)  [from (scheme repl)]
+;   Returns the current REPL interaction environment (mutable).
+;
+; Note: These procedures are in separate libraries and must be imported.
+
+; ==========================================================================
+; Import required libraries
+; ==========================================================================
+
+>>> (import (scheme eval))
+
+>>> (import (scheme repl))
+
+>>> (procedure? eval)
+
+==> #t
+
+>>> (procedure? environment)
+
+==> #t
+
+>>> (procedure? interaction-environment)
+
+==> #t
+
+; ==========================================================================
+; eval — basic expression evaluation
+; ==========================================================================
+
+>>> (eval '(+ 1 2) (environment '(scheme base)))
+
+==> 3
+
+>>> (eval '(* 6 7) (environment '(scheme base)))
+
+==> 42
+
+>>> (eval '(car '(a b c)) (environment '(scheme base)))
+
+==> a
+
+>>> (eval '(list 1 2 3) (environment '(scheme base)))
+
+==> (1 2 3)
+
+; ==========================================================================
+; eval — self-evaluating forms
+; ==========================================================================
+
+>>> (eval 42 (environment '(scheme base)))
+
+==> 42
+
+>>> (eval #t (environment '(scheme base)))
+
+==> #t
+
+>>> (eval "hello" (environment '(scheme base)))
+
+==> "hello"
+
+>>> (eval '() (environment '(scheme base)))
+
+==> ()
+
+>>> (eval #\a (environment '(scheme base)))
+
+==> #\a
+
+>>> (eval '#(1 2 3) (environment '(scheme base)))
+
+==> #(1 2 3)
+
+; ==========================================================================
+; eval — quoted data
+; ==========================================================================
+
+>>> (eval ''foo (environment '(scheme base)))
+
+==> foo
+
+>>> (eval ''(1 2 3) (environment '(scheme base)))
+
+==> (1 2 3)
+
+>>> (eval '(quote hello) (environment '(scheme base)))
+
+==> hello
+
+; ==========================================================================
+; eval — nested expressions
+; ==========================================================================
+
+>>> (eval '(+ (* 2 3) (- 10 4)) (environment '(scheme base)))
+
+==> 12
+
+>>> (eval '(map (lambda (x) (* x x)) '(1 2 3 4 5))
+...        (environment '(scheme base)))
+
+==> (1 4 9 16 25)
+
+>>> (eval '(let ((x 5) (y 3)) (+ x y))
+...        (environment '(scheme base)))
+
+==> 8
+
+>>> (eval '(if #t 'yes 'no) (environment '(scheme base)))
+
+==> yes
+
+>>> (eval '(cond (#f 'no) (#t 'yes) (else 'never))
+...        (environment '(scheme base)))
+
+==> yes
+
+; ==========================================================================
+; eval — lambda and application
+; ==========================================================================
+
+>>> (eval '((lambda (x) (* x x)) 7)
+...        (environment '(scheme base)))
+
+==> 49
+
+>>> (eval '((lambda (x y) (+ x y)) 3 4)
+...        (environment '(scheme base)))
+
+==> 7
+
+>>> (eval '(let ((f (lambda (n)
+...                   (if (= n 0) 1 (* n (f (- n 1)))))))
+...           (f 5))
+...        (environment '(scheme base)))
+
+%%% %any-error%
+
+; Note: letrec required for recursive lambdas via eval
+
+>>> (eval '(letrec ((fact (lambda (n)
+...                         (if (= n 0) 1 (* n (fact (- n 1)))))))
+...           (fact 6))
+...        (environment '(scheme base)))
+
+==> 720
+
+; ==========================================================================
+; eval — define at top level of environment
+; ==========================================================================
+
+; In the interaction environment, define affects the mutable env.
+
+>>> (eval '(define eval-x 99) (interaction-environment))
+
+>>> (eval 'eval-x (interaction-environment))
+
+==> 99
+
+>>> (eval '(define (eval-double n) (* n 2)) (interaction-environment))
+
+>>> (eval '(eval-double 21) (interaction-environment))
+
+==> 42
+
+; ==========================================================================
+; eval — building expressions dynamically
+; ==========================================================================
+
+>>> (define (make-adder-expr n)
+...   `(lambda (x) (+ x ,n)))
+
+>>> (eval (list (make-adder-expr 5) 10) (environment '(scheme base)))
+
+==> 15
+
+>>> (eval (list (make-adder-expr 100) 1) (environment '(scheme base)))
+
+==> 101
+
+>>> (define (eval-arithmetic op a b)
+...   (eval (list op a b) (environment '(scheme base))))
+
+>>> (eval-arithmetic '+ 3 4)
+
+==> 7
+
+>>> (eval-arithmetic '* 6 7)
+
+==> 42
+
+>>> (eval-arithmetic '- 10 3)
+
+==> 7
+
+; ==========================================================================
+; environment — constructs an environment from library names
+; ==========================================================================
+
+>>> (procedure? environment)
+
+==> #t
+
+; Single library
+
+>>> (eval '(+ 1 2) (environment '(scheme base)))
+
+==> 3
+
+; Multiple libraries
+
+>>> (eval '(begin (import (scheme write)) (procedure? write))
+...        (environment '(scheme base)))
+
+==> #t or ==> #t
+
+>>> (eval '(sqrt 4.0) (environment '(scheme base) '(scheme inexact)))
+
+==> 2.0
+
+>>> (eval '(char-upcase #\a)
+...        (environment '(scheme base) '(scheme char)))
+
+==> #\A
+
+; The environment procedure itself comes from (scheme eval)
+
+; ==========================================================================
+; environment — using standard library environments
+; ==========================================================================
+
+>>> (eval '(map car '((1 2) (3 4) (5 6)))
+...        (environment '(scheme base)))
+
+==> (1 3 5)
+
+>>> (eval '(string-append "hello" " " "world")
+...        (environment '(scheme base)))
+
+==> "hello world"
+
+>>> (eval '(apply + '(1 2 3 4 5))
+...        (environment '(scheme base)))
+
+==> 15
+
+; ==========================================================================
+; interaction-environment — the mutable REPL environment
+; ==========================================================================
+
+; interaction-environment returns an environment object
+
+>>> (procedure? interaction-environment)
+
+==> #t
+
+; The result is usable with eval
+
+>>> (eval '(+ 1 2) (interaction-environment))
+
+==> 3
+
+; Definitions in interaction-environment are visible to the REPL
+
+>>> (eval '(define interact-var 'from-eval) (interaction-environment))
+
+>>> interact-var
+
+==> from-eval
+
+; eval in interaction-environment sees all REPL-defined names
+
+>>> (define repl-visible 'yes)
+
+>>> (eval 'repl-visible (interaction-environment))
+
+==> yes
+
+; ==========================================================================
+; scheme-report-environment — R5RS compatibility
+; ==========================================================================
+
+>>> (import (scheme r5rs))
+
+>>> (procedure? scheme-report-environment)
+
+==> #t
+
+; scheme-report-environment 5 is required
+
+>>> (eval '(+ 1 2) (scheme-report-environment 5))
+
+==> 3
+
+>>> (eval '(car '(a b c)) (scheme-report-environment 5))
+
+==> a
+
+>>> (eval '(lambda (x) x) (scheme-report-environment 5))
+
+==> #<procedure>
+
+; R5RS environment contains standard R5RS procedures
+
+>>> (eval '(apply + '(1 2 3)) (scheme-report-environment 5))
+
+==> 6
+
+; ==========================================================================
+; null-environment — only syntax keywords
+; ==========================================================================
+
+>>> (procedure? null-environment)
+
+==> #t
+
+; null-environment 5 contains only syntax (if, lambda, quote, etc.)
+
+>>> (eval '(if #t 'yes 'no) (null-environment 5))
+
+==> yes
+
+>>> (eval '(lambda (x) x) (null-environment 5))
+
+==> #<procedure>
+
+>>> (eval '(quote hello) (null-environment 5))
+
+==> hello
+
+>>> (eval '(begin 1 2 3) (null-environment 5))
+
+==> 3
+
+; null-environment does NOT contain + or other library procedures
+
+>>> (eval '(+ 1 2) (null-environment 5))
+
+%%% %any-error%
+
+>>> (eval '(car '(1 2)) (null-environment 5))
+
+%%% %any-error%
+
+; ==========================================================================
+; eval — error cases
+; ==========================================================================
+
+; Unbound variable
+
+>>> (eval 'unbound-xyz (environment '(scheme base)))
+
+%%% %any-error%
+
+; Wrong number of arguments
+
+>>> (eval '(car 1 2) (environment '(scheme base)))
+
+%%% %any-error%
+
+; Non-procedure in operator position
+
+>>> (eval '(1 2 3) (environment '(scheme base)))
+
+%%% %any-error%
+
+; ==========================================================================
+; eval — values and multiple return values
+; ==========================================================================
+
+>>> (call-with-values
+...   (lambda () (eval '(values 1 2 3) (environment '(scheme base))))
+...   list)
+
+==> (1 2 3)
+
+>>> (eval '(floor/ 17 5) (environment '(scheme base)))
+
+==> 3 2
+
+; ==========================================================================
+; eval is not a special form — it is a procedure
+; ==========================================================================
+
+>>> (procedure? eval)
+
+==> #t
+
+>>> (apply eval (list '(+ 1 2) (environment '(scheme base))))
+
+==> 3
+
+; eval can be passed as an argument
+
+>>> (define (eval-all exprs env)
+...   (map (lambda (e) (eval e env)) exprs))
+
+>>> (eval-all '((+ 1 2) (* 3 4) (- 10 5))
+...            (environment '(scheme base)))
+
+==> (3 12 5)
+

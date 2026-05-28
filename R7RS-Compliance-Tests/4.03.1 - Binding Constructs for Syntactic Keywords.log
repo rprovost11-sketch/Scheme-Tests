@@ -1,0 +1,280 @@
+; Section 4.3.1 - Binding Constructs for Syntactic Keywords
+;
+; (let-syntax ((<keyword> <transformer>) ...) <body>)
+;   Binds each <keyword> to its transformer within <body>.
+;   The transformer expressions are evaluated in the outer (enclosing)
+;   environment — the bound keywords are NOT visible to each other's
+;   transformer expressions.
+;
+; (letrec-syntax ((<keyword> <transformer>) ...) <body>)
+;   Like let-syntax but the transformer expressions are evaluated in an
+;   environment that includes all the bindings being defined — keywords
+;   CAN reference each other (mutually recursive macros).
+;
+; In both forms the keyword bindings are not visible outside the body.
+; The body may contain definitions (spliced as in let/letrec bodies).
+
+; ==========================================================================
+; let-syntax — basic: locally defined macro
+; ==========================================================================
+
+>>> (let-syntax ((double (syntax-rules ()
+...                        ((double x) (+ x x)))))
+...   (double 5))
+
+==> 10
+
+>>> (let-syntax ((swap! (syntax-rules ()
+...                       ((swap! a b)
+...                        (let ((tmp a))
+...                          (set! a b)
+...                          (set! b tmp))))))
+...   (define p 1)
+...   (define q 2)
+...   (swap! p q)
+...   (list p q))
+
+==> (2 1)
+
+; ==========================================================================
+; let-syntax — keyword not visible outside body
+; ==========================================================================
+
+>>> (let-syntax ((my-and (syntax-rules ()
+...                        ((my-and x y) (if x y #f)))))
+...   (my-and #t #t))
+
+==> #t
+
+; my-and is not defined outside the let-syntax body
+
+>>> (let-syntax ((inner (syntax-rules ()
+...                       ((inner) 42))))
+...   (inner))
+
+==> 42
+
+; ==========================================================================
+; let-syntax — multiple keywords bound simultaneously
+; ==========================================================================
+
+>>> (let-syntax ((inc (syntax-rules ()
+...                     ((inc x) (+ x 1))))
+...               (dec (syntax-rules ()
+...                     ((dec x) (- x 1)))))
+...   (list (inc 5) (dec 5)))
+
+==> (6 4)
+
+; ==========================================================================
+; let-syntax — transformers see outer environment, not sibling keywords
+; ==========================================================================
+
+; In let-syntax, transformer for 'b' cannot use 'a' (defined in same form).
+; This distinguishes let-syntax from letrec-syntax.
+
+>>> (define outer-val 99)
+
+>>> (let-syntax ((get-outer (syntax-rules ()
+...                           ((get-outer) outer-val))))
+...   (get-outer))
+
+==> 99
+
+; ==========================================================================
+; let-syntax — body may have multiple expressions
+; ==========================================================================
+
+>>> (let-syntax ((sq (syntax-rules ()
+...                    ((sq x) (* x x)))))
+...   (define a (sq 3))
+...   (define b (sq 4))
+...   (+ a b))
+
+==> 25
+
+; ==========================================================================
+; let-syntax — nested let-syntax
+; ==========================================================================
+
+>>> (let-syntax ((outer-mac (syntax-rules ()
+...                           ((outer-mac x) (* x 2)))))
+...   (let-syntax ((inner-mac (syntax-rules ()
+...                             ((inner-mac x) (outer-mac (+ x 1))))))
+...     (inner-mac 4)))
+
+==> 10
+
+; ==========================================================================
+; let-syntax — hygiene: macro does not capture outer variable
+; ==========================================================================
+
+; The macro introduces 'tmp' — it should not interfere with caller's 'tmp'.
+
+>>> (let-syntax ((safe-swap (syntax-rules ()
+...                           ((safe-swap a b)
+...                            (let ((tmp a))
+...                              (set! a b)
+...                              (set! b tmp))))))
+...   (define tmp 'caller-tmp)
+...   (define x 1)
+...   (define y 2)
+...   (safe-swap x y)
+...   (list x y tmp))
+
+==> (2 1 caller-tmp)
+
+; ==========================================================================
+; let-syntax — body may contain internal definitions
+; ==========================================================================
+
+>>> (let-syntax ((when2 (syntax-rules ()
+...                       ((when2 test expr)
+...                        (if test expr (if #f #f))))))
+...   (define (check-positive n)
+...     (when2 (> n 0) 'positive))
+...   (list (check-positive 5) (check-positive -1)))
+
+==> (positive)
+
+; Note: (check-positive -1) returns unspecified; list element is unspecified.
+; The test runner should accept any value in position 2.
+
+; ==========================================================================
+; letrec-syntax — basic
+; ==========================================================================
+
+>>> (letrec-syntax ((my-or (syntax-rules ()
+...                          ((my-or) #f)
+...                          ((my-or e) e)
+...                          ((my-or e1 e2 ...)
+...                           (let ((t e1))
+...                             (if t t (my-or e2 ...)))))))
+...   (my-or #f #f 42))
+
+==> 42
+
+>>> (letrec-syntax ((my-or (syntax-rules ()
+...                          ((my-or) #f)
+...                          ((my-or e) e)
+...                          ((my-or e1 e2 ...)
+...                           (let ((t e1))
+...                             (if t t (my-or e2 ...)))))))
+...   (my-or #f #f #f))
+
+==> #f
+
+; ==========================================================================
+; letrec-syntax — mutually recursive keywords
+; ==========================================================================
+
+>>> (letrec-syntax
+...   ((my-even? (syntax-rules ()
+...                ((my-even? n)
+...                 (if (= n 0) #t (my-odd? (- n 1))))))
+...    (my-odd?  (syntax-rules ()
+...                ((my-odd? n)
+...                 (if (= n 0) #f (my-even? (- n 1)))))))
+...   (list (my-even? 4) (my-odd? 3) (my-even? 7)))
+
+==> (#t #t #f)
+
+; ==========================================================================
+; letrec-syntax — keyword visible to its own transformer (self-reference)
+; ==========================================================================
+
+>>> (letrec-syntax ((my-and (syntax-rules ()
+...                           ((my-and) #t)
+...                           ((my-and e) e)
+...                           ((my-and e1 e2 ...)
+...                            (if e1 (my-and e2 ...) #f)))))
+...   (my-and #t #t #t))
+
+==> #t
+
+>>> (letrec-syntax ((my-and (syntax-rules ()
+...                           ((my-and) #t)
+...                           ((my-and e) e)
+...                           ((my-and e1 e2 ...)
+...                            (if e1 (my-and e2 ...) #f)))))
+...   (my-and #t #f #t))
+
+==> #f
+
+>>> (letrec-syntax ((my-and (syntax-rules ()
+...                           ((my-and) #t)
+...                           ((my-and e) e)
+...                           ((my-and e1 e2 ...)
+...                            (if e1 (my-and e2 ...) #f)))))
+...   (my-and))
+
+==> #t
+
+; ==========================================================================
+; letrec-syntax — keyword not visible outside body
+; ==========================================================================
+
+>>> (letrec-syntax ((local-mac (syntax-rules ()
+...                              ((local-mac) 'inside))))
+...   (local-mac))
+
+==> inside
+
+; ==========================================================================
+; let-syntax vs letrec-syntax — scoping distinction
+; ==========================================================================
+
+; In let-syntax, 'b-mac' cannot expand to 'a-mac' because 'a-mac' is
+; defined in the same let-syntax and thus not in scope for 'b-mac's
+; transformer.  In letrec-syntax it can.
+
+>>> (letrec-syntax ((a-mac (syntax-rules ()
+...                          ((a-mac x) (* x 10))))
+...                  (b-mac (syntax-rules ()
+...                           ((b-mac x) (a-mac (+ x 1))))))
+...   (b-mac 4))
+
+==> 50
+
+; ==========================================================================
+; let-syntax — zero bindings
+; ==========================================================================
+
+>>> (let-syntax () 'empty)
+
+==> empty
+
+>>> (letrec-syntax () 'empty)
+
+==> empty
+
+; ==========================================================================
+; let-syntax — used inside a lambda body
+; ==========================================================================
+
+>>> (define (make-verbose-adder label)
+...   (let-syntax ((tagged-add (syntax-rules ()
+...                              ((tagged-add a b)
+...                               (list label (+ a b))))))
+...     (lambda (x y) (tagged-add x y))))
+
+>>> ((make-verbose-adder 'sum) 3 4)
+
+==> (sum 7)
+
+; ==========================================================================
+; let-syntax — define-syntax at top level for comparison
+; ==========================================================================
+
+>>> (define-syntax top-sq
+...   (syntax-rules ()
+...     ((top-sq x) (* x x))))
+
+>>> (top-sq 6)
+
+==> 36
+
+>>> (top-sq (+ 1 2))
+
+==> 9
+

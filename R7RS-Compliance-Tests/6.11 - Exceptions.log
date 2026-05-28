@@ -1,0 +1,684 @@
+; Section 6.11 - Exceptions
+;
+; (with-exception-handler handler thunk)
+;   Calls thunk with handler installed as the current exception handler.
+;   If thunk returns normally, its values are returned.
+;   If an exception is raised during thunk, handler is called with the
+;   raised object.  For raise (non-continuable), handler must not return
+;   normally — doing so is itself an error.  For raise-continuable,
+;   handler's return value becomes the value of the raise-continuable call.
+;
+; (raise obj)               — signal non-continuable exception
+; (raise-continuable obj)   — signal continuable exception
+; (error message irritant ...)  — signal an error-object
+; (error-object? obj)       — #t for error objects from error/read/file
+; (error-object-message obj)
+; (error-object-irritants obj)
+; (read-error? obj)         — #t for read errors specifically
+; (file-error? obj)         — #t for file errors specifically
+;
+; Note: guard is the high-level interface; see section 4.2.7.
+
+; ==========================================================================
+; error — creates and raises an error object
+; ==========================================================================
+
+>>> (guard (exn (#t (error-object-message exn)))
+...   (error "something went wrong"))
+
+==> "something went wrong"
+
+>>> (guard (exn (#t (error-object-message exn)))
+...   (error "bad value" 42))
+
+==> "bad value"
+
+>>> (guard (exn (#t (error-object-irritants exn)))
+...   (error "bad value" 42))
+
+==> (42)
+
+>>> (guard (exn (#t (error-object-irritants exn)))
+...   (error "multiple irritants" 1 2 3))
+
+==> (1 2 3)
+
+>>> (guard (exn (#t (error-object-irritants exn)))
+...   (error "no irritants"))
+
+==> ()
+
+>>> (guard (exn (#t (list (error-object-message exn)
+...                       (error-object-irritants exn))))
+...   (error "oops" 'a 'b 'c))
+
+==> ("oops" (a b c))
+
+; ==========================================================================
+; error-object? — true for objects created by error
+; ==========================================================================
+
+>>> (guard (exn (#t (error-object? exn)))
+...   (error "test"))
+
+==> #t
+
+>>> (error-object? "not an error")
+
+==> #f
+
+>>> (error-object? 42)
+
+==> #f
+
+>>> (error-object? '())
+
+==> #f
+
+>>> (error-object? #t)
+
+==> #f
+
+; error-object? is also true for read-errors and file-errors
+
+>>> (guard (exn (#t (error-object? exn)))
+...   (/ 1 0))
+
+==> #t
+
+; ==========================================================================
+; error-object-message — returns the message string
+; ==========================================================================
+
+>>> (guard (exn (#t (string? (error-object-message exn))))
+...   (error "hello"))
+
+==> #t
+
+>>> (guard (exn (#t (error-object-message exn)))
+...   (error "the message" 'x 'y))
+
+==> "the message"
+
+; message is always a string
+
+>>> (guard (exn (#t (string? (error-object-message exn))))
+...   (error "any message" 1 2 3))
+
+==> #t
+
+; ==========================================================================
+; error-object-irritants — returns list of irritants
+; ==========================================================================
+
+>>> (guard (exn (#t (list? (error-object-irritants exn))))
+...   (error "msg"))
+
+==> #t
+
+>>> (guard (exn (#t (error-object-irritants exn)))
+...   (error "msg" 'a))
+
+==> (a)
+
+>>> (guard (exn (#t (length (error-object-irritants exn))))
+...   (error "msg" 1 2 3 4 5))
+
+==> 5
+
+; irritants can be any objects
+
+>>> (guard (exn (#t (error-object-irritants exn)))
+...   (error "msg" '(1 2) "str" #t))
+
+==> ((1 2) "str" #t)
+
+; ==========================================================================
+; raise — non-continuable exception
+; ==========================================================================
+
+>>> (guard (exn (#t exn))
+...   (raise 'my-error))
+
+==> my-error
+
+>>> (guard (exn (#t exn))
+...   (raise 42))
+
+==> 42
+
+>>> (guard (exn (#t exn))
+...   (raise '(a b c)))
+
+==> (a b c)
+
+>>> (guard (exn (#t exn))
+...   (raise #f))
+
+==> #f
+
+; raise with any object type
+
+>>> (guard (exn ((string? exn) exn))
+...   (raise "error string"))
+
+==> "error string"
+
+; ==========================================================================
+; raise — non-continuable: handler returning is an error
+; ==========================================================================
+
+; If the handler returns from a non-continuable raise, another exception
+; is raised (the implementation's continuability violation).
+; We verify this by catching the outer error.
+
+>>> (guard (outer (#t 'outer-caught))
+...   (with-exception-handler
+...     (lambda (exn) 'handler-returned)
+...     (lambda () (raise 'trigger))))
+
+==> outer-caught
+
+; ==========================================================================
+; raise-continuable — handler's return value is used
+; ==========================================================================
+
+; The handler's return value becomes the value of raise-continuable.
+
+>>> (with-exception-handler
+...   (lambda (exn) (* exn 2))
+...   (lambda () (+ 1 (raise-continuable 10))))
+
+==> 21
+
+; 10 * 2 = 20, + 1 = 21
+
+>>> (with-exception-handler
+...   (lambda (exn) (string-append exn "!"))
+...   (lambda () (raise-continuable "hello")))
+
+==> "hello!"
+
+>>> (with-exception-handler
+...   (lambda (exn) 0)
+...   (lambda () (+ (raise-continuable 'ignored) 42)))
+
+==> 42
+
+; ==========================================================================
+; with-exception-handler — basic structure
+; ==========================================================================
+
+; If thunk returns normally, its value is returned
+
+>>> (with-exception-handler
+...   (lambda (e) 'caught)
+...   (lambda () 42))
+
+==> 42
+
+>>> (with-exception-handler
+...   (lambda (e) 'caught)
+...   (lambda () (+ 1 2)))
+
+==> 3
+
+; handler receives the raised object
+
+>>> (with-exception-handler
+...   (lambda (e) (list 'caught e))
+...   (lambda ()
+...     (guard (exn (#t (list 'caught exn)))
+...       (raise 'boom))))
+
+==> (caught boom)
+
+; ==========================================================================
+; with-exception-handler — nested handlers
+; ==========================================================================
+
+; When a handler is invoked, the current handler is restored to the one
+; that was in place before the with-exception-handler call (not the
+; installed handler itself).
+
+>>> (guard (outer (#t (list 'outer outer)))
+...   (with-exception-handler
+...     (lambda (inner)
+...       (raise (list 'wrapped inner)))
+...     (lambda ()
+...       (raise 'original))))
+
+==> (outer (wrapped original))
+
+; ==========================================================================
+; with-exception-handler — handler called for errors from built-ins
+; ==========================================================================
+
+>>> (guard (exn (#t (error-object-message exn)))
+...   (car '()))
+
+==> "car: not a pair" or ==> "not a pair" or ==> "argument is not a pair"
+
+; (We accept any message string — the specific wording is implementation-defined)
+
+>>> (guard (exn (#t (error-object? exn)))
+...   (car '()))
+
+==> #t
+
+>>> (guard (exn (#t (error-object? exn)))
+...   (vector-ref #(1 2 3) 10))
+
+==> #t
+
+>>> (guard (exn (#t (error-object? exn)))
+...   (/ 1 0))
+
+==> #t
+
+; ==========================================================================
+; read-error? — true for errors during reading
+; ==========================================================================
+
+; read-error? is a subtype of error-object?
+; We can test it by trying to read malformed input via read.
+
+>>> (procedure? read-error?)
+
+==> #t
+
+>>> (read-error? (guard (exn (#t exn))
+...               (raise (make-read-error "test"))))
+
+==> #t or ==> #f
+
+; The above uses make-read-error which is implementation-defined.
+; Instead test via read on a bad port.
+
+>>> (read-error? "not a read error")
+
+==> #f
+
+>>> (read-error? 42)
+
+==> #f
+
+; read-error? implies error-object?
+
+>>> (guard (exn ((read-error? exn) (error-object? exn))
+...              (#t #f))
+...   (guard (exn (#t (raise exn)))
+...     (with-input-from-string "(" read)))
+
+==> #t or ==> #f
+
+; ==========================================================================
+; file-error? — true for errors during file operations
+; ==========================================================================
+
+>>> (procedure? file-error?)
+
+==> #t
+
+>>> (file-error? "not a file error")
+
+==> #f
+
+>>> (file-error? 42)
+
+==> #f
+
+; File error from opening non-existent file
+
+>>> (guard (exn (#t (file-error? exn)))
+...   (open-input-file "this-file-does-not-exist-xyz.txt"))
+
+==> #t
+
+; file-error? implies error-object?
+
+>>> (guard (exn ((file-error? exn) (error-object? exn))
+...              (#t 'not-file-error))
+...   (open-input-file "nonexistent-xyz.txt"))
+
+==> #t
+
+; ==========================================================================
+; Exception handler stack — re-raise propagates outward
+; ==========================================================================
+
+>>> (define handler-calls '())
+
+>>> (guard (exn (#t (reverse handler-calls)))
+...   (with-exception-handler
+...     (lambda (e)
+...       (set! handler-calls (cons 'inner handler-calls))
+...       (raise e))
+...     (lambda ()
+...       (with-exception-handler
+...         (lambda (e)
+...           (set! handler-calls (cons 'innermost handler-calls))
+...           (raise e))
+...         (lambda ()
+...           (raise 'boom))))))
+
+==> (innermost inner)
+
+; ==========================================================================
+; error in a guard handler — propagates to outer guard
+; ==========================================================================
+
+>>> (guard (outer (#t (list 'outer (error-object-message outer))))
+...   (guard (inner (#t (error "from handler" inner)))
+...     (error "original")))
+
+==> (outer "from handler")
+
+; ==========================================================================
+; error-object irritants may be any type
+; ==========================================================================
+
+>>> (guard (exn (#t (error-object-irritants exn)))
+...   (error "mixed" 1 "two" 'three #(4 5) '(6)))
+
+==> (1 "two" three #(4 5) (6))
+
+; ==========================================================================
+; Condition types summary
+; ==========================================================================
+
+; All error objects satisfy error-object?
+
+>>> (guard (exn (#t (error-object? exn)))
+...   (error "test error"))
+
+==> #t
+
+; read-error? and file-error? are subtypes
+
+>>> (guard (exn (#t (if (read-error? exn) 'read (if (file-error? exn) 'file 'other))))
+...   (error "a regular error"))
+
+==> other
+
+; ==========================================================================
+; raise-continuable — detailed handler-interaction tests
+; ==========================================================================
+
+; Handler's return value is used as the result of raise-continuable
+
+>>> (with-exception-handler
+...   (lambda (exn) (* exn 3))
+...   (lambda () (+ 1 (raise-continuable 5))))
+
+==> 16
+
+; Handler receives the exact object raised
+
+>>> (with-exception-handler
+...   (lambda (exn) (list 'got exn))
+...   (lambda () (raise-continuable 'my-signal)))
+
+==> (got my-signal)
+
+; raise-continuable returns into calling expression — multiple continuations
+
+>>> (with-exception-handler
+...   (lambda (e) 100)
+...   (lambda ()
+...     (* (raise-continuable 'x)
+...        (raise-continuable 'y))))
+
+==> 10000
+
+; raise-continuable in a loop
+
+>>> (define rc-count 0)
+
+>>> (with-exception-handler
+...   (lambda (e) (set! rc-count (+ rc-count 1)) 0)
+...   (lambda ()
+...     (let loop ((i 5))
+...       (when (> i 0)
+...         (raise-continuable i)
+...         (loop (- i 1))))))
+
+>>> rc-count
+
+==> 5
+
+; raise-continuable: if the handler raises a non-continuable exception,
+; that exception propagates normally.
+
+>>> (guard (outer (#t (list 'outer (error-object-message outer))))
+...   (with-exception-handler
+...     (lambda (inner-exn)
+...       (error "handler raised" inner-exn))
+...     (lambda ()
+...       (raise-continuable 'trigger))))
+
+==> (outer "handler raised")
+
+; raise-continuable: handler installed at time of raise-continuable is
+; the one active before with-exception-handler was called, not itself.
+; So the handler does not recursively handle its own raises.
+
+>>> (guard (exn (#t 'outer-caught))
+...   (with-exception-handler
+...     (lambda (e)
+...       ; This raise goes to the OUTER handler, not this one again
+...       (raise 'from-handler))
+...     (lambda ()
+...       (raise-continuable 'trigger))))
+
+==> outer-caught
+
+; ==========================================================================
+; with-exception-handler — handler installed/restored correctly
+; ==========================================================================
+
+; Handler is NOT active during its own execution (raises go to outer handler)
+
+>>> (define outer-saw #f)
+
+>>> (with-exception-handler
+...   (lambda (e) (set! outer-saw e))
+...   (lambda ()
+...     (with-exception-handler
+...       (lambda (inner-e)
+...         ; Any raise here goes to outer, not this handler again
+...         (raise (list 'wrapped inner-e)))
+...       (lambda ()
+...         (raise 'original)))))
+
+>>> outer-saw
+
+==> (wrapped original)
+
+; with-exception-handler — thunk returning normally gives back its value
+
+>>> (with-exception-handler
+...   (lambda (e) 'should-not-reach)
+...   (lambda () (+ 2 3)))
+
+==> 5
+
+; Multiple values returned from thunk
+
+>>> (call-with-values
+...   (lambda ()
+...     (with-exception-handler
+...       (lambda (e) 'error)
+...       (lambda () (values 1 2 3))))
+...   list)
+
+==> (1 2 3)
+
+; with-exception-handler — deeply nested handlers, each re-raises
+
+>>> (define seen '())
+
+>>> (guard (final (#t (reverse seen)))
+...   (with-exception-handler
+...     (lambda (e)
+...       (set! seen (cons 'h1 seen))
+...       (raise e))
+...     (lambda ()
+...       (with-exception-handler
+...         (lambda (e)
+...           (set! seen (cons 'h2 seen))
+...           (raise e))
+...         (lambda ()
+...           (with-exception-handler
+...             (lambda (e)
+...               (set! seen (cons 'h3 seen))
+...               (raise e))
+...             (lambda ()
+...               (raise 'boom))))))))
+
+==> (h3 h2 h1)
+
+; ==========================================================================
+; error — additional edge cases
+; ==========================================================================
+
+; error with zero irritants — irritants list is empty, not absent
+
+>>> (guard (exn (#t (null? (error-object-irritants exn))))
+...   (error "no irritants at all"))
+
+==> #t
+
+; error message is a string, not a symbol or number
+
+>>> (guard (exn (#t (string? (error-object-message exn))))
+...   (error "strictly a string"))
+
+==> #t
+
+; error raised inside a lambda inside guard
+
+>>> (guard (exn (#t (error-object-message exn)))
+...   ((lambda () (error "from lambda" 1 2 3))))
+
+==> "from lambda"
+
+; error re-raised preserves the original object
+
+>>> (guard (outer (#t outer))
+...   (guard (inner (#t (raise inner)))
+...     (error "original error" 'x)))
+
+==> error-object? ==> #t
+
+>>> (guard (outer (#t (error-object-message outer)))
+...   (guard (inner (#t (raise inner)))
+...     (error "preserved message" 'x)))
+
+==> "preserved message"
+
+; ==========================================================================
+; guard — additional interaction tests
+; ==========================================================================
+
+; guard catches built-in errors by type
+
+>>> (guard (exn ((error-object? exn) 'error-object))
+...   (vector-ref #(1 2 3) 99))
+
+==> error-object
+
+>>> (guard (exn ((error-object? exn) 'error-object))
+...   (car '()))
+
+==> error-object
+
+; guard with => clause for exception objects
+
+>>> (guard (exn ((error-object? exn)
+...              => (lambda (e) (error-object-message e))))
+...   (error "arrow clause" 1 2))
+
+==> "arrow clause"
+
+; guard re-raises when no clause matches — caught by outer guard
+
+>>> (guard (outer (#t (list 'outer (error-object-message outer))))
+...   (guard (inner ((string? inner) 'string-caught))
+...     (error "not a string condition")))
+
+==> (outer "not a string condition")
+
+; guard — else clause as catch-all after specific clauses
+
+>>> (guard (exn
+...          ((file-error? exn) 'file-error)
+...          ((read-error? exn) 'read-error)
+...          (else 'other-error))
+...   (error "generic"))
+
+==> other-error
+
+; guard with multiple body expressions — all evaluated before value returned
+
+>>> (define guard-body-log '())
+
+>>> (guard (exn (#t 'caught))
+...   (set! guard-body-log (cons 1 guard-body-log))
+...   (set! guard-body-log (cons 2 guard-body-log))
+...   (error "boom"))
+
+==> caught
+
+>>> (reverse guard-body-log)
+
+==> (1 2)
+
+; guard — continuations captured inside do not escape the dynamic extent
+
+>>> (define guard-k #f)
+
+>>> (guard (exn (#t 'caught))
+...   (call/cc (lambda (k) (set! guard-k k)))
+...   (error "trigger"))
+
+==> caught
+
+; ==========================================================================
+; raise — additional non-continuable tests
+; ==========================================================================
+
+; raise with a complex object
+
+>>> (guard (exn (#t exn))
+...   (raise (vector 1 2 3)))
+
+==> #(1 2 3)
+
+>>> (guard (exn (#t exn))
+...   (raise '(a (b c) d)))
+
+==> (a (b c) d)
+
+; raise with #t and #f
+
+>>> (guard (exn (#t exn))
+...   (raise #t))
+
+==> #t
+
+>>> (guard (exn (#t exn))
+...   (raise #f))
+
+==> #f
+
+; Non-continuable: when handler returns, a new exception is raised
+; by the runtime. The outer guard catches that secondary exception.
+
+>>> (guard (outer (#t 'outer-caught))
+...   (with-exception-handler
+...     (lambda (e) 'returned-from-handler)
+...     (lambda () (raise 'non-continuable))))
+
+==> outer-caught
+

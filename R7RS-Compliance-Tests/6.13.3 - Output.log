@@ -1,0 +1,941 @@
+; Section 6.13.3 - Output
+;
+; Textual output:
+;   (write obj)               (write obj port)
+;   (write-shared obj)        (write-shared obj port)
+;   (write-simple obj)        (write-simple obj port)
+;   (display obj)             (display obj port)
+;   (newline)                 (newline port)
+;   (write-char char)         (write-char char port)
+;   (write-string str)        (write-string str port)
+;   (write-string str port start end)
+;
+; Binary output:
+;   (write-u8 byte)           (write-u8 byte port)
+;   (write-bytevector bv)     (write-bytevector bv port)
+;   (write-bytevector bv port start end)
+;
+; Flush:
+;   (flush-output-port)       (flush-output-port port)
+;
+; All output procedures default to (current-output-port) when port is omitted.
+
+; ==========================================================================
+; write — outputs machine-readable representation
+; ==========================================================================
+
+; write outputs strings with double-quote delimiters
+
+>>> (define wp (open-output-string))
+
+>>> (write "hello" wp)
+
+>>> (get-output-string wp)
+
+==> "\"hello\""
+
+; write outputs characters with #\ prefix
+
+>>> (define wp2 (open-output-string))
+
+>>> (write #\a wp2)
+
+>>> (get-output-string wp2)
+
+==> "#\\a"
+
+; write outputs named characters
+
+>>> (define wp3 (open-output-string))
+
+>>> (write #\space wp3)
+
+>>> (get-output-string wp3)
+
+==> "#\\space"
+
+>>> (define wp4 (open-output-string))
+
+>>> (write #\newline wp4)
+
+>>> (get-output-string wp4)
+
+==> "#\\newline"
+
+; write outputs booleans
+
+>>> (define wp5 (open-output-string))
+
+>>> (write #t wp5)
+
+>>> (get-output-string wp5)
+
+==> "#t"
+
+>>> (define wp6 (open-output-string))
+
+>>> (write #f wp6)
+
+>>> (get-output-string wp6)
+
+==> "#f"
+
+; write outputs numbers
+
+>>> (define wp7 (open-output-string))
+
+>>> (write 42 wp7)
+
+>>> (get-output-string wp7)
+
+==> "42"
+
+>>> (define wp8 (open-output-string))
+
+>>> (write 3.14 wp8)
+
+>>> (get-output-string wp8)
+
+==> "3.14"
+
+>>> (define wp9 (open-output-string))
+
+>>> (write 1/3 wp9)
+
+>>> (get-output-string wp9)
+
+==> "1/3"
+
+; write outputs symbols unquoted
+
+>>> (define wp10 (open-output-string))
+
+>>> (write 'hello wp10)
+
+>>> (get-output-string wp10)
+
+==> "hello"
+
+; write outputs lists
+
+>>> (define wp11 (open-output-string))
+
+>>> (write '(1 2 3) wp11)
+
+>>> (get-output-string wp11)
+
+==> "(1 2 3)"
+
+>>> (define wp12 (open-output-string))
+
+>>> (write '(a "b" #\c) wp12)
+
+>>> (get-output-string wp12)
+
+==> "(a \"b\" #\\c)"
+
+; write outputs pairs (dotted)
+
+>>> (define wp13 (open-output-string))
+
+>>> (write (cons 1 2) wp13)
+
+>>> (get-output-string wp13)
+
+==> "(1 . 2)"
+
+; write outputs vectors
+
+>>> (define wp14 (open-output-string))
+
+>>> (write #(1 2 3) wp14)
+
+>>> (get-output-string wp14)
+
+==> "#(1 2 3)"
+
+>>> (define wp15 (open-output-string))
+
+>>> (write #("a" #\b #t) wp15)
+
+>>> (get-output-string wp15)
+
+==> "#(\"a\" #\\b #t)"
+
+; write outputs bytevectors
+
+>>> (define wp16 (open-output-string))
+
+>>> (write #u8(1 2 3) wp16)
+
+>>> (get-output-string wp16)
+
+==> "#u8(1 2 3)"
+
+; write outputs empty list
+
+>>> (define wp17 (open-output-string))
+
+>>> (write '() wp17)
+
+>>> (get-output-string wp17)
+
+==> "()"
+
+; write outputs nested structure
+
+>>> (define wp18 (open-output-string))
+
+>>> (write '(1 (2 3) "four" #\5) wp18)
+
+>>> (get-output-string wp18)
+
+==> "(1 (2 3) \"four\" #\\5)"
+
+; write produces output readable by read (roundtrip)
+
+>>> (define out (open-output-string))
+
+>>> (write '(1 "two" #\3 #t) out)
+
+>>> (read (open-input-string (get-output-string out)))
+
+==> (1 "two" #\3 #t)
+
+; write outputs string escape sequences
+
+>>> (define esc-out (open-output-string))
+
+>>> (write "line1\nline2" esc-out)
+
+>>> (get-output-string esc-out)
+
+==> "\"line1\\nline2\""
+
+>>> (define esc-out2 (open-output-string))
+
+>>> (write "tab\there" esc-out2)
+
+>>> (get-output-string esc-out2)
+
+==> "\"tab\\there\""
+
+; ==========================================================================
+; write-shared — like write but uses datum labels for shared structure
+; ==========================================================================
+
+; write-shared on non-shared structure — same as write
+
+>>> (define ws1 (open-output-string))
+
+>>> (write-shared '(1 2 3) ws1)
+
+>>> (get-output-string ws1)
+
+==> "(1 2 3)"
+
+>>> (define ws2 (open-output-string))
+
+>>> (write-shared "hello" ws2)
+
+>>> (get-output-string ws2)
+
+==> "\"hello\""
+
+; write-shared uses #N= and #N# for shared substructure
+
+>>> (define shared-pair (list 1 2))
+
+>>> (define sharing-list (list shared-pair shared-pair))
+
+>>> (define ws3 (open-output-string))
+
+>>> (write-shared sharing-list ws3)
+
+>>> (get-output-string ws3)
+
+==> "(#0=(1 2) #0#)" or ==> "(#1=(1 2) #1#)"
+
+; write-shared handles circular structure without looping
+
+>>> (define circ (list 1 2))
+
+>>> (set-cdr! (cdr circ) circ)
+
+>>> (define ws4 (open-output-string))
+
+>>> (write-shared circ ws4)
+
+>>> (string? (get-output-string ws4))
+
+==> #t
+
+; ==========================================================================
+; write-simple — like write but never uses datum labels
+; ==========================================================================
+
+; write-simple on non-shared structure — same as write
+
+>>> (define wsi1 (open-output-string))
+
+>>> (write-simple '(1 2 3) wsi1)
+
+>>> (get-output-string wsi1)
+
+==> "(1 2 3)"
+
+>>> (define wsi2 (open-output-string))
+
+>>> (write-simple "hello" wsi2)
+
+>>> (get-output-string wsi2)
+
+==> "\"hello\""
+
+>>> (define wsi3 (open-output-string))
+
+>>> (write-simple #\a wsi3)
+
+>>> (get-output-string wsi3)
+
+==> "#\\a"
+
+; write-simple outputs shared structure without datum labels (may be infinite
+; for circular — but on shared-but-not-circular it just repeats)
+
+>>> (define sp (list 1 2))
+
+>>> (define wsi4 (open-output-string))
+
+>>> (write-simple (list sp sp) wsi4)
+
+>>> (get-output-string wsi4)
+
+==> "((1 2) (1 2))"
+
+; ==========================================================================
+; display — human-readable output (no quotes, no #\ prefix)
+; ==========================================================================
+
+; display outputs strings without quotes
+
+>>> (define dp1 (open-output-string))
+
+>>> (display "hello" dp1)
+
+>>> (get-output-string dp1)
+
+==> "hello"
+
+; display outputs characters without #\ prefix
+
+>>> (define dp2 (open-output-string))
+
+>>> (display #\a dp2)
+
+>>> (get-output-string dp2)
+
+==> "a"
+
+>>> (define dp3 (open-output-string))
+
+>>> (display #\space dp3)
+
+>>> (get-output-string dp3)
+
+==> " "
+
+>>> (define dp4 (open-output-string))
+
+>>> (display #\newline dp4)
+
+>>> (get-output-string dp4)
+
+==> "\n"
+
+; display outputs numbers
+
+>>> (define dp5 (open-output-string))
+
+>>> (display 42 dp5)
+
+>>> (get-output-string dp5)
+
+==> "42"
+
+; display outputs booleans
+
+>>> (define dp6 (open-output-string))
+
+>>> (display #t dp6)
+
+>>> (get-output-string dp6)
+
+==> "#t"
+
+>>> (define dp7 (open-output-string))
+
+>>> (display #f dp7)
+
+>>> (get-output-string dp7)
+
+==> "#f"
+
+; display outputs symbols
+
+>>> (define dp8 (open-output-string))
+
+>>> (display 'hello dp8)
+
+>>> (get-output-string dp8)
+
+==> "hello"
+
+; display outputs lists (strings inside are not quoted)
+
+>>> (define dp9 (open-output-string))
+
+>>> (display '(1 "two" #\3) dp9)
+
+>>> (get-output-string dp9)
+
+==> "(1 two 3)"
+
+; display outputs nested
+
+>>> (define dp10 (open-output-string))
+
+>>> (display '(a (b c) "d") dp10)
+
+>>> (get-output-string dp10)
+
+==> "(a (b c) d)"
+
+; display outputs empty list
+
+>>> (define dp11 (open-output-string))
+
+>>> (display '() dp11)
+
+>>> (get-output-string dp11)
+
+==> "()"
+
+; display outputs vectors (strings inside are not quoted)
+
+>>> (define dp12 (open-output-string))
+
+>>> (display #("hello" #\a) dp12)
+
+>>> (get-output-string dp12)
+
+==> "#(hello a)"
+
+; write vs display contrast — strings
+
+>>> (define cw (open-output-string))
+
+>>> (write "hello" cw)
+
+>>> (define cd (open-output-string))
+
+>>> (display "hello" cd)
+
+>>> (list (get-output-string cw) (get-output-string cd))
+
+==> ("\"hello\"" "hello")
+
+; write vs display contrast — characters
+
+>>> (define cw2 (open-output-string))
+
+>>> (write #\a cw2)
+
+>>> (define cd2 (open-output-string))
+
+>>> (display #\a cd2)
+
+>>> (list (get-output-string cw2) (get-output-string cd2))
+
+==> ("#\\a" "a")
+
+; ==========================================================================
+; newline — outputs a newline character
+; ==========================================================================
+
+>>> (define nlp (open-output-string))
+
+>>> (newline nlp)
+
+>>> (string-length (get-output-string nlp))
+
+==> 1
+
+>>> (char=? (string-ref (get-output-string nlp) 0) #\newline)
+
+==> #t
+
+; newline after display
+
+>>> (define nlp2 (open-output-string))
+
+>>> (display "hello" nlp2)
+
+>>> (newline nlp2)
+
+>>> (display "world" nlp2)
+
+>>> (get-output-string nlp2)
+
+==> "hello\nworld"
+
+; multiple newlines
+
+>>> (define nlp3 (open-output-string))
+
+>>> (newline nlp3)
+
+>>> (newline nlp3)
+
+>>> (newline nlp3)
+
+>>> (string-length (get-output-string nlp3))
+
+==> 3
+
+; ==========================================================================
+; write-char — outputs a single character
+; ==========================================================================
+
+>>> (define wcp (open-output-string))
+
+>>> (write-char #\a wcp)
+
+>>> (get-output-string wcp)
+
+==> "a"
+
+>>> (define wcp2 (open-output-string))
+
+>>> (write-char #\space wcp2)
+
+>>> (get-output-string wcp2)
+
+==> " "
+
+>>> (define wcp3 (open-output-string))
+
+>>> (write-char #\newline wcp3)
+
+>>> (get-output-string wcp3)
+
+==> "\n"
+
+; write-char multiple times
+
+>>> (define wcp4 (open-output-string))
+
+>>> (write-char #\h wcp4)
+
+>>> (write-char #\i wcp4)
+
+>>> (write-char #\! wcp4)
+
+>>> (get-output-string wcp4)
+
+==> "hi!"
+
+; write-char with for-each to build a string
+
+>>> (define wcp5 (open-output-string))
+
+>>> (for-each (lambda (c) (write-char c wcp5)) (string->list "hello"))
+
+>>> (get-output-string wcp5)
+
+==> "hello"
+
+; ==========================================================================
+; write-string — outputs a string (or substring)
+; ==========================================================================
+
+; Basic write-string
+
+>>> (define wsp (open-output-string))
+
+>>> (write-string "hello" wsp)
+
+>>> (get-output-string wsp)
+
+==> "hello"
+
+; write-string outputs unescaped (like display for string content)
+
+>>> (define wsp2 (open-output-string))
+
+>>> (write-string "hello world" wsp2)
+
+>>> (get-output-string wsp2)
+
+==> "hello world"
+
+; write-string with start and end (substring)
+
+>>> (define wsp3 (open-output-string))
+
+>>> (write-string "hello world" wsp3 0 5)
+
+>>> (get-output-string wsp3)
+
+==> "hello"
+
+>>> (define wsp4 (open-output-string))
+
+>>> (write-string "hello world" wsp4 6 11)
+
+>>> (get-output-string wsp4)
+
+==> "world"
+
+; write-string with start = end outputs nothing
+
+>>> (define wsp5 (open-output-string))
+
+>>> (write-string "hello" wsp5 2 2)
+
+>>> (get-output-string wsp5)
+
+==> ""
+
+; write-string with start = 0, end = length writes whole string
+
+>>> (define wsp6 (open-output-string))
+
+>>> (write-string "abc" wsp6 0 3)
+
+>>> (get-output-string wsp6)
+
+==> "abc"
+
+; write-string of empty string
+
+>>> (define wsp7 (open-output-string))
+
+>>> (write-string "" wsp7)
+
+>>> (get-output-string wsp7)
+
+==> ""
+
+; write-string preserves whitespace and special chars (raw output, no escaping)
+
+>>> (define wsp8 (open-output-string))
+
+>>> (write-string "line1\nline2" wsp8)
+
+>>> (string-length (get-output-string wsp8))
+
+==> 11
+
+; ==========================================================================
+; write-u8 — outputs a single byte to a binary port
+; ==========================================================================
+
+>>> (define bop (open-output-bytevector))
+
+>>> (write-u8 65 bop)
+
+>>> (get-output-bytevector bop)
+
+==> #u8(65)
+
+>>> (define bop2 (open-output-bytevector))
+
+>>> (write-u8 0 bop2)
+
+>>> (get-output-bytevector bop2)
+
+==> #u8(0)
+
+>>> (define bop3 (open-output-bytevector))
+
+>>> (write-u8 255 bop3)
+
+>>> (get-output-bytevector bop3)
+
+==> #u8(255)
+
+; write-u8 multiple times
+
+>>> (define bop4 (open-output-bytevector))
+
+>>> (write-u8 1 bop4)
+
+>>> (write-u8 2 bop4)
+
+>>> (write-u8 3 bop4)
+
+>>> (get-output-bytevector bop4)
+
+==> #u8(1 2 3)
+
+; write-u8 with for-each
+
+>>> (define bop5 (open-output-bytevector))
+
+>>> (for-each (lambda (b) (write-u8 b bop5)) '(10 20 30 40))
+
+>>> (get-output-bytevector bop5)
+
+==> #u8(10 20 30 40)
+
+; ==========================================================================
+; write-bytevector — outputs bytes from a bytevector
+; ==========================================================================
+
+; Basic write-bytevector
+
+>>> (define bvop (open-output-bytevector))
+
+>>> (write-bytevector #u8(1 2 3) bvop)
+
+>>> (get-output-bytevector bvop)
+
+==> #u8(1 2 3)
+
+; write-bytevector appends to existing content
+
+>>> (define bvop2 (open-output-bytevector))
+
+>>> (write-bytevector #u8(1 2) bvop2)
+
+>>> (write-bytevector #u8(3 4) bvop2)
+
+>>> (get-output-bytevector bvop2)
+
+==> #u8(1 2 3 4)
+
+; write-bytevector with start and end (subrange)
+
+>>> (define bvop3 (open-output-bytevector))
+
+>>> (write-bytevector #u8(10 20 30 40 50) bvop3 1 4)
+
+>>> (get-output-bytevector bvop3)
+
+==> #u8(20 30 40)
+
+; write-bytevector with start = 0, end = length
+
+>>> (define bvop4 (open-output-bytevector))
+
+>>> (write-bytevector #u8(5 6 7) bvop4 0 3)
+
+>>> (get-output-bytevector bvop4)
+
+==> #u8(5 6 7)
+
+; write-bytevector with start = end outputs nothing
+
+>>> (define bvop5 (open-output-bytevector))
+
+>>> (write-bytevector #u8(1 2 3) bvop5 1 1)
+
+>>> (get-output-bytevector bvop5)
+
+==> #u8()
+
+; write-bytevector of empty bytevector
+
+>>> (define bvop6 (open-output-bytevector))
+
+>>> (write-bytevector #u8() bvop6)
+
+>>> (get-output-bytevector bvop6)
+
+==> #u8()
+
+; ==========================================================================
+; flush-output-port — flushes buffered output
+; ==========================================================================
+
+; On string/bytevector ports, flush-output-port is a no-op but must not error
+
+>>> (define fp1 (open-output-string))
+
+>>> (display "hello" fp1)
+
+>>> (flush-output-port fp1)
+
+>>> (get-output-string fp1)
+
+==> "hello"
+
+>>> (define fp2 (open-output-bytevector))
+
+>>> (write-bytevector #u8(1 2 3) fp2)
+
+>>> (flush-output-port fp2)
+
+>>> (get-output-bytevector fp2)
+
+==> #u8(1 2 3)
+
+; flush-output-port is a procedure
+
+>>> (procedure? flush-output-port)
+
+==> #t
+
+; ==========================================================================
+; Output procedures are procedures
+; ==========================================================================
+
+>>> (procedure? write)
+
+==> #t
+
+>>> (procedure? write-shared)
+
+==> #t
+
+>>> (procedure? write-simple)
+
+==> #t
+
+>>> (procedure? display)
+
+==> #t
+
+>>> (procedure? newline)
+
+==> #t
+
+>>> (procedure? write-char)
+
+==> #t
+
+>>> (procedure? write-string)
+
+==> #t
+
+>>> (procedure? write-u8)
+
+==> #t
+
+>>> (procedure? write-bytevector)
+
+==> #t
+
+; ==========================================================================
+; Integration — combining output procedures
+; ==========================================================================
+
+; Building a formatted string with multiple output calls
+
+>>> (define out (open-output-string))
+
+>>> (display "x = " out)
+
+>>> (write 42 out)
+
+>>> (newline out)
+
+>>> (display "y = " out)
+
+>>> (write "hello" out)
+
+>>> (get-output-string out)
+
+==> "x = 42\ny = \"hello\""
+
+; Writing a list element by element
+
+>>> (define list-out (open-output-string))
+
+>>> (write-char #\( list-out)
+
+>>> (for-each
+...   (lambda (x)
+...     (write x list-out)
+...     (write-char #\space list-out))
+...   '(1 2 3))
+
+>>> (write-char #\) list-out)
+
+>>> (string? (get-output-string list-out))
+
+==> #t
+
+; Roundtrip: write then read
+
+>>> (define rt-out (open-output-string))
+
+>>> (for-each
+...   (lambda (x) (write x rt-out) (write-char #\space rt-out))
+...   '(1 "two" #\3 #t '() #(a b)))
+
+>>> (define rt-in (open-input-string (get-output-string rt-out)))
+
+>>> (read rt-in)
+
+==> 1
+
+>>> (read rt-in)
+
+==> "two"
+
+>>> (read rt-in)
+
+==> #\3
+
+>>> (read rt-in)
+
+==> #t
+
+; Bytevector roundtrip
+
+>>> (define bv-rt-out (open-output-bytevector))
+
+>>> (write-bytevector #u8(72 101 108 108 111) bv-rt-out)
+
+>>> (utf8->string (get-output-bytevector bv-rt-out))
+
+==> "Hello"
+
+; write-string vs write — write-string does not add quotes
+
+>>> (define ws-out (open-output-string))
+
+>>> (write-string "hello" ws-out)
+
+>>> (get-output-string ws-out)
+
+==> "hello"
+
+>>> (define w-out (open-output-string))
+
+>>> (write "hello" w-out)
+
+>>> (get-output-string w-out)
+
+==> "\"hello\""
+
+; display on port, then check content is there
+
+>>> (define multi-out (open-output-string))
+
+>>> (display 1 multi-out)
+
+>>> (display " " multi-out)
+
+>>> (display 2 multi-out)
+
+>>> (display " " multi-out)
+
+>>> (display 3 multi-out)
+
+>>> (get-output-string multi-out)
+
+==> "1 2 3"
+

@@ -1,0 +1,404 @@
+; Section 5.4 - Syntax Definitions
+;
+; (define-syntax <keyword> <transformer>)
+;
+; Binds <keyword> to a macro transformer.  The transformer is most
+; commonly a syntax-rules expression but may be any expression that
+; evaluates to a transformer object.
+;
+; At top level: creates a global syntactic binding visible to all
+; subsequent top-level forms.
+;
+; In a body (lambda, let, etc.): creates a local syntactic binding
+; visible throughout the body (including to earlier-appearing definitions,
+; as with letrec* — mutual recursion between syntax definitions is allowed).
+;
+; A syntax binding occupies the same namespace as variable bindings.
+; A define-syntax can shadow a variable binding and vice-versa.
+
+; ==========================================================================
+; define-syntax — basic top-level macro
+; ==========================================================================
+
+>>> (define-syntax my-when
+...   (syntax-rules ()
+...     ((my-when test expr ...)
+...      (if test (begin expr ...) (if #f #f)))))
+
+>>> (my-when #t 'yes)
+
+==> yes
+
+>>> (my-when #f 'never)
+... 
+... ; unspecified — no error
+
+>>> (my-when #t 1 2 3)
+
+==> 3
+
+; ==========================================================================
+; define-syntax — macro visible globally after definition
+; ==========================================================================
+
+>>> (define-syntax my-unless
+...   (syntax-rules ()
+...     ((my-unless test expr ...)
+...      (if test (if #f #f) (begin expr ...)))))
+
+>>> (my-unless #f 'triggered)
+
+==> triggered
+
+>>> (my-unless #t 'not-triggered)
+... 
+... ; unspecified
+
+>>> (define (use-my-unless x)
+...   (my-unless (= x 0) (* x 2)))
+
+>>> (use-my-unless 5)
+
+==> 10
+
+; ==========================================================================
+; define-syntax — macro with multiple rules
+; ==========================================================================
+
+>>> (define-syntax my-cond
+...   (syntax-rules (else)
+...     ((my-cond (else e ...)) (begin e ...))
+...     ((my-cond (test e ...) rest ...)
+...      (if test (begin e ...) (my-cond rest ...)))))
+
+>>> (my-cond (#f 'no) (#t 'yes) (else 'default))
+
+==> yes
+
+>>> (my-cond (#f 'no) (else 'default))
+
+==> default
+
+>>> (my-cond (else 'only))
+
+==> only
+
+; ==========================================================================
+; define-syntax — recursive macro (uses itself in expansion)
+; ==========================================================================
+
+>>> (define-syntax my-and
+...   (syntax-rules ()
+...     ((my-and)           #t)
+...     ((my-and e)         e)
+...     ((my-and e1 e2 ...)
+...      (if e1 (my-and e2 ...) #f))))
+
+>>> (my-and)
+
+==> #t
+
+>>> (my-and 1 2 3)
+
+==> 3
+
+>>> (my-and 1 #f 3)
+
+==> #f
+
+>>> (my-and 'a 'b 'c 'd)
+
+==> d
+
+; ==========================================================================
+; define-syntax — used inside a procedure definition
+; ==========================================================================
+
+>>> (define-syntax inc!
+...   (syntax-rules ()
+...     ((inc! var)   (set! var (+ var 1)))
+...     ((inc! var n) (set! var (+ var n)))))
+
+>>> (define counter 0)
+
+>>> (inc! counter)
+
+>>> counter
+
+==> 1
+
+>>> (inc! counter 5)
+
+>>> counter
+
+==> 6
+
+; ==========================================================================
+; define-syntax — macro expanding to a definition
+; ==========================================================================
+
+>>> (define-syntax def-double
+...   (syntax-rules ()
+...     ((def-double name val)
+...      (define name (* val 2)))))
+
+>>> (def-double twenty 10)
+
+>>> twenty
+
+==> 20
+
+>>> (def-double hundred 50)
+
+>>> hundred
+
+==> 100
+
+; ==========================================================================
+; define-syntax — macro expanding to a procedure definition
+; ==========================================================================
+
+>>> (define-syntax def-pred
+...   (syntax-rules ()
+...     ((def-pred name test)
+...      (define (name x) (if (test x) #t #f)))))
+
+>>> (def-pred my-positive? positive?)
+
+>>> (my-positive? 5)
+
+==> #t
+
+>>> (my-positive? -1)
+
+==> #f
+
+>>> (def-pred my-zero? zero?)
+
+>>> (my-zero? 0)
+
+==> #t
+
+; ==========================================================================
+; Internal define-syntax — local syntactic binding in a body
+; ==========================================================================
+
+>>> (let ()
+...   (define-syntax local-sq
+...     (syntax-rules ()
+...       ((local-sq x) (* x x))))
+...   (local-sq 7))
+
+==> 49
+
+>>> (define (with-local-macro x)
+...   (define-syntax double-it
+...     (syntax-rules ()
+...       ((double-it v) (* v 2))))
+...   (double-it x))
+
+>>> (with-local-macro 6)
+
+==> 12
+
+; ==========================================================================
+; Internal define-syntax — not visible outside body
+; ==========================================================================
+
+; A local define-syntax is scoped to its body, like let-syntax.
+
+>>> (let ()
+...   (define-syntax inner-mac
+...     (syntax-rules ()
+...       ((inner-mac) 'inside)))
+...   (inner-mac))
+
+==> inside
+
+; inner-mac is not accessible here (outside the let body)
+
+; ==========================================================================
+; Internal define-syntax — can reference later definitions (letrec* scope)
+; ==========================================================================
+
+; Within a body, define-syntax and define share the same letrec* scope.
+; A macro can expand to use a variable defined later in the same body.
+
+>>> ((lambda ()
+...    (define-syntax use-later
+...      (syntax-rules ()
+...        ((use-later) later-var)))
+...    (define later-var 42)
+...    (use-later)))
+
+==> 42
+
+; ==========================================================================
+; Internal define-syntax — mutual recursion between syntax definitions
+; ==========================================================================
+
+>>> (let ()
+...   (define-syntax my-e?
+...     (syntax-rules ()
+...       ((my-e? n)
+...        (if (= n 0) #t (my-o? (- n 1))))))
+...   (define-syntax my-o?
+...     (syntax-rules ()
+...       ((my-o? n)
+...        (if (= n 0) #f (my-e? (- n 1))))))
+...   (list (my-e? 4) (my-o? 3)))
+
+==> (#t #t)
+
+; ==========================================================================
+; define-syntax — shadowing a built-in syntax form
+; ==========================================================================
+
+; define-syntax can shadow existing syntactic keywords.
+
+>>> (define-syntax if
+...   (syntax-rules ()
+...     ((if test then else)
+...      (cond (test then) (else else)))
+...     ((if test then)
+...      (cond (test then)))))
+
+>>> (if #t 'yes 'no)
+
+==> yes
+
+>>> (if #f 'yes 'no)
+
+==> no
+
+; ==========================================================================
+; define-syntax — shadowing a variable binding
+; ==========================================================================
+
+; A syntactic keyword binding shadows a variable of the same name.
+; Using the name as an expression (not in call position) is an error.
+
+>>> (define shadow-name 42)
+
+>>> shadow-name
+
+==> 42
+
+>>> (define-syntax shadow-name
+...   (syntax-rules ()
+...     ((shadow-name x) (* x 2))))
+
+>>> (shadow-name 5)
+
+==> 10
+
+; ==========================================================================
+; define-syntax — transformer is evaluated in definition environment
+; ==========================================================================
+
+; The transformer expression (e.g. syntax-rules form) is evaluated when
+; define-syntax is evaluated.  It captures the environment at that point.
+
+>>> (define-syntax capture-env
+...   (let ((n 10))
+...     (syntax-rules ()
+...       ((capture-env) n))))
+... 
+... ; Note: syntax-rules does not capture run-time variable values in the
+... ; template — this test is about the transformer being an expression.
+... ; The result is implementation-defined for non-syntax-rules transformers.
+... ; We test the common syntax-rules case instead.
+
+>>> (define-syntax always-42
+...   (syntax-rules ()
+...     ((always-42) 42)))
+
+>>> (always-42)
+
+==> 42
+
+; ==========================================================================
+; define-syntax — macro generating another define-syntax
+; ==========================================================================
+
+>>> (define-syntax def-alias-syntax
+...   (syntax-rules ()
+...     ((def-alias-syntax new-name old-name)
+...      (define-syntax new-name
+...        (syntax-rules ()
+...          ((new-name arg ...) (old-name arg ...)))))))
+
+>>> (def-alias-syntax my-cons cons)
+
+>>> (my-cons 1 '(2 3))
+
+==> (1 2 3)
+
+>>> (def-alias-syntax my-list list)
+
+>>> (my-list 1 2 3)
+
+==> (1 2 3)
+
+; ==========================================================================
+; define-syntax — hygiene across uses
+; ==========================================================================
+
+; Each use of a hygienic macro gets its own fresh introduced bindings.
+
+>>> (define-syntax fresh-let
+...   (syntax-rules ()
+...     ((fresh-let val body)
+...      (let ((tmp val)) body))))
+
+>>> (let ((tmp 'outer))
+...   (list (fresh-let 99 tmp)
+...         tmp))
+
+==> (outer outer)
+
+; The first element is 'outer' because: fresh-let introduces its own
+; hygienic 'tmp'; body is the expression 'tmp' which refers to the
+; caller's 'tmp' (= 'outer), not the macro-introduced one.
+; The macro's 'tmp' is hygienically distinct from the caller's 'tmp'.
+
+; ==========================================================================
+; define-syntax — used inside a cond clause
+; ==========================================================================
+
+>>> (define-syntax add1-mac
+...   (syntax-rules ()
+...     ((add1-mac x) (+ x 1))))
+
+>>> (cond (#t (add1-mac 41)))
+
+==> 42
+
+; ==========================================================================
+; define-syntax — used in let binding initializer
+; ==========================================================================
+
+>>> (define-syntax double-mac
+...   (syntax-rules ()
+...     ((double-mac x) (* x 2))))
+
+>>> (let ((v (double-mac 21)))
+...   v)
+
+==> 42
+
+; ==========================================================================
+; define-syntax — error: keyword used as variable reference
+; ==========================================================================
+
+; A syntactic keyword used in expression position (not as the head of
+; a form it was designed for) is an error.
+
+>>> (define-syntax kw-only
+...   (syntax-rules ()
+...     ((kw-only x) x)))
+
+>>> kw-only
+
+%%% %any-error%
+

@@ -1,0 +1,382 @@
+; Section 4.2.5 - Delayed Evaluation
+;
+; (delay <expr>)
+;   Returns a promise.  <expr> is not evaluated yet.
+;
+; (force <promise>)
+;   Forces a promise: evaluates (or retrieves the memoized value of) it.
+;   If <promise> is not a promise, returns it directly (R7RS 6.4 note).
+;   Forcing the same promise twice returns the same value (memoized).
+;
+; (delay-force <expr>)   [also: (lazy <expr>) in SRFI-45 parlance]
+;   Like delay but <expr> must evaluate to a promise; allows iterative
+;   forcing without growing the stack (for infinite streams etc.).
+;
+; (make-promise <obj>)
+;   If <obj> is already a promise, returns it; otherwise wraps it in an
+;   already-forced promise whose value is <obj>.
+;
+; (promise? <obj>)
+;   Returns #t if <obj> is a promise, #f otherwise.
+
+; ==========================================================================
+; delay — produces a promise
+; ==========================================================================
+
+>>> (promise? (delay 1))
+
+==> #t
+
+>>> (promise? (delay (+ 1 2)))
+
+==> #t
+
+>>> (promise? (delay #f))
+
+==> #t
+
+; ==========================================================================
+; promise? — non-promises return #f
+; ==========================================================================
+
+>>> (promise? 42)
+
+==> #f
+
+>>> (promise? '())
+
+==> #f
+
+>>> (promise? #t)
+
+==> #f
+
+>>> (promise? "hello")
+
+==> #f
+
+>>> (promise? (lambda () 1))
+
+==> #f
+
+; ==========================================================================
+; force — evaluates the delayed expression
+; ==========================================================================
+
+>>> (force (delay 42))
+
+==> 42
+
+>>> (force (delay (+ 1 2)))
+
+==> 3
+
+>>> (force (delay (* 6 7)))
+
+==> 42
+
+>>> (force (delay 'hello))
+
+==> hello
+
+>>> (force (delay '(1 2 3)))
+
+==> (1 2 3)
+
+; ==========================================================================
+; force — expression not evaluated until forced
+; ==========================================================================
+
+>>> (define forced? #f)
+
+>>> (define p (delay (begin (set! forced? #t) 99)))
+
+>>> forced?
+
+==> #f
+
+>>> (force p)
+
+==> 99
+
+>>> forced?
+
+==> #t
+
+; ==========================================================================
+; force — memoization: expression evaluated at most once
+; ==========================================================================
+
+>>> (define eval-count 0)
+
+>>> (define memo-p
+...   (delay (begin
+...             (set! eval-count (+ eval-count 1))
+...             eval-count)))
+
+>>> (force memo-p)
+
+==> 1
+
+>>> (force memo-p)
+
+==> 1
+
+>>> (force memo-p)
+
+==> 1
+
+>>> eval-count
+
+==> 1
+
+; ==========================================================================
+; force — memoized value is the same object (eq? for non-immediate types)
+; ==========================================================================
+
+>>> (define list-p (delay (list 1 2 3)))
+
+>>> (define v1 (force list-p))
+
+>>> (define v2 (force list-p))
+
+>>> (eq? v1 v2)
+
+==> #t
+
+; ==========================================================================
+; make-promise — wraps a non-promise value
+; ==========================================================================
+
+>>> (promise? (make-promise 42))
+
+==> #t
+
+>>> (force (make-promise 42))
+
+==> 42
+
+>>> (force (make-promise 'hello))
+
+==> hello
+
+>>> (force (make-promise '(1 2 3)))
+
+==> (1 2 3)
+
+; ==========================================================================
+; make-promise — on an existing promise, returns it unchanged
+; ==========================================================================
+
+>>> (define orig-p (delay 7))
+
+>>> (define wrapped (make-promise orig-p))
+
+>>> (eq? orig-p wrapped)
+
+==> #t
+
+>>> (force wrapped)
+
+==> 7
+
+; ==========================================================================
+; make-promise — already-forced promise stays forced
+; ==========================================================================
+
+>>> (define ap (make-promise 10))
+
+>>> (force ap)
+
+==> 10
+
+>>> (promise? ap)
+
+==> #t
+
+; ==========================================================================
+; delay-force — for iterative (trampolined) promises
+; ==========================================================================
+
+; delay-force allows building iterative streams without stack growth.
+; The expression inside delay-force must evaluate to a promise.
+
+>>> (define (stream-from n)
+...   (delay-force (make-promise (cons n (stream-from (+ n 1))))))
+... 
+... ; Force once to get the first pair
+>>> (define s (force (stream-from 0)))
+
+>>> (car s)
+
+==> 0
+
+>>> (car (force (cdr s)))
+
+==> 1
+
+>>> (car (force (cdr (force (cdr s)))))
+
+==> 2
+
+; ==========================================================================
+; delay-force — result is a promise
+; ==========================================================================
+
+>>> (promise? (delay-force (make-promise 1)))
+
+==> #t
+
+; ==========================================================================
+; delay-force — iterative forcing does not grow the stack (TCO)
+; ==========================================================================
+
+; A loop expressed as a chain of delay-force promises should force
+; iteratively without stack overflow.
+
+>>> (define (make-count-promise n limit)
+...   (if (= n limit)
+...       (make-promise n)
+...       (delay-force (make-count-promise (+ n 1) limit))))
+
+>>> (force (make-count-promise 0 1000000))
+
+==> 1000000
+
+; ==========================================================================
+; delay — captures the environment at creation time
+; ==========================================================================
+
+>>> (define captured 1)
+
+>>> (define env-p (delay captured))
+
+>>> (set! captured 2)
+
+>>> (force env-p)
+
+==> 2
+
+; The promise captures the variable binding (location), not the value.
+; Since captured was set! to 2 before forcing, the forced value is 2.
+
+; ==========================================================================
+; delay — in recursive definitions (streams)
+; ==========================================================================
+
+; Classic ones stream
+>>> (define ones (delay (cons 1 ones)))
+
+>>> (car (force ones))
+
+==> 1
+
+>>> (car (force (cdr (force ones))))
+
+==> 1
+
+; ==========================================================================
+; delay — interaction with call/cc
+; ==========================================================================
+
+; A promise forced inside a continuation captures the continuation
+; but memoizes correctly.
+
+>>> (define cc-p (delay (+ 10 20)))
+
+>>> (force cc-p)
+
+==> 30
+
+>>> (force cc-p)
+
+==> 30
+
+; ==========================================================================
+; force — on a non-promise value (implementation behavior)
+; ==========================================================================
+
+; R7RS says it is an error to force a non-promise.
+; We only test the well-defined cases above.
+
+; ==========================================================================
+; Streams — practical example using delay/force
+; ==========================================================================
+
+; take: extract first n elements from a lazy stream
+>>> (define (stream-take s n)
+...   (if (= n 0)
+...       '()
+...       (let ((pair (force s)))
+...         (cons (car pair)
+...               (stream-take (cdr pair) (- n 1))))))
+
+>>> (define naturals
+...   (let loop ((n 0))
+...     (delay (cons n (loop (+ n 1))))))
+
+>>> (stream-take naturals 5)
+
+==> (0 1 2 3 4)
+
+>>> (stream-take naturals 10)
+
+==> (0 1 2 3 4 5 6 7 8 9)
+
+; Infinite stream of ones
+>>> (define (const-stream v)
+...   (delay (cons v (const-stream v))))
+
+>>> (stream-take (const-stream 'x) 4)
+
+==> (x x x x)
+
+; Stream filter
+>>> (define (stream-filter pred s)
+...   (let ((pair (force s)))
+...     (if (pred (car pair))
+...         (delay (cons (car pair) (stream-filter pred (cdr pair))))
+...         (stream-filter pred (cdr pair)))))
+
+>>> (define evens-stream (stream-filter even? naturals))
+
+>>> (stream-take evens-stream 5)
+
+==> (0 2 4 6 8)
+
+; ==========================================================================
+; promise? disjoint from all other types
+; ==========================================================================
+
+>>> (promise? #t)
+
+==> #f
+
+>>> (promise? 0)
+
+==> #f
+
+>>> (promise? #\a)
+
+==> #f
+
+>>> (promise? (vector))
+
+==> #f
+
+>>> (promise? (cons 1 2))
+
+==> #f
+
+>>> (promise? (make-promise 1))
+
+==> #t
+
+>>> (promise? (delay 1))
+
+==> #t
+
+>>> (promise? (delay-force (make-promise 1)))
+
+==> #t
+

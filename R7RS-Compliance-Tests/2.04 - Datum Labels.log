@@ -1,0 +1,288 @@
+; Section 2.4 - Datum Labels
+;
+; #N= labels a datum with the non-negative integer N.
+; #N# is a reference to the datum labeled N.
+; Both must appear within the same enclosing datum.
+; Labels create shared structure; self-referential labels create circular structure.
+;
+; Testing strategy:
+;   Shared structure — use eq? to verify identity rather than printing,
+;   since the output format for shared structure is implementation-defined.
+;   Circular structure — test observable properties (car, cdr, eq?) only;
+;   never ask the REPL to print a circular value directly (would hang).
+
+; ==========================================================================
+; Basic shared structure
+; ==========================================================================
+
+; Two elements of a list that are the same object
+
+>>> (let ((x '(#0=(1 2) #0#))) (eq? (car x) (cadr x)))
+
+==> #t
+
+; Three references to the same object
+
+>>> (let ((x '(#0=(a b) #0# #0#)))
+...   (and (eq? (car x) (cadr x))
+...        (eq? (cadr x) (caddr x))))
+
+==> #t
+
+; Shared structure: length of the outer list is 2, inner list is still (1 2)
+
+>>> (length '(#0=(1 2) #0#))
+
+==> 2
+
+>>> (length (car '(#0=(1 2) #0#)))
+
+==> 2
+
+; The shared element has the expected content
+
+>>> (car '(#0=(a b) #0#))
+
+==> (a b)
+
+>>> (cadr '(#0=(a b) #0#))
+
+==> (a b)
+
+; Sharing a symbol
+
+>>> (let ((x '(#0=hello #0#))) (eq? (car x) (cadr x)))
+
+==> #t
+
+; Sharing a boolean
+
+>>> (let ((x '(#0=#t #0#))) (eq? (car x) (cadr x)))
+
+==> #t
+
+; Sharing inside a vector
+
+>>> (let ((v '#(#0=(1 2) #0#))) (eq? (vector-ref v 0) (vector-ref v 1)))
+
+==> #t
+
+; ==========================================================================
+; Label numbering
+; ==========================================================================
+
+; Labels can be any non-negative integer, including multi-digit
+
+>>> (let ((x '(#42=(a b) #42#))) (eq? (car x) (cadr x)))
+
+==> #t
+
+>>> (let ((x '(#0=(p q) #1=(r s) #0# #1#)))
+...   (and (eq? (car x) (caddr x))
+...        (eq? (cadr x) (cadddr x))
+...        (not (eq? (car x) (cadr x)))))
+
+==> #t
+
+; Multiple distinct labels in one datum
+
+>>> (car '(#0=foo #1=bar #0# #1#))
+
+==> foo
+
+>>> (cadr '(#0=foo #1=bar #0# #1#))
+
+==> bar
+
+>>> (caddr '(#0=foo #1=bar #0# #1#))
+
+==> foo
+
+>>> (cadddr '(#0=foo #1=bar #0# #1#))
+
+==> bar
+
+; ==========================================================================
+; Nested labels
+; ==========================================================================
+
+; A label defined in a nested position, referenced at outer level
+
+>>> (let ((x '(#0=((1 2) 3) #0#))) (eq? (car x) (cadr x)))
+
+==> #t
+
+; A label whose datum itself contains a labeled sub-datum
+
+>>> (let ((x '(#0=(#1=a #1#) #0#)))
+...   (and (eq? (car x) (cadr x))
+...        (eq? (caar x) (cadar x))))
+
+==> #t
+
+; ==========================================================================
+; Circular structure
+;
+; R7RS 6.13.2 mandates that `write` use datum label notation for cycles
+; so that output is finite and re-readable.  We test both the structural
+; properties (via eq?, car, cdr) and the printed representation.
+;
+; The specific label number N in #N= is not mandated by R7RS; an
+; implementation may choose any non-negative integer.  Tests below use
+; #0= as the canonical form.  The test runner should match these by
+; structural equivalence of the datum-label expression rather than exact
+; string comparison.
+; ==========================================================================
+
+; Circular pair: #0=(1 . #0#) is the infinite list (1 1 1 ...)
+
+; Structural properties
+
+>>> (define circ '#0=(1 . #0#))
+
+>>> (pair? circ)
+
+==> #t
+
+>>> (car circ)
+
+==> 1
+
+>>> (car (cdr circ))
+
+==> 1
+
+>>> (car (cdr (cdr circ)))
+
+==> 1
+
+; The cdr of the list is the list itself
+
+>>> (eq? circ (cdr circ))
+
+==> #t
+
+>>> (eq? circ (cddr circ))
+
+==> #t
+
+; Printed representation — must use datum label notation (R7RS 6.13.2)
+
+>>> circ
+
+==> #0=(1 . #0#)
+
+; A circular list whose elements alternate: #0=(1 . #1=(2 . #0#))
+
+; Structural properties
+
+>>> (define alt '#0=(1 . #1=(2 . #0#)))
+
+>>> (car alt)
+
+==> 1
+
+>>> (cadr alt)
+
+==> 2
+
+>>> (caddr alt)
+
+==> 1
+
+>>> (cadddr alt)
+
+==> 2
+
+>>> (eq? alt (cddr alt))
+
+==> #t
+
+; Printed representation
+
+>>> alt
+
+==> #0=(1 2 . #0#) or ==> #0=(1 . #1=(2 . #0#))
+
+; Circular pair where both car and cdr are the pair itself: #0=(#0# . #0#)
+
+>>> (define self '#0=(#0# . #0#))
+
+>>> (eq? self (car self))
+
+==> #t
+
+>>> (eq? self (cdr self))
+
+==> #t
+
+; Printed representation
+
+>>> self
+
+==> #0=(#0# . #0#)
+
+; Circular vector: #0=#(1 2 #0#) — third element is the vector itself
+
+; Structural properties
+
+>>> (define cv '#0=#(1 2 #0#))
+
+>>> (vector-ref cv 0)
+
+==> 1
+
+>>> (vector-ref cv 1)
+
+==> 2
+
+>>> (eq? (vector-ref cv 2) cv)
+
+==> #t
+
+>>> (vector-ref (vector-ref cv 2) 0)
+
+==> 1
+
+; Printed representation
+
+>>> cv
+
+==> #0=#(1 2 #0#)
+
+; ==========================================================================
+; Shared (non-circular) structure — printed output
+;
+; R7RS does not mandate that write detects sharing in non-circular
+; structure.  An implementation may print shared structure either by
+; repeating the datum or by using datum labels.  Both are conformant.
+; ==========================================================================
+
+>>> '(#0=(1 2) #0#)
+
+==> ((1 2) (1 2)) or ==> (#0=(1 2) #0#)
+
+; ==========================================================================
+; Errors — cases R7RS explicitly identifies as errors
+; ==========================================================================
+
+; Duplicate label: using the same N in two #N= within one datum is an error
+
+>>> '(#0=1 #0=2)
+
+%%% %any-error% duplicate datum label #0=
+
+>>> '#0=#(#0=1 2)
+
+%%% %any-error% duplicate datum label #0=
+
+; Reference to a label that has not been defined in this datum is an error
+
+>>> '#0#
+
+%%% %any-error% forward reference to undefined datum label #0#
+
+>>> '(#0# #0=1)
+
+%%% %any-error% forward reference to undefined datum label #0#
+

@@ -1,0 +1,299 @@
+; Section 4.2.4 - Iteration
+;
+; (do ((<var> <init> <step>) ...)
+;     (<test> <expr> ...)
+;   <command> ...)
+;
+; Variables are bound to their <init> values.  On each iteration:
+;   - <test> is evaluated; if true, <expr>s are evaluated and last is returned.
+;   - If false, <command>s are evaluated for side effects, then all <step>s
+;     are evaluated (in unspecified order) and variables are updated
+;     simultaneously, then the loop repeats.
+;
+; If the <test> is false and there are no <command>s, the behavior is
+; an unspecified value (the loop just steps).
+; If no <expr>s follow <test>, the result when test is true is unspecified.
+;
+; Named let is the other primary iteration form — covered in 4.2.2.
+
+; ==========================================================================
+; do — basic counting loop
+; ==========================================================================
+
+>>> (do ((i 0 (+ i 1)))
+...     ((= i 5) i))
+
+==> 5
+
+>>> (do ((i 1 (+ i 1)))
+...     ((> i 10) i))
+
+==> 11
+
+; ==========================================================================
+; do — accumulating a sum
+; ==========================================================================
+
+>>> (do ((i 1 (+ i 1))
+...      (sum 0 (+ sum i)))
+...     ((> i 10) sum))
+
+==> 55
+
+; ==========================================================================
+; do — building a list
+; ==========================================================================
+
+>>> (do ((i 5 (- i 1))
+...      (lst '() (cons i lst)))
+...     ((= i 0) lst))
+
+==> (1 2 3 4 5)
+
+; ==========================================================================
+; do — multiple variables stepped simultaneously
+; ==========================================================================
+
+; Steps are evaluated before any variable is updated (simultaneous update).
+; With simultaneous update a gets old-b (2) and b gets old-a (1), giving (2 1).
+; Sequential update would give (2 2) because b would see the already-updated a.
+
+>>> (do ((a 1 b)
+...      (b 2 a))
+...     ((= a 2) (list a b)))
+
+==> (2 1)
+
+; Fibonacci via do: a and b swap simultaneously
+>>> (do ((a 0 b)
+...      (b 1 (+ a b))
+...      (n 8 (- n 1)))
+...     ((= n 0) a))
+
+==> 21
+
+; ==========================================================================
+; do — commands (side effects each iteration)
+; ==========================================================================
+
+>>> (define do-log '())
+
+>>> (do ((i 0 (+ i 1)))
+...     ((= i 3))
+...   (set! do-log (cons i do-log)))
+
+>>> do-log
+
+==> (2 1 0)
+
+; ==========================================================================
+; do — multiple commands per iteration
+; ==========================================================================
+
+>>> (define evens '())
+
+>>> (define odds '())
+
+>>> (do ((i 0 (+ i 1)))
+...     ((= i 6))
+...   (if (even? i)
+...       (set! evens (cons i evens))
+...       (set! odds (cons i odds))))
+
+>>> evens
+
+==> (4 2 0)
+
+>>> odds
+
+==> (5 3 1)
+
+; ==========================================================================
+; do — zero iterations (test true immediately)
+; ==========================================================================
+
+>>> (do ((i 0 (+ i 1)))
+...     ((= i 0) 'done))
+
+==> done
+
+>>> (do ((i 5 (- i 1)))
+...     ((> i 3) i))
+
+==> 5
+
+; ==========================================================================
+; do — result expression uses loop variable
+; ==========================================================================
+
+>>> (do ((vec (make-vector 5))
+...      (i 0 (+ i 1)))
+...     ((= i 5) vec)
+...   (vector-set! vec i (* i i)))
+
+==> #(0 1 4 9 16)
+
+; ==========================================================================
+; do — result is last of multiple result expressions
+; ==========================================================================
+
+>>> (do ((i 0 (+ i 1)))
+...     ((= i 3)
+...      (+ i 1)
+...      (* i 2)
+...      i))
+
+==> 3
+
+; ==========================================================================
+; do — no result expressions: unspecified when test is true
+; ==========================================================================
+
+>>> (define done-val
+...   (do ((i 0 (+ i 1)))
+...       ((= i 3))))
+... 
+... ; done-val is unspecified — no error
+
+>>> (if #t 'ok)
+
+==> ok
+
+; ==========================================================================
+; do — no step expression: variable unchanged each iteration
+; ==========================================================================
+
+; A variable with no step keeps its initial value forever.
+; This is only useful if the test can become true via other means.
+
+>>> (define external 0)
+
+>>> (do ((i 5))
+...     ((= external 3) i)
+...   (set! external (+ external 1)))
+
+==> 5
+
+; ==========================================================================
+; do — init expressions evaluated in current (outer) env
+; ==========================================================================
+
+>>> (define init-x 10)
+
+>>> (do ((x init-x (+ x 1)))
+...     ((= x 13) x))
+
+==> 13
+
+; ==========================================================================
+; do — step expressions evaluated simultaneously (not sequentially)
+; ==========================================================================
+
+; Classic swap test: a and b exchange values each step
+>>> (do ((a 1 b)
+...      (b 2 a)
+...      (n 3 (- n 1)))
+...     ((= n 0) (list a b)))
+
+==> (2 1)
+
+; ==========================================================================
+; do — computing factorial
+; ==========================================================================
+
+>>> (do ((n 6 (- n 1))
+...      (acc 1 (* acc n)))
+...     ((= n 0) acc))
+
+==> 720
+
+; ==========================================================================
+; do — computing GCD iteratively
+; ==========================================================================
+
+>>> (do ((a 36 b)
+...      (b 24 (remainder a b)))
+...     ((= b 0) a))
+
+==> 12
+
+; ==========================================================================
+; do — vector filling
+; ==========================================================================
+
+>>> (let ((v (make-vector 5 0)))
+...   (do ((i 0 (+ i 1)))
+...       ((= i 5) v)
+...     (vector-set! v i (+ i 1))))
+
+==> #(1 2 3 4 5)
+
+; ==========================================================================
+; do — list processing (length)
+; ==========================================================================
+
+>>> (do ((lst '(a b c d e) (cdr lst))
+...      (len 0 (+ len 1)))
+...     ((null? lst) len))
+
+==> 5
+
+; ==========================================================================
+; do — list processing (reverse)
+; ==========================================================================
+
+>>> (do ((lst '(1 2 3 4 5) (cdr lst))
+...      (rev '() (cons (car lst) rev)))
+...     ((null? lst) rev))
+
+==> (5 4 3 2 1)
+
+; ==========================================================================
+; do — searching (find first match)
+; ==========================================================================
+
+>>> (do ((lst '(3 1 4 1 5 9 2 6) (cdr lst)))
+...     ((or (null? lst) (> (car lst) 4))
+...      (if (null? lst) #f (car lst))))
+
+==> 5
+
+; ==========================================================================
+; do — large iteration (TCO not required for do, but should not blow stack)
+; ==========================================================================
+
+>>> (do ((i 0 (+ i 1)))
+...     ((= i 1000000) i))
+
+==> 1000000
+
+; ==========================================================================
+; do — nested
+; ==========================================================================
+
+>>> (let ((total 0))
+...   (do ((i 1 (+ i 1)))
+...       ((> i 3) total)
+...     (do ((j 1 (+ j 1)))
+...         ((> j i))
+...       (set! total (+ total 1)))))
+
+==> 6
+
+; i=1: j runs 1 time  → total=1
+; i=2: j runs 2 times → total=3
+; i=3: j runs 3 times → total=6
+
+; ==========================================================================
+; do — in tail position (result expression is in tail position)
+; ==========================================================================
+
+; The result expressions of do are in tail position.
+>>> (define (do-tail-helper n)
+...   (do ((i 0 (+ i 1)))
+...       ((= i n) 'done)))
+
+>>> (do-tail-helper 1000000)
+
+==> done
+

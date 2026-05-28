@@ -1,0 +1,786 @@
+; Section 6.6 - Characters
+;
+; Characters represent individual Unicode scalar values.
+; Written as #\<char>, #\<name>, or #\x<hex>.
+;
+; Named characters: #\alarm #\backspace #\delete #\escape #\newline
+;                   #\null #\return #\space #\tab
+;
+; (char? obj)
+; (char=? c1 c2 ...)   (char<? ...)  (char>? ...)  (char<=? ...)  (char>=? ...)
+; (char-ci=? ...)  (char-ci<? ...)  (char-ci>? ...)  etc.
+; (char-alphabetic? char)  (char-numeric? char)  (char-whitespace? char)
+; (char-upper-case? char)  (char-lower-case? char)
+; (char->integer char)     (integer->char n)
+; (char-upcase char)       (char-downcase char)    (char-foldcase char)
+
+; ==========================================================================
+; char? — true only for characters
+; ==========================================================================
+
+>>> (char? #\a)
+
+==> #t
+
+>>> (char? #\A)
+
+==> #t
+
+>>> (char? #\space)
+
+==> #t
+
+>>> (char? #\newline)
+
+==> #t
+
+>>> (char? #\0)
+
+==> #t
+
+>>> (char? "a")
+
+==> #f
+
+>>> (char? 97)
+
+==> #f
+
+>>> (char? 'a)
+
+==> #f
+
+>>> (char? #t)
+
+==> #f
+
+>>> (char? '())
+
+==> #f
+
+; ==========================================================================
+; Named characters
+; ==========================================================================
+
+>>> #\space
+
+==> #\space
+
+>>> #\newline
+
+==> #\newline
+
+>>> #\tab
+
+==> #\tab
+
+>>> #\null
+
+==> #\null
+
+>>> #\alarm
+
+==> #\alarm
+
+>>> #\backspace
+
+==> #\backspace
+
+>>> #\delete
+
+==> #\delete
+
+>>> #\escape
+
+==> #\escape
+
+>>> #\return
+
+==> #\return
+
+; ==========================================================================
+; Character literals
+; ==========================================================================
+
+>>> #\a
+
+==> #\a
+
+>>> #\A
+
+==> #\A
+
+>>> #\0
+
+==> #\0
+
+>>> #\z
+
+==> #\z
+
+>>> #\Z
+
+==> #\Z
+
+>>> #\!
+
+==> #\!
+
+; ==========================================================================
+; Hex character literals
+; ==========================================================================
+
+>>> #\x41
+
+==> #\A
+
+>>> #\x61
+
+==> #\a
+
+>>> #\x20
+
+==> #\space
+
+>>> #\x0
+
+==> #\null
+
+>>> #\x9
+
+==> #\tab
+
+>>> #\xA
+
+==> #\newline
+
+; ==========================================================================
+; char=? — character equality
+; ==========================================================================
+
+>>> (char=? #\a #\a)
+
+==> #t
+
+>>> (char=? #\a #\b)
+
+==> #f
+
+>>> (char=? #\A #\a)
+
+==> #f
+
+>>> (char=? #\space #\space)
+
+==> #t
+
+; Multi-argument
+
+>>> (char=? #\a #\a #\a)
+
+==> #t
+
+>>> (char=? #\a #\a #\b)
+
+==> #f
+
+; ==========================================================================
+; char<? — character ordering (by Unicode code point)
+; ==========================================================================
+
+>>> (char<? #\a #\b)
+
+==> #t
+
+>>> (char<? #\b #\a)
+
+==> #f
+
+>>> (char<? #\A #\a)
+
+==> #t
+
+>>> (char<? #\0 #\9)
+
+==> #t
+
+>>> (char<? #\a #\a)
+
+==> #f
+
+; Multi-argument
+
+>>> (char<? #\a #\b #\c)
+
+==> #t
+
+>>> (char<? #\a #\c #\b)
+
+==> #f
+
+; ==========================================================================
+; char>?
+; ==========================================================================
+
+>>> (char>? #\b #\a)
+
+==> #t
+
+>>> (char>? #\a #\b)
+
+==> #f
+
+>>> (char>? #\z #\a #\A)
+
+==> #t
+
+; ==========================================================================
+; char<=? and char>=?
+; ==========================================================================
+
+>>> (char<=? #\a #\a)
+
+==> #t
+
+>>> (char<=? #\a #\b)
+
+==> #t
+
+>>> (char<=? #\b #\a)
+
+==> #f
+
+>>> (char<=? #\a #\a #\b)
+
+==> #t
+
+>>> (char<=? #\a #\b #\b)
+
+==> #t
+
+>>> (char>=? #\b #\a)
+
+==> #t
+
+>>> (char>=? #\a #\a)
+
+==> #t
+
+>>> (char>=? #\a #\b)
+
+==> #f
+
+>>> (char>=? #\z #\z #\a)
+
+==> #t
+
+; ==========================================================================
+; Ordering of character ranges
+; ==========================================================================
+
+; Digits precede uppercase which precede lowercase in ASCII
+
+>>> (char<? #\0 #\9)
+
+==> #t
+
+>>> (char<? #\A #\Z)
+
+==> #t
+
+>>> (char<? #\a #\z)
+
+==> #t
+
+>>> (char<? #\9 #\A)
+
+==> #t
+
+>>> (char<? #\Z #\a)
+
+==> #t
+
+; ==========================================================================
+; char-ci=? — case-insensitive equality
+; ==========================================================================
+
+>>> (char-ci=? #\a #\A)
+
+==> #t
+
+>>> (char-ci=? #\A #\a)
+
+==> #t
+
+>>> (char-ci=? #\a #\a)
+
+==> #t
+
+>>> (char-ci=? #\a #\b)
+
+==> #f
+
+>>> (char-ci=? #\Z #\z)
+
+==> #t
+
+; Multi-argument
+
+>>> (char-ci=? #\a #\A #\a)
+
+==> #t
+
+>>> (char-ci=? #\a #\A #\b)
+
+==> #f
+
+; ==========================================================================
+; char-ci<? char-ci>? char-ci<=? char-ci>=?
+; ==========================================================================
+
+>>> (char-ci<? #\a #\B)
+
+==> #t
+
+>>> (char-ci<? #\B #\a)
+
+==> #f
+
+>>> (char-ci<? #\A #\b)
+
+==> #t
+
+>>> (char-ci>? #\B #\a)
+
+==> #t
+
+>>> (char-ci<=? #\a #\A)
+
+==> #t
+
+>>> (char-ci<=? #\A #\a)
+
+==> #t
+
+>>> (char-ci<=? #\a #\B)
+
+==> #t
+
+>>> (char-ci>=? #\A #\a)
+
+==> #t
+
+>>> (char-ci>=? #\Z #\a)
+
+==> #t
+
+; ==========================================================================
+; char-alphabetic?
+; ==========================================================================
+
+>>> (char-alphabetic? #\a)
+
+==> #t
+
+>>> (char-alphabetic? #\z)
+
+==> #t
+
+>>> (char-alphabetic? #\A)
+
+==> #t
+
+>>> (char-alphabetic? #\Z)
+
+==> #t
+
+>>> (char-alphabetic? #\0)
+
+==> #f
+
+>>> (char-alphabetic? #\9)
+
+==> #f
+
+>>> (char-alphabetic? #\space)
+
+==> #f
+
+>>> (char-alphabetic? #\!)
+
+==> #f
+
+; ==========================================================================
+; char-numeric?
+; ==========================================================================
+
+>>> (char-numeric? #\0)
+
+==> #t
+
+>>> (char-numeric? #\9)
+
+==> #t
+
+>>> (char-numeric? #\5)
+
+==> #t
+
+>>> (char-numeric? #\a)
+
+==> #f
+
+>>> (char-numeric? #\A)
+
+==> #f
+
+>>> (char-numeric? #\space)
+
+==> #f
+
+; ==========================================================================
+; char-whitespace?
+; ==========================================================================
+
+>>> (char-whitespace? #\space)
+
+==> #t
+
+>>> (char-whitespace? #\newline)
+
+==> #t
+
+>>> (char-whitespace? #\tab)
+
+==> #t
+
+>>> (char-whitespace? #\return)
+
+==> #t
+
+>>> (char-whitespace? #\a)
+
+==> #f
+
+>>> (char-whitespace? #\0)
+
+==> #f
+
+; ==========================================================================
+; char-upper-case? and char-lower-case?
+; ==========================================================================
+
+>>> (char-upper-case? #\A)
+
+==> #t
+
+>>> (char-upper-case? #\Z)
+
+==> #t
+
+>>> (char-upper-case? #\a)
+
+==> #f
+
+>>> (char-upper-case? #\0)
+
+==> #f
+
+>>> (char-lower-case? #\a)
+
+==> #t
+
+>>> (char-lower-case? #\z)
+
+==> #t
+
+>>> (char-lower-case? #\A)
+
+==> #f
+
+>>> (char-lower-case? #\0)
+
+==> #f
+
+>>> (char-lower-case? #\space)
+
+==> #f
+
+; ==========================================================================
+; char->integer — returns Unicode code point
+; ==========================================================================
+
+>>> (char->integer #\a)
+
+==> 97
+
+>>> (char->integer #\A)
+
+==> 65
+
+>>> (char->integer #\0)
+
+==> 48
+
+>>> (char->integer #\space)
+
+==> 32
+
+>>> (char->integer #\newline)
+
+==> 10
+
+>>> (char->integer #\tab)
+
+==> 9
+
+>>> (char->integer #\null)
+
+==> 0
+
+>>> (char->integer #\delete)
+
+==> 127
+
+>>> (char->integer #\escape)
+
+==> 27
+
+>>> (char->integer #\return)
+
+==> 13
+
+>>> (char->integer #\alarm)
+
+==> 7
+
+>>> (char->integer #\backspace)
+
+==> 8
+
+; ==========================================================================
+; integer->char — creates character from code point
+; ==========================================================================
+
+>>> (integer->char 97)
+
+==> #\a
+
+>>> (integer->char 65)
+
+==> #\A
+
+>>> (integer->char 48)
+
+==> #\0
+
+>>> (integer->char 32)
+
+==> #\space
+
+>>> (integer->char 10)
+
+==> #\newline
+
+>>> (integer->char 0)
+
+==> #\null
+
+>>> (integer->char 127)
+
+==> #\delete
+
+; ==========================================================================
+; char->integer / integer->char roundtrip
+; ==========================================================================
+
+>>> (char=? #\a (integer->char (char->integer #\a)))
+
+==> #t
+
+>>> (char=? #\Z (integer->char (char->integer #\Z)))
+
+==> #t
+
+>>> (char=? #\space (integer->char (char->integer #\space)))
+
+==> #t
+
+>>> (= 97 (char->integer (integer->char 97)))
+
+==> #t
+
+; ==========================================================================
+; char->integer ordering consistent with char<?
+; ==========================================================================
+
+>>> (< (char->integer #\a) (char->integer #\b))
+
+==> #t
+
+>>> (< (char->integer #\A) (char->integer #\a))
+
+==> #t
+
+>>> (= (- (char->integer #\b) (char->integer #\a)) 1)
+
+==> #t
+
+; ==========================================================================
+; char-upcase — convert to uppercase
+; ==========================================================================
+
+>>> (char-upcase #\a)
+
+==> #\A
+
+>>> (char-upcase #\z)
+
+==> #\Z
+
+>>> (char-upcase #\A)
+
+==> #\A
+
+>>> (char-upcase #\0)
+
+==> #\0
+
+>>> (char-upcase #\space)
+
+==> #\space
+
+; ==========================================================================
+; char-downcase — convert to lowercase
+; ==========================================================================
+
+>>> (char-downcase #\A)
+
+==> #\a
+
+>>> (char-downcase #\Z)
+
+==> #\z
+
+>>> (char-downcase #\a)
+
+==> #\a
+
+>>> (char-downcase #\0)
+
+==> #\0
+
+>>> (char-downcase #\space)
+
+==> #\space
+
+; ==========================================================================
+; char-foldcase — Unicode case folding (for case-insensitive comparison)
+; ==========================================================================
+
+>>> (char-foldcase #\A)
+
+==> #\a
+
+>>> (char-foldcase #\a)
+
+==> #\a
+
+>>> (char-foldcase #\Z)
+
+==> #\z
+
+>>> (char-foldcase #\0)
+
+==> #\0
+
+; char-foldcase is consistent with char-ci=?
+
+>>> (char=? (char-foldcase #\A) (char-foldcase #\a))
+
+==> #t
+
+; ==========================================================================
+; Characters in lists, strings, vectors
+; ==========================================================================
+
+>>> (list #\a #\b #\c)
+
+==> (#\a #\b #\c)
+
+>>> (string #\h #\e #\l #\l #\o)
+
+==> "hello"
+
+>>> (vector #\x #\y #\z)
+
+==> #(#\x #\y #\z)
+
+; ==========================================================================
+; Characters in map and filter
+; ==========================================================================
+
+>>> (map char-upcase '(#\h #\e #\l #\l #\o))
+
+==> (#\H #\E #\L #\L #\O)
+
+>>> (filter char-alphabetic? '(#\a #\1 #\b #\2 #\c))
+
+==> (#\a #\b #\c)
+
+>>> (map char->integer '(#\a #\b #\c))
+
+==> (97 98 99)
+
+>>> (map integer->char '(72 101 108 108 111))
+
+==> (#\H #\e #\l #\l #\o)
+
+; ==========================================================================
+; char predicates — classification summary
+; ==========================================================================
+
+>>> (map char-alphabetic? '(#\a #\Z #\0 #\space #\!))
+
+==> (#t #t #f #f #f)
+
+>>> (map char-numeric? '(#\0 #\9 #\a #\space))
+
+==> (#t #t #f #f)
+
+>>> (map char-whitespace? '(#\space #\newline #\tab #\a #\0))
+
+==> (#t #t #t #f #f)
+
+>>> (map char-upper-case? '(#\A #\Z #\a #\0))
+
+==> (#t #t #f #f)
+
+>>> (map char-lower-case? '(#\a #\z #\A #\0))
+
+==> (#t #t #f #f)
+
+; ==========================================================================
+; Error cases
+; ==========================================================================
+
+>>> (char->integer 42)
+
+%%% %any-error%
+
+>>> (char->integer "a")
+
+%%% %any-error%
+
+>>> (integer->char -1)
+
+%%% %any-error%
+
+>>> (char-upcase 42)
+
+%%% %any-error%
+
+>>> (char=? #\a "a")
+
+%%% %any-error%
+

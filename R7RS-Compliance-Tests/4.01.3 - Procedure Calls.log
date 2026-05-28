@@ -1,0 +1,276 @@
+; Section 4.1.3 - Procedure Calls
+;
+; Syntax: (<operator> <operand1> ...)
+;
+; The operator expression and all operand expressions are evaluated;
+; the operator must produce a procedure, which is then applied to the
+; values of the operands.  Operands are evaluated in an unspecified order.
+; It is an error if the operator does not evaluate to a procedure.
+
+; ==========================================================================
+; Basic procedure calls
+; ==========================================================================
+
+>>> (+ 1 2)
+
+==> 3
+
+>>> (- 10 3)
+
+==> 7
+
+>>> (* 4 5)
+
+==> 20
+
+>>> (/ 10 2)
+
+==> 5
+
+>>> (max 3 7 2)
+
+==> 7
+
+>>> (min 3 7 2)
+
+==> 2
+
+>>> (abs -5)
+
+==> 5
+
+>>> (not #f)
+
+==> #t
+
+>>> (null? '())
+
+==> #t
+
+>>> (length '(1 2 3))
+
+==> 3
+
+; ==========================================================================
+; Zero-argument calls
+; ==========================================================================
+
+>>> (list)
+
+==> ()
+
+>>> (vector)
+
+==> #()
+
+>>> (string)
+
+==> ""
+
+>>> (bytevector)
+
+==> #u8()
+
+>>> (values)
+
+==>
+
+; ==========================================================================
+; Operator position: any expression that evaluates to a procedure
+; ==========================================================================
+
+; Variable reference in operator position
+
+>>> (define my-proc +)
+
+>>> (my-proc 3 4)
+
+==> 7
+
+; Lambda expression directly in operator position
+
+>>> ((lambda (x) (* x x)) 5)
+
+==> 25
+
+>>> ((lambda (x y) (+ x y)) 3 4)
+
+==> 7
+
+>>> ((lambda () 42))
+
+==> 42
+
+; A call whose result is a procedure, used as operator
+
+>>> ((car (list + - *)) 10 3)
+
+==> 13
+
+>>> ((cadr (list + - *)) 10 3)
+
+==> 7
+
+>>> ((caddr (list + - *)) 10 3)
+
+==> 30
+
+; A conditional expression in operator position
+
+>>> ((if #t + -) 10 3)
+
+==> 13
+
+>>> ((if #f + -) 10 3)
+
+==> 7
+
+; A let expression in operator position
+
+>>> ((let ((f +)) f) 2 3)
+
+==> 5
+
+; ==========================================================================
+; Operand position: any expression is a valid operand
+; ==========================================================================
+
+; Literal operands
+
+>>> (+ 1 2)
+
+==> 3
+
+; Variable reference operands
+
+>>> (define a 10)
+
+>>> (define b 20)
+
+>>> (+ a b)
+
+==> 30
+
+; Nested call as operand
+
+>>> (+ (* 2 3) (- 5 1))
+
+==> 10
+
+>>> (list (+ 1 2) (* 3 4) (- 10 5))
+
+==> (3 12 5)
+
+; Deeply nested calls
+
+>>> (+ (* 2 (+ 3 4)) (- (* 3 3) 1))
+
+==> 22
+
+; Conditional as operand
+
+>>> (+ (if #t 1 0) (if #f 0 2))
+
+==> 3
+
+; Quote as operand
+
+>>> (length '(a b c d))
+
+==> 4
+
+>>> (car '(1 2 3))
+
+==> 1
+
+; Lambda expression as operand (passing a procedure)
+
+>>> (map (lambda (x) (* x x)) '(1 2 3 4 5))
+
+==> (1 4 9 16 25)
+
+; ==========================================================================
+; Calls with many arguments
+; ==========================================================================
+
+>>> (+ 1 2 3 4 5)
+
+==> 15
+
+>>> (list 1 2 3 4 5 6 7 8 9 10)
+
+==> (1 2 3 4 5 6 7 8 9 10)
+
+>>> (string #\h #\e #\l #\l #\o)
+
+==> "hello"
+
+>>> (* 1 2 3 4 5 6 7 8 9 10)
+
+==> 3628800
+
+; ==========================================================================
+; The operator is evaluated before operands are applied
+; (the result of evaluation must be a procedure)
+; ==========================================================================
+
+; A procedure stored in a data structure can be retrieved and called
+
+>>> (define procs (list + - * /))
+
+>>> ((list-ref procs 0) 5 3)
+
+==> 8
+
+>>> ((list-ref procs 1) 5 3)
+
+==> 2
+
+>>> ((list-ref procs 2) 5 3)
+
+==> 15
+
+>>> ((list-ref procs 3) 6 3)
+
+==> 2
+
+; Higher-order: a procedure that returns a procedure
+
+>>> (define (adder n) (lambda (x) (+ x n)))
+
+>>> ((adder 5) 10)
+
+==> 15
+
+>>> ((adder 100) 1)
+
+==> 101
+
+; ==========================================================================
+; Error: operator does not evaluate to a procedure
+; ==========================================================================
+
+>>> (1 2 3)
+
+%%% %any-error%
+
+>>> (#t 1 2)
+
+%%% %any-error%
+
+>>> ("hello" 0)
+
+%%% %any-error%
+
+>>> ('foo 1)
+
+%%% %any-error%
+
+>>> (#\a 1)
+
+%%% %any-error%
+
+>>> ('(1 2 3) 0)
+
+%%% %any-error%
+

@@ -1,0 +1,554 @@
+; Section 6.13.2 - Input
+;
+; Textual input:
+;   (read)              (read port)
+;   (read-char)         (read-char port)
+;   (peek-char)         (peek-char port)
+;   (read-line)         (read-line port)
+;   (read-string k)     (read-string k port)
+;   (char-ready?)       (char-ready? port)
+;
+; Binary input:
+;   (read-u8)           (read-u8 port)
+;   (peek-u8)           (peek-u8 port)
+;   (u8-ready?)         (u8-ready? port)
+;   (read-bytevector k) (read-bytevector k port)
+;   (read-bytevector! bv) (read-bytevector! bv port start end)
+;
+; EOF:
+;   (eof-object? obj)
+;   (eof-object)        — returns the canonical EOF object
+;
+; All input procedures default to (current-input-port) when port is omitted.
+
+; ==========================================================================
+; eof-object? and eof-object
+; ==========================================================================
+
+>>> (eof-object? (eof-object))
+
+==> #t
+
+>>> (eof-object? 42)
+
+==> #f
+
+>>> (eof-object? "")
+
+==> #f
+
+>>> (eof-object? #f)
+
+==> #f
+
+>>> (eof-object? '())
+
+==> #f
+
+>>> (eof-object? #\a)
+
+==> #f
+
+; EOF from an exhausted string port
+
+>>> (define eofp (open-input-string ""))
+
+>>> (eof-object? (read-char eofp))
+
+==> #t
+
+; eof-object is its own type
+
+>>> (eq? (eof-object) (eof-object))
+
+==> #t
+
+; ==========================================================================
+; read-char — reads one character
+; ==========================================================================
+
+>>> (define p (open-input-string "abc"))
+
+>>> (read-char p)
+
+==> #\a
+
+>>> (read-char p)
+
+==> #\b
+
+>>> (read-char p)
+
+==> #\c
+
+>>> (eof-object? (read-char p))
+
+==> #t
+
+; read-char on a multi-character string
+
+>>> (define p2 (open-input-string "hello\nworld"))
+
+>>> (read-char p2)
+
+==> #\h
+
+>>> (read-char p2)
+
+==> #\e
+
+; Newline is a single character
+
+>>> (define nlp (open-input-string "\n"))
+
+>>> (char=? (read-char nlp) #\newline)
+
+==> #t
+
+; ==========================================================================
+; peek-char — reads without consuming
+; ==========================================================================
+
+>>> (define pkp (open-input-string "abc"))
+
+>>> (peek-char pkp)
+
+==> #\a
+
+>>> (peek-char pkp)
+
+==> #\a
+
+>>> (read-char pkp)
+
+==> #\a
+
+>>> (peek-char pkp)
+
+==> #\b
+
+>>> (read-char pkp)
+
+==> #\b
+
+>>> (read-char pkp)
+
+==> #\c
+
+>>> (eof-object? (peek-char pkp))
+
+==> #t
+
+>>> (eof-object? (read-char pkp))
+
+==> #t
+
+; peek-char on empty port
+
+>>> (define emp (open-input-string ""))
+
+>>> (eof-object? (peek-char emp))
+
+==> #t
+
+; ==========================================================================
+; read-line — reads a line (up to newline or EOF)
+; ==========================================================================
+
+>>> (define lp (open-input-string "hello\nworld\n"))
+
+>>> (read-line lp)
+
+==> "hello"
+
+>>> (read-line lp)
+
+==> "world"
+
+>>> (eof-object? (read-line lp))
+
+==> #t
+
+; Newline is consumed but not included in result
+
+>>> (define lp2 (open-input-string "line1\nline2"))
+
+>>> (read-line lp2)
+
+==> "line1"
+
+>>> (read-line lp2)
+
+==> "line2"
+
+>>> (eof-object? (read-line lp2))
+
+==> #t
+
+; Empty line
+
+>>> (define lp3 (open-input-string "\n"))
+
+>>> (read-line lp3)
+
+==> ""
+
+>>> (eof-object? (read-line lp3))
+
+==> #t
+
+; Single line with no trailing newline
+
+>>> (define lp4 (open-input-string "hello"))
+
+>>> (read-line lp4)
+
+==> "hello"
+
+>>> (eof-object? (read-line lp4))
+
+==> #t
+
+; Multiple empty lines
+
+>>> (define lp5 (open-input-string "\n\n\n"))
+
+>>> (read-line lp5)
+
+==> ""
+
+>>> (read-line lp5)
+
+==> ""
+
+>>> (read-line lp5)
+
+==> ""
+
+>>> (eof-object? (read-line lp5))
+
+==> #t
+
+; ==========================================================================
+; read — reads a Scheme datum
+; ==========================================================================
+
+>>> (define rp (open-input-string "42"))
+
+>>> (read rp)
+
+==> 42
+
+>>> (define rp2 (open-input-string "(+ 1 2)"))
+
+>>> (read rp2)
+
+==> (+ 1 2)
+
+>>> (define rp3 (open-input-string "\"hello\""))
+
+>>> (read rp3)
+
+==> "hello"
+
+>>> (define rp4 (open-input-string "#t #f"))
+
+>>> (read rp4)
+
+==> #t
+
+>>> (read rp4)
+
+==> #f
+
+>>> (eof-object? (read rp4))
+
+==> #t
+
+; read skips whitespace between datums
+
+>>> (define rp5 (open-input-string "  1   2   3  "))
+
+>>> (read rp5)
+
+==> 1
+
+>>> (read rp5)
+
+==> 2
+
+>>> (read rp5)
+
+==> 3
+
+>>> (eof-object? (read rp5))
+
+==> #t
+
+; read handles all datum types
+
+>>> (read (open-input-string "'foo"))
+
+==> (quote foo)
+
+>>> (read (open-input-string "#\\a"))
+
+==> #\a
+
+>>> (read (open-input-string "#(1 2 3)"))
+
+==> #(1 2 3)
+
+>>> (read (open-input-string "#u8(1 2 3)"))
+
+==> #u8(1 2 3)
+
+>>> (read (open-input-string "1/3"))
+
+==> 1/3
+
+; read on empty / whitespace-only input
+
+>>> (eof-object? (read (open-input-string "")))
+
+==> #t
+
+>>> (eof-object? (read (open-input-string "   ")))
+
+==> #t
+
+; read skips comments
+
+>>> (read (open-input-string "; a comment\n42"))
+
+==> 42
+
+>>> (read (open-input-string "#| block comment |# 99"))
+
+==> 99
+
+; ==========================================================================
+; read-string — reads up to k characters
+; ==========================================================================
+
+>>> (read-string 5 (open-input-string "hello world"))
+
+==> "hello"
+
+>>> (read-string 3 (open-input-string "abc"))
+
+==> "abc"
+
+; If fewer than k chars available, reads what's there
+
+>>> (read-string 10 (open-input-string "hi"))
+
+==> "hi"
+
+>>> (eof-object? (read-string 5 (open-input-string "")))
+
+==> #t
+
+>>> (read-string 0 (open-input-string "hello"))
+
+==> ""
+
+; Newlines are included
+
+>>> (read-string 6 (open-input-string "hello\nworld"))
+
+==> "hello\n"
+
+; ==========================================================================
+; char-ready? — #t if a char is available without blocking
+; ==========================================================================
+
+; On string ports, a char is always ready (or EOF is ready)
+
+>>> (define crp (open-input-string "a"))
+
+>>> (char-ready? crp)
+
+==> #t
+
+>>> (define crp2 (open-input-string ""))
+
+>>> (char-ready? crp2)
+
+==> #t
+
+; ==========================================================================
+; read-u8 — reads one byte
+; ==========================================================================
+
+>>> (define bp (open-input-bytevector #u8(10 20 30)))
+
+>>> (read-u8 bp)
+
+==> 10
+
+>>> (read-u8 bp)
+
+==> 20
+
+>>> (read-u8 bp)
+
+==> 30
+
+>>> (eof-object? (read-u8 bp))
+
+==> #t
+
+; Result is an exact integer 0–255
+
+>>> (exact? (read-u8 (open-input-bytevector #u8(42))))
+
+==> #t
+
+>>> (= 0 (read-u8 (open-input-bytevector #u8(0))))
+
+==> #t
+
+>>> (= 255 (read-u8 (open-input-bytevector #u8(255))))
+
+==> #t
+
+; ==========================================================================
+; peek-u8 — reads byte without consuming
+; ==========================================================================
+
+>>> (define pkbp (open-input-bytevector #u8(1 2 3)))
+
+>>> (peek-u8 pkbp)
+
+==> 1
+
+>>> (peek-u8 pkbp)
+
+==> 1
+
+>>> (read-u8 pkbp)
+
+==> 1
+
+>>> (peek-u8 pkbp)
+
+==> 2
+
+>>> (read-u8 pkbp)
+
+==> 2
+
+>>> (read-u8 pkbp)
+
+==> 3
+
+>>> (eof-object? (peek-u8 pkbp))
+
+==> #t
+
+; ==========================================================================
+; u8-ready? — #t if a byte is available without blocking
+; ==========================================================================
+
+>>> (u8-ready? (open-input-bytevector #u8(1 2)))
+
+==> #t
+
+>>> (u8-ready? (open-input-bytevector #u8()))
+
+==> #t
+
+; ==========================================================================
+; read-bytevector — reads up to k bytes
+; ==========================================================================
+
+>>> (read-bytevector 3 (open-input-bytevector #u8(1 2 3 4 5)))
+
+==> #u8(1 2 3)
+
+>>> (read-bytevector 5 (open-input-bytevector #u8(1 2 3)))
+
+==> #u8(1 2 3)
+
+>>> (eof-object? (read-bytevector 3 (open-input-bytevector #u8())))
+
+==> #t
+
+>>> (read-bytevector 0 (open-input-bytevector #u8(1 2 3)))
+
+==> #u8()
+
+; ==========================================================================
+; read-bytevector! — reads into an existing bytevector
+; ==========================================================================
+
+>>> (define target (make-bytevector 5 0))
+
+>>> (read-bytevector! target (open-input-bytevector #u8(1 2 3)))
+
+==> 3
+
+>>> target
+
+==> #u8(1 2 3 0 0)
+
+; With start and end
+
+>>> (define target2 (make-bytevector 5 0))
+
+>>> (read-bytevector! target2 (open-input-bytevector #u8(10 20 30)) 1 3)
+
+==> 2
+
+>>> target2
+
+==> #u8(0 10 20 0 0)
+
+; Returns number of bytes read, or eof-object if no bytes available
+
+>>> (eof-object? (read-bytevector! (make-bytevector 3)
+...                                 (open-input-bytevector #u8())))
+
+==> #t
+
+; ==========================================================================
+; Input from string ports — integration tests
+; ==========================================================================
+
+; Reading multiple datums from a string
+
+>>> (define multi (open-input-string "1 \"two\" (3 4) #t"))
+
+>>> (list (read multi) (read multi) (read multi) (read multi))
+
+==> (1 "two" (3 4) #t)
+
+; Interleaving read-char and read
+
+>>> (define mixed (open-input-string "a(1 2)b"))
+
+>>> (read-char mixed)
+
+==> #\a
+
+>>> (read mixed)
+
+==> (1 2)
+
+>>> (read-char mixed)
+
+==> #\b
+
+; read-line then read
+
+>>> (define combo (open-input-string "first line\n42"))
+
+>>> (read-line combo)
+
+==> "first line"
+
+>>> (read combo)
+
+==> 42
+

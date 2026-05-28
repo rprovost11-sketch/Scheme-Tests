@@ -1,0 +1,754 @@
+; Section 6.13.1 - Ports
+;
+; Ports are objects that mediate I/O.  Textual ports work with characters;
+; binary ports work with bytes.  Some ports are both.
+;
+; Port predicates:
+;   (port? obj)
+;   (input-port? obj)    (output-port? obj)
+;   (input-port-open? port)  (output-port-open? port)
+;   (textual-port? obj)  (binary-port? obj)
+;
+; Standard ports:
+;   (current-input-port)   (current-output-port)   (current-error-port)
+;
+; File ports:
+;   (open-input-file filename)     (open-output-file filename)
+;   (open-binary-input-file filename)  (open-binary-output-file filename)
+;   (close-input-port port)    (close-output-port port)
+;   (close-port port)
+;   (with-input-from-file filename thunk)
+;   (with-output-to-file filename thunk)
+;   (call-with-port port proc)
+;   (call-with-input-file filename proc)
+;   (call-with-output-file filename proc)
+;
+; String ports:
+;   (open-input-string str)
+;   (open-output-string)
+;   (get-output-string port)
+;   (with-input-from-string str thunk)     [implementation extension, common]
+;
+; Bytevector ports:
+;   (open-input-bytevector bv)
+;   (open-output-bytevector)
+;   (get-output-bytevector port)
+
+; ==========================================================================
+; port? — true for any port object
+; ==========================================================================
+
+>>> (port? (current-input-port))
+
+==> #t
+
+>>> (port? (current-output-port))
+
+==> #t
+
+>>> (port? (current-error-port))
+
+==> #t
+
+>>> (port? (open-input-string "hello"))
+
+==> #t
+
+>>> (port? (open-output-string))
+
+==> #t
+
+>>> (port? 42)
+
+==> #f
+
+>>> (port? "hello")
+
+==> #f
+
+>>> (port? '())
+
+==> #f
+
+>>> (port? #t)
+
+==> #f
+
+; ==========================================================================
+; input-port? and output-port?
+; ==========================================================================
+
+>>> (input-port? (current-input-port))
+
+==> #t
+
+>>> (output-port? (current-output-port))
+
+==> #t
+
+>>> (output-port? (current-error-port))
+
+==> #t
+
+>>> (input-port? (current-output-port))
+
+==> #f
+
+>>> (output-port? (current-input-port))
+
+==> #f
+
+>>> (input-port? (open-input-string "test"))
+
+==> #t
+
+>>> (output-port? (open-input-string "test"))
+
+==> #f
+
+>>> (output-port? (open-output-string))
+
+==> #t
+
+>>> (input-port? (open-output-string))
+
+==> #f
+
+>>> (input-port? 42)
+
+==> #f
+
+>>> (output-port? 42)
+
+==> #f
+
+; ==========================================================================
+; textual-port? and binary-port?
+; ==========================================================================
+
+>>> (textual-port? (current-input-port))
+
+==> #t
+
+>>> (textual-port? (current-output-port))
+
+==> #t
+
+>>> (textual-port? (open-input-string "hi"))
+
+==> #t
+
+>>> (textual-port? (open-output-string))
+
+==> #t
+
+>>> (binary-port? (open-input-bytevector #u8(1 2 3)))
+
+==> #t
+
+>>> (binary-port? (open-output-bytevector))
+
+==> #t
+
+>>> (binary-port? (open-input-string "hi"))
+
+==> #f
+
+>>> (textual-port? (open-input-bytevector #u8()))
+
+==> #f
+
+; ==========================================================================
+; current-input-port, current-output-port, current-error-port
+; ==========================================================================
+
+>>> (procedure? current-input-port)
+
+==> #t
+
+>>> (procedure? current-output-port)
+
+==> #t
+
+>>> (procedure? current-error-port)
+
+==> #t
+
+>>> (input-port? (current-input-port))
+
+==> #t
+
+>>> (output-port? (current-output-port))
+
+==> #t
+
+>>> (output-port? (current-error-port))
+
+==> #t
+
+; Standard ports are open
+
+>>> (input-port-open? (current-input-port))
+
+==> #t
+
+>>> (output-port-open? (current-output-port))
+
+==> #t
+
+>>> (output-port-open? (current-error-port))
+
+==> #t
+
+; ==========================================================================
+; input-port-open? and output-port-open?
+; ==========================================================================
+
+>>> (define sp (open-input-string "test"))
+
+>>> (input-port-open? sp)
+
+==> #t
+
+>>> (close-input-port sp)
+
+>>> (input-port-open? sp)
+
+==> #f
+
+>>> (define op (open-output-string))
+
+>>> (output-port-open? op)
+
+==> #t
+
+>>> (close-output-port op)
+
+>>> (output-port-open? op)
+
+==> #f
+
+; ==========================================================================
+; String input ports — open-input-string
+; ==========================================================================
+
+>>> (define p (open-input-string "hello"))
+
+>>> (input-port? p)
+
+==> #t
+
+>>> (textual-port? p)
+
+==> #t
+
+>>> (read-char p)
+
+==> #\h
+
+>>> (read-char p)
+
+==> #\e
+
+>>> (read-char p)
+
+==> #\l
+
+; Exhausted port returns eof-object
+
+>>> (define ep (open-input-string "x"))
+
+>>> (read-char ep)
+
+==> #\x
+
+>>> (eof-object? (read-char ep))
+
+==> #t
+
+; Reading from exhausted port repeatedly returns eof
+
+>>> (eof-object? (read-char ep))
+
+==> #t
+
+; ==========================================================================
+; String output ports — open-output-string / get-output-string
+; ==========================================================================
+
+>>> (define outp (open-output-string))
+
+>>> (output-port? outp)
+
+==> #t
+
+>>> (write-char #\h outp)
+
+>>> (write-char #\i outp)
+
+>>> (get-output-string outp)
+
+==> "hi"
+
+>>> (write-char #\! outp)
+
+>>> (get-output-string outp)
+
+==> "hi!"
+
+; get-output-string does not close the port — can keep writing
+
+>>> (define strp (open-output-string))
+
+>>> (display "hello" strp)
+
+>>> (display " world" strp)
+
+>>> (get-output-string strp)
+
+==> "hello world"
+
+; ==========================================================================
+; open-input-string — read datum
+; ==========================================================================
+
+>>> (define rp (open-input-string "(+ 1 2)"))
+
+>>> (read rp)
+
+==> (+ 1 2)
+
+>>> (eof-object? (read rp))
+
+==> #t
+
+>>> (define rp2 (open-input-string "1 2 3"))
+
+>>> (read rp2)
+
+==> 1
+
+>>> (read rp2)
+
+==> 2
+
+>>> (read rp2)
+
+==> 3
+
+>>> (eof-object? (read rp2))
+
+==> #t
+
+; ==========================================================================
+; close-input-port, close-output-port, close-port
+; ==========================================================================
+
+>>> (define cp1 (open-input-string "test"))
+
+>>> (input-port-open? cp1)
+
+==> #t
+
+>>> (close-input-port cp1)
+
+>>> (input-port-open? cp1)
+
+==> #f
+
+>>> (define cp2 (open-output-string))
+
+>>> (output-port-open? cp2)
+
+==> #t
+
+>>> (close-output-port cp2)
+
+>>> (output-port-open? cp2)
+
+==> #f
+
+; close-port works on either direction
+
+>>> (define cp3 (open-input-string "x"))
+
+>>> (close-port cp3)
+
+>>> (input-port-open? cp3)
+
+==> #f
+
+>>> (define cp4 (open-output-string))
+
+>>> (close-port cp4)
+
+>>> (output-port-open? cp4)
+
+==> #f
+
+; ==========================================================================
+; call-with-port — closes port when proc returns or raises
+; ==========================================================================
+
+>>> (call-with-port
+...   (open-input-string "hello world")
+...   (lambda (p)
+...     (list (read p) (read p))))
+
+==> (hello world)
+
+; Port is closed after call-with-port returns
+
+>>> (define cwp-port (open-input-string "test"))
+
+>>> (call-with-port cwp-port (lambda (p) (read p)))
+
+==> test
+
+>>> (input-port-open? cwp-port)
+
+==> #f
+
+; call-with-port also closes on exception
+
+>>> (define cwp-port2 (open-input-string "test"))
+
+>>> (guard (exn (#t 'caught))
+...   (call-with-port cwp-port2 (lambda (p) (error "boom"))))
+
+==> caught
+
+>>> (input-port-open? cwp-port2)
+
+==> #f
+
+; ==========================================================================
+; with-input-from-file / with-output-to-file — parameterize current ports
+; ==========================================================================
+
+; These use make-parameter semantics: current-input-port /
+; current-output-port are temporarily rebound.
+
+; We test with string ports via with-input-from-string (common extension)
+; and verify current-input-port is restored.
+
+>>> (define saved-in (current-input-port))
+
+>>> (with-input-from-string "42"
+...   (lambda () (read)))
+
+==> 42
+
+>>> (eq? (current-input-port) saved-in)
+
+==> #t
+
+; ==========================================================================
+; Bytevector input ports — open-input-bytevector
+; ==========================================================================
+
+>>> (define bvp (open-input-bytevector #u8(1 2 3)))
+
+>>> (input-port? bvp)
+
+==> #t
+
+>>> (binary-port? bvp)
+
+==> #t
+
+>>> (read-u8 bvp)
+
+==> 1
+
+>>> (read-u8 bvp)
+
+==> 2
+
+>>> (read-u8 bvp)
+
+==> 3
+
+>>> (eof-object? (read-u8 bvp))
+
+==> #t
+
+; ==========================================================================
+; Bytevector output ports — open-output-bytevector / get-output-bytevector
+; ==========================================================================
+
+>>> (define bvop (open-output-bytevector))
+
+>>> (output-port? bvop)
+
+==> #t
+
+>>> (binary-port? bvop)
+
+==> #t
+
+>>> (write-u8 72 bvop)
+
+>>> (write-u8 105 bvop)
+
+>>> (get-output-bytevector bvop)
+
+==> #u8(72 105)
+
+>>> (write-u8 33 bvop)
+
+>>> (get-output-bytevector bvop)
+
+==> #u8(72 105 33)
+
+; get-output-bytevector does not close the port
+
+>>> (define bvop2 (open-output-bytevector))
+
+>>> (write-bytevector #u8(1 2 3) bvop2)
+
+>>> (get-output-bytevector bvop2)
+
+==> #u8(1 2 3)
+
+; ==========================================================================
+; File ports (require file system access)
+; ==========================================================================
+
+; open-input-file / open-output-file are tested via call-with-input-file
+; and call-with-output-file which ensure cleanup.
+
+>>> (call-with-output-file "6.13-test-output.tmp"
+...   (lambda (p)
+...     (display "hello" p)
+...     (newline p)))
+
+>>> (call-with-input-file "6.13-test-output.tmp"
+...   (lambda (p)
+...     (read-line p)))
+
+==> "hello"
+
+; File is readable after writing
+
+>>> (call-with-input-file "6.13-test-output.tmp"
+...   (lambda (p)
+...     (port? p)))
+
+==> #t
+
+; ==========================================================================
+; open-input-file — error on non-existent file
+; ==========================================================================
+
+>>> (open-input-file "this-file-does-not-exist-xyz123.txt")
+
+%%% %any-error%
+
+; ==========================================================================
+; port procedures are procedures
+; ==========================================================================
+
+>>> (procedure? open-input-string)
+
+==> #t
+
+>>> (procedure? open-output-string)
+
+==> #t
+
+>>> (procedure? get-output-string)
+
+==> #t
+
+>>> (procedure? open-input-bytevector)
+
+==> #t
+
+>>> (procedure? open-output-bytevector)
+
+==> #t
+
+>>> (procedure? get-output-bytevector)
+
+==> #t
+
+>>> (procedure? close-port)
+
+==> #t
+
+>>> (procedure? call-with-port)
+
+==> #t
+
+; ==========================================================================
+; with-output-to-file — parameterize current-output-port to a file
+; ==========================================================================
+
+>>> (with-output-to-file "6.13-output-to-file.tmp"
+...   (lambda ()
+...     (display "written via current-output-port")
+...     (newline)))
+
+>>> (call-with-input-file "6.13-output-to-file.tmp"
+...   (lambda (p) (read-line p)))
+
+==> "written via current-output-port"
+
+; current-output-port is restored after with-output-to-file
+
+>>> (define saved-out (current-output-port))
+
+>>> (with-output-to-file "6.13-output-to-file2.tmp"
+...   (lambda () (display "temp")))
+
+>>> (eq? (current-output-port) saved-out)
+
+==> #t
+
+; with-output-to-file restores port even on exception
+
+>>> (define saved-out2 (current-output-port))
+
+>>> (guard (exn (#t 'caught))
+...   (with-output-to-file "6.13-output-to-file3.tmp"
+...     (lambda () (error "boom"))))
+
+==> caught
+
+>>> (eq? (current-output-port) saved-out2)
+
+==> #t
+
+; ==========================================================================
+; with-input-from-file — parameterize current-input-port to a file
+; ==========================================================================
+
+; Prepare a file for reading
+
+>>> (call-with-output-file "6.13-input-from-file.tmp"
+...   (lambda (p) (display "42 hello" p)))
+
+>>> (with-input-from-file "6.13-input-from-file.tmp"
+...   (lambda () (read)))
+
+==> 42
+
+>>> (with-input-from-file "6.13-input-from-file.tmp"
+...   (lambda () (list (read) (read))))
+
+==> (42 hello)
+
+; current-input-port is restored after with-input-from-file
+
+>>> (define saved-in2 (current-input-port))
+
+>>> (with-input-from-file "6.13-input-from-file.tmp"
+...   (lambda () (read)))
+
+==> 42
+
+>>> (eq? (current-input-port) saved-in2)
+
+==> #t
+
+; ==========================================================================
+; open-binary-input-file — file port for binary reading
+; ==========================================================================
+
+; Write binary data to a temp file first
+
+>>> (call-with-output-file "6.13-binary.tmp"
+...   (lambda (p)
+...     (write-u8 1 p)
+...     (write-u8 2 p)
+...     (write-u8 3 p)))
+
+>>> (define bfp (open-binary-input-file "6.13-binary.tmp"))
+
+>>> (input-port? bfp)
+
+==> #t
+
+>>> (binary-port? bfp)
+
+==> #t
+
+>>> (read-u8 bfp)
+
+==> 1
+
+>>> (read-u8 bfp)
+
+==> 2
+
+>>> (read-u8 bfp)
+
+==> 3
+
+>>> (eof-object? (read-u8 bfp))
+
+==> #t
+
+>>> (close-input-port bfp)
+
+>>> (input-port-open? bfp)
+
+==> #f
+
+; open-binary-input-file errors on nonexistent file
+
+>>> (open-binary-input-file "nonexistent-binary-xyz.bin")
+
+%%% %any-error%
+
+; ==========================================================================
+; open-binary-output-file — file port for binary writing
+; ==========================================================================
+
+>>> (define bofp (open-binary-output-file "6.13-binary-out.tmp"))
+
+>>> (output-port? bofp)
+
+==> #t
+
+>>> (binary-port? bofp)
+
+==> #t
+
+>>> (write-u8 10 bofp)
+
+>>> (write-u8 20 bofp)
+
+>>> (write-u8 30 bofp)
+
+>>> (close-output-port bofp)
+
+>>> (output-port-open? bofp)
+
+==> #f
+
+; Verify the binary output can be read back
+
+>>> (define bfp2 (open-binary-input-file "6.13-binary-out.tmp"))
+
+>>> (read-bytevector 3 bfp2)
+
+==> #u8(10 20 30)
+
+>>> (close-input-port bfp2)
+... 
+... ; Cleanup temp files
+
+>>> (delete-file "6.13-output-to-file.tmp")
+
+>>> (delete-file "6.13-output-to-file2.tmp")
+
+>>> (delete-file "6.13-output-to-file3.tmp")
+
+>>> (delete-file "6.13-input-from-file.tmp")
+
+>>> (delete-file "6.13-binary.tmp")
+
+>>> (delete-file "6.13-binary-out.tmp")
+
