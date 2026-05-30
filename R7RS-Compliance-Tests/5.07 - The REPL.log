@@ -318,20 +318,28 @@
 ==> 42
 
 ; ==========================================================================
-; Multiple values at top level
+; Multiple values
 ; ==========================================================================
 
->>> (values 1 2 3)
+; Passing more than one value (or zero values) to the REPL's single-value
+; print continuation is unspecified (R7RS 6.10: "the effect of passing no
+; values or more than one value to continuations that were not created [by
+; call-with-values etc.] is unspecified").  The displayed form of a bare
+; top-level multiple-value result is therefore implementation-defined; we
+; test the values themselves through call-with-values, which is defined to
+; accept any number of values.
 
-==> 1 2 3
+>>> (call-with-values (lambda () (values 1 2 3)) list)
 
->>> (values)
+==> (1 2 3)
 
-==>
+>>> (call-with-values (lambda () (values)) list)
 
->>> (floor/ 17 5)
+==> ()
 
-==> 3 2
+>>> (call-with-values (lambda () (floor/ 17 5)) list)
+
+==> (3 2)
 
 ; ==========================================================================
 ; Interaction environment is the same object each call

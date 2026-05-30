@@ -257,7 +257,7 @@
 >>> (guard (exn (#t (error-object-message exn)))
 ...   (car '()))
 
-==> "car: not a pair" or ==> "not a pair" or ==> "argument is not a pair"
+==> "car: not a pair" or ==> "not a pair" or ==> "argument is not a pair" or ==> "car: expected pair, got non-pair value"
 
 ; (We accept any message string — the specific wording is implementation-defined)
 
@@ -473,11 +473,30 @@
 
 ==> outer-caught
 
+; Nested raise-continuable: two handlers are entered via raise-continuable, and
+; the innermost raises.  Each handler runs with the handler in place when IT was
+; installed, so the innermost handler's raise must propagate past BOTH popped
+; handlers to the outer guard.  (Verified against Chez Scheme: (top from-inner).)
+
+>>> (guard (top (#t (list 'top top)))
+...   (with-exception-handler
+...     (lambda (a) (raise 'from-inner))
+...     (lambda ()
+...       (with-exception-handler
+...         (lambda (b) (raise-continuable 'reraise))
+...         (lambda () (raise-continuable 'start))))))
+
+==> (top from-inner)
+
 ; ==========================================================================
 ; with-exception-handler — handler installed/restored correctly
 ; ==========================================================================
 
-; Handler is NOT active during its own execution (raises go to outer handler)
+; Handler is NOT active during its own execution (raises go to outer handler).
+; The outer handler returns after handling a non-continuable raise, so R7RS
+; requires a secondary exception ("exception handler returned") to be raised --
+; we accept any error here.  The real assertion is the next form: outer-saw
+; proves the inner handler's raise reached the OUTER handler.
 
 >>> (define outer-saw #f)
 
@@ -490,6 +509,8 @@
 ...         (raise (list 'wrapped inner-e)))
 ...       (lambda ()
 ...         (raise 'original)))))
+
+%%% %any-error%
 
 >>> outer-saw
 
@@ -565,11 +586,12 @@
 
 ; error re-raised preserves the original object
 
->>> (guard (outer (#t outer))
-...   (guard (inner (#t (raise inner)))
-...     (error "original error" 'x)))
+>>> (error-object?
+...   (guard (outer (#t outer))
+...     (guard (inner (#t (raise inner)))
+...       (error "original error" 'x))))
 
-==> error-object? ==> #t
+==> #t
 
 >>> (guard (outer (#t (error-object-message outer)))
 ...   (guard (inner (#t (raise inner)))
@@ -593,9 +615,12 @@
 
 ==> error-object
 
-; guard with => clause for exception objects
+; guard with => clause for exception objects.  Per R7RS cond/guard semantics,
+; => applies the receiver to the VALUE OF THE TEST, so the test must evaluate to
+; the object passed on -- here exn itself (a true value), not (error-object? exn)
+; which would pass #t.
 
->>> (guard (exn ((error-object? exn)
+>>> (guard (exn (exn
 ...              => (lambda (e) (error-object-message e))))
 ...   (error "arrow clause" 1 2))
 

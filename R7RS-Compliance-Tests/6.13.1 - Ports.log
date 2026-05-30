@@ -656,9 +656,12 @@
 ; open-binary-input-file — file port for binary reading
 ; ==========================================================================
 
-; Write binary data to a temp file first
+; Write binary data to a temp file first.  write-u8 writes to a binary output
+; port, so the file is opened with open-binary-output-file; call-with-output-file
+; yields a textual port (R7RS 6.13.1) and cannot accept write-u8.  call-with-port
+; provides the same open/run/auto-close as call-with-output-file does for text.
 
->>> (call-with-output-file "6.13-binary.tmp"
+>>> (call-with-port (open-binary-output-file "6.13-binary.tmp")
 ...   (lambda (p)
 ...     (write-u8 1 p)
 ...     (write-u8 2 p)

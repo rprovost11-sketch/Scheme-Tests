@@ -122,10 +122,8 @@
 %%% SchemeArityError: line 1, col 45: case-lambda: no clause matches 3 arguments
 %%% (define g (case-lambda (() 'zero) ((a) a))) (g 1 2 3)
 %%%                                             ^
->>> (case-lambda)
-%%% line 1, col 1: case-lambda requires at least one clause
-%%% (case-lambda)
-%%% ^
+>>> (procedure? (case-lambda))
+==> #t
 >>> (case-lambda (() . body))
 %%% line 1, col 14: case-lambda clause must have formals and a non-empty body, got (() . body)
 %%% (case-lambda (() . body))

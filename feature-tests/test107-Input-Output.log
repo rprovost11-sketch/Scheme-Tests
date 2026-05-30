@@ -360,12 +360,13 @@
 ...   (get-output-string op))
 ==> "(a b c)"
 
-;;; with-input-from-string, with-output-to-string: Chez-specific -- unbound in pyscheme
+;;; with-input-from-string: supported common extension -- the compliance suite
+;;; relies on it (see 6.11 Exceptions, 6.13.1 Ports).  It makes a string input
+;;; port the current-input-port for the thunk.  with-output-to-string is not
+;;; supported (still unbound).
 
 >>> (with-input-from-string "test" read)
-%%% line 1, col 2: unbound variable: with-input-from-string
-%%% (with-input-from-string "test" read)
-%%%  ^
+==> test
 
 >>> (with-output-to-string (lambda () (display "hello")))
 %%% line 1, col 2: unbound variable: with-output-to-string

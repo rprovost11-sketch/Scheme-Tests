@@ -552,13 +552,13 @@
 ; values — return multiple values
 ; ==========================================================================
 
->>> (values 1 2 3)
+>>> (call-with-values (lambda () (values 1 2 3)) list)
 
-==> 1 2 3
+==> (1 2 3)
 
->>> (values)
+>>> (call-with-values (lambda () (values)) list)
 
-==>
+==> ()
 
 >>> (values 42)
 

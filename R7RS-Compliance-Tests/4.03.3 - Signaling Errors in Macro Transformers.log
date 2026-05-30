@@ -139,9 +139,11 @@
 >>> (guard (exn (#t 'caught))
 ...   (one-arg))
 
-==> caught or ==> caught
+%%% %any-error%
 
-; The ==> caught or ==> caught notation reflects that this test may
-; behave differently across implementations (expand-time vs run-time error);
-; the important thing is either 'caught is returned or the error propagates.
+; This test is implementation-defined: an implementation that reports the
+; macro mismatch at expand time lets the error propagate past guard (the
+; case checked here), while one that defers it to run time would instead
+; have guard return 'caught.  Both are conformant; the essential fact is
+; that (one-arg) is an error and the evaluator must not hang.
 

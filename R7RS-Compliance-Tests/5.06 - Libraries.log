@@ -25,12 +25,14 @@
 ; path so that (test math), (test strings), etc. resolve to the .sld files
 ; alongside this test log.
 ;
-; Auxiliary library files used by these tests:
-;   5.6-lib-math.sld    — (test math):    square, cube, sum-of-squares
-;   5.6-lib-strings.sld — (test strings): string-join, string-repeat
-;   5.6-lib-user.sld    — (test user):    hypotenuse, labeled-square
-;   5.6-lib-rename.sld  — (test rename):  public-add, public-mul, version
-;   5.6-lib-syntax.sld  — (test syntax):  my-when, my-swap!
+; Auxiliary library files used by these tests.  They follow the standard
+; R7RS library-name -> path convention, so (test math) resolves to
+; test/math.sld on the search path (the test directory), etc.:
+;   test/math.sld    — (test math):    square, cube, sum-of-squares
+;   test/strings.sld — (test strings): string-join, string-repeat
+;   test/user.sld    — (test user):    hypotenuse, labeled-square
+;   test/rename.sld  — (test rename):  public-add, public-mul, version
+;   test/syntax.sld  — (test syntax):  my-when, my-swap!
 
 ; ==========================================================================
 ; import from a user-defined library

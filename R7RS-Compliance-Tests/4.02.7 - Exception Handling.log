@@ -72,7 +72,7 @@
 ; guard — error object (from error procedure)
 ; ==========================================================================
 
->>> (guard (exn (else (error-message exn)))
+>>> (guard (exn (else (error-object-message exn)))
 ...   (error "something went wrong"))
 
 ==> "something went wrong"
@@ -125,13 +125,13 @@
 ; ==========================================================================
 
 >>> (guard (exn
-...          ((number? exn) => (lambda (x) (* x 2))))
+...          ((and (number? exn) exn) => (lambda (x) (* x 2))))
 ...   (raise 21))
 
 ==> 42
 
 >>> (guard (exn
-...          ((error-object? exn) => error-object-message)
+...          ((and (error-object? exn) exn) => error-object-message)
 ...          (else 'not-error))
 ...   (error "arrow test"))
 

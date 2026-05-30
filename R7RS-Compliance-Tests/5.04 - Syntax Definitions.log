@@ -237,16 +237,22 @@
 ; Internal define-syntax — mutual recursion between syntax definitions
 ; ==========================================================================
 
+; The recursion must bottom out at EXPAND time, so the macros recurse on
+; syntactic structure (argument count), not a run-time numeric comparison --
+; (if (= n 0) ...) never terminates expansion because the expander cannot
+; evaluate (- n 1).  Here my-e?/my-o? consume one argument per step; an even
+; argument count is "even", an odd count is "odd".
+
 >>> (let ()
 ...   (define-syntax my-e?
 ...     (syntax-rules ()
-...       ((my-e? n)
-...        (if (= n 0) #t (my-o? (- n 1))))))
+...       ((my-e?) #t)
+...       ((my-e? x rest ...) (my-o? rest ...))))
 ...   (define-syntax my-o?
 ...     (syntax-rules ()
-...       ((my-o? n)
-...        (if (= n 0) #f (my-e? (- n 1))))))
-...   (list (my-e? 4) (my-o? 3)))
+...       ((my-o?) #f)
+...       ((my-o? x rest ...) (my-e? rest ...))))
+...   (list (my-e? a a a a) (my-o? a a a)))
 
 ==> (#t #t)
 
@@ -299,15 +305,17 @@
 ; The transformer expression (e.g. syntax-rules form) is evaluated when
 ; define-syntax is evaluated.  It captures the environment at that point.
 
+; The template references n, a run-time let binding -- an out-of-phase
+; identifier (the transformer runs at expand time, where n has no value).
+; This is an error (Chez: "out-of-phase identifier"; we accept any error).
+; The common syntax-rules case is exercised by always-42 just below.
+
 >>> (define-syntax capture-env
 ...   (let ((n 10))
 ...     (syntax-rules ()
 ...       ((capture-env) n))))
-... 
-... ; Note: syntax-rules does not capture run-time variable values in the
-... ; template — this test is about the transformer being an expression.
-... ; The result is implementation-defined for non-syntax-rules transformers.
-... ; We test the common syntax-rules case instead.
+
+%%% %any-error%
 
 >>> (define-syntax always-42
 ...   (syntax-rules ()
@@ -321,12 +329,16 @@
 ; define-syntax — macro generating another define-syntax
 ; ==========================================================================
 
+; The inner ... belongs to the GENERATED macro, so it must be escaped as
+; (... ...) in the outer template -- otherwise the outer syntax-rules consumes
+; it as its own ellipsis (Chez: "extra ellipsis in syntax form").
+
 >>> (define-syntax def-alias-syntax
 ...   (syntax-rules ()
 ...     ((def-alias-syntax new-name old-name)
 ...      (define-syntax new-name
 ...        (syntax-rules ()
-...          ((new-name arg ...) (old-name arg ...)))))))
+...          ((new-name arg (... ...)) (old-name arg (... ...))))))))
 
 >>> (def-alias-syntax my-cons cons)
 

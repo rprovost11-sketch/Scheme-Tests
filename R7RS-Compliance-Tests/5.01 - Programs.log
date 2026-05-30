@@ -245,21 +245,25 @@
 ; R7RS does not prohibit redefining names from imported libraries.
 ; After redefine, the new binding is used.
 
+; Capture the original + first so it can be restored for the tests below.
+>>> (define original-plus +)
+
 >>> (define + (lambda (x y) (list x y)))
 
 >>> (+ 1 2)
 
 ==> (1 2)
 
-; Restore + for subsequent tests
->>> (define + (let ((orig +)) (lambda args (apply orig args))))
-... 
-... ; This won't restore the original + because orig now refers to the new +.
-... ; Just re-import conceptually — we test redefine behavior, not restoration.
-... 
-... ; ==========================================================================
-... ; Top-level — interaction between define and set!
-... ; ==========================================================================
+; Restore + for subsequent tests by rebinding the captured original.
+>>> (define + original-plus)
+
+>>> (+ 1 2)
+
+==> 3
+
+; ==========================================================================
+; Top-level — interaction between define and set!
+; ==========================================================================
 
 >>> (define tl-mutable 0)
 

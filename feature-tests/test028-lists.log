@@ -531,10 +531,7 @@
 %%% (receive (a . rest) (values 1 2 3) (cons a rest))
 %%%          ^
 >>> (length (filter even? '(1 2 3 4 5 6 7 8)))
-... ; sum of squares
-%%% line 1, col 10: unbound variable: filter
-%%% (length (filter even? '(1 2 3 4 5 6 7 8)))
-%%%          ^
+==> 4
 ... ; reverse: improper list raises type error
 >>> (reverse (cons 1 2))
 %%% SchemeTypeError: line 1, col 1: reverse: argument must be a proper list

@@ -227,7 +227,7 @@
 >>> (define-syntax zip-lists
 ...   (syntax-rules ()
 ...     ((zip-lists (a ...) (b ...))
-...      (list (list a b) ...))))
+...      (list (list 'a 'b) ...))))
 
 >>> (zip-lists (1 2 3) (a b c))
 
@@ -271,7 +271,7 @@
 
 >>> (define-syntax no-literal
 ...   (syntax-rules ()
-...     ((no-literal else-val) else-val)))
+...     ((no-literal else-val) 'else-val)))
 
 >>> (no-literal 99)
 
@@ -493,7 +493,7 @@
 
 >>> (define-syntax car-mac
 ...   (syntax-rules ()
-...     ((car-mac (h . t)) h)))
+...     ((car-mac (h . t)) 'h)))
 
 >>> (car-mac (1 2 3))
 
@@ -505,7 +505,7 @@
 
 >>> (define-syntax cdr-mac
 ...   (syntax-rules ()
-...     ((cdr-mac (h . t)) t)))
+...     ((cdr-mac (h . t)) 't)))
 
 >>> (cdr-mac (1 2 3))
 

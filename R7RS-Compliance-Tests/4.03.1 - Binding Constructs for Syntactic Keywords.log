@@ -135,10 +135,12 @@
 ...     (when2 (> n 0) 'positive))
 ...   (list (check-positive 5) (check-positive -1)))
 
-==> (positive)
+==> (positive #<void>)
 
-; Note: (check-positive -1) returns unspecified; list element is unspecified.
-; The test runner should accept any value in position 2.
+; Note: (check-positive -1) takes the (if #f #f) branch, so its value is the
+; unspecified value, which both interpreters render as #<void>.  The runner
+; compares the whole printed result exactly (no per-element wildcard), so the
+; second list element is spelled out here.
 
 ; ==========================================================================
 ; letrec-syntax — basic
@@ -168,14 +170,19 @@
 ; letrec-syntax — mutually recursive keywords
 ; ==========================================================================
 
+; The recursion must bottom out at EXPAND time, so the macros recurse on
+; syntactic structure (argument count), not a run-time numeric comparison --
+; (if (= n 0) ...) never terminates expansion because the expander cannot
+; evaluate (- n 1).  An even argument count is "even", an odd count is "odd".
+
 >>> (letrec-syntax
 ...   ((my-even? (syntax-rules ()
-...                ((my-even? n)
-...                 (if (= n 0) #t (my-odd? (- n 1))))))
+...                ((my-even?) #t)
+...                ((my-even? x rest ...) (my-odd? rest ...))))
 ...    (my-odd?  (syntax-rules ()
-...                ((my-odd? n)
-...                 (if (= n 0) #f (my-even? (- n 1)))))))
-...   (list (my-even? 4) (my-odd? 3) (my-even? 7)))
+...                ((my-odd?) #f)
+...                ((my-odd? x rest ...) (my-even? rest ...)))))
+...   (list (my-even? a a a a) (my-odd? a a a) (my-even? a a a a a a a)))
 
 ==> (#t #t #f)
 
