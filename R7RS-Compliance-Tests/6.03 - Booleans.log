@@ -186,11 +186,13 @@
 
 ==> not-equal
 
->>> (if (not (null? '())) 'non-null 'null)
+; not of a non-empty-list test takes the then-branch.  (The list must be
+; non-empty: (null? '()) is #t, so (not (null? '())) is #f -> 'null.)
+>>> (if (not (null? '(1))) 'non-null 'null)
 
 ==> non-null
 
->>> (if (not (null? '())) 'non-null 'null)
+>>> (if (not (null? '(a b))) 'non-null 'null)
 
 ==> non-null
 

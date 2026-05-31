@@ -360,9 +360,10 @@
 ; rationalize — best rational approximation within tolerance
 ; ==========================================================================
 
+; simplest rational within 1/10 of (exact .1); Chez yields 1/5.
 >>> (rationalize (exact .1) 1/10)
 
-==> 1/7 or ==> 0
+==> 1/5
 
 ; The result is the simplest rational within 1/10 of (exact 0.1).
 
@@ -606,9 +607,10 @@
 
 ==> #f
 
+; "10" parsed in base 2 is 2 (Chez agrees).
 >>> (string->number "10" 2)
 
-==> #f
+==> 2
 
 >>> (string->number "xyz" 16)
 

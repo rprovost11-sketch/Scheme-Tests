@@ -113,9 +113,10 @@
 
 ==> #t
 
+; sqrt of an exact perfect square is exact (R7RS 6.2.6); verified against Chez.
 >>> (exact? (sqrt 4))
 
-==> #f
+==> #t
 
 >>> (< (abs (- (sqrt 2.0) 1.4142135623730951)) 1e-10)
 

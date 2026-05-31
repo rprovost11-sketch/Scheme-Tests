@@ -76,9 +76,10 @@
 
 ==> "hello"
 
+; evaluating the empty list is an error, not self-evaluating (Chez errors too).
 >>> (eval '() (environment '(scheme base)))
 
-==> ()
+%%% %any-error%
 
 >>> (eval #\a (environment '(scheme base)))
 
