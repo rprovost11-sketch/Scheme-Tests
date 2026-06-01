@@ -688,3 +688,333 @@
 
 ==> 1
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === exact-integer-sqrt — returns s and r with k = s*s + r, k < (s+1)^2
+; R7RS 6.2.6.
+
+>>> (call-with-values (lambda () (exact-integer-sqrt 4)) list)
+
+==> (2 0)
+
+>>> (call-with-values (lambda () (exact-integer-sqrt 5)) list)
+
+==> (2 1)
+
+>>> (call-with-values (lambda () (exact-integer-sqrt 0)) list)
+
+==> (0 0)
+
+>>> (call-with-values (lambda () (exact-integer-sqrt 1)) list)
+
+==> (1 0)
+
+>>> (call-with-values (lambda () (exact-integer-sqrt 8)) list)
+
+==> (2 4)
+
+>>> (call-with-values (lambda () (exact-integer-sqrt 9)) list)
+
+==> (3 0)
+
+>>> (call-with-values (lambda () (exact-integer-sqrt 15)) list)
+
+==> (3 6)
+
+>>> (call-with-values (lambda () (exact-integer-sqrt 16)) list)
+
+==> (4 0)
+
+; both results exact
+>>> (call-with-values
+...   (lambda () (exact-integer-sqrt 17))
+...   (lambda (s r) (and (exact-integer? s) (exact-integer? r))))
+
+==> #t
+
+; reconstruction identity for a non-perfect-square
+>>> (call-with-values
+...   (lambda () (exact-integer-sqrt 32))
+...   (lambda (s r) (= 32 (+ (* s s) r))))
+
+==> #t
+
+; === floor / ceiling / truncate / round — exact integer is identity (exact)
+
+>>> (floor 5)
+
+==> 5
+
+>>> (ceiling 5)
+
+==> 5
+
+>>> (truncate 5)
+
+==> 5
+
+>>> (round 5)
+
+==> 5
+
+>>> (floor -5)
+
+==> -5
+
+>>> (round -5)
+
+==> -5
+
+>>> (exact? (round 5))
+
+==> #t
+
+; === round — exact rational ties to even
+
+>>> (round -3/2)
+
+==> -2
+
+>>> (round -5/2)
+
+==> -2
+
+>>> (round 7/3)
+
+==> 2
+
+>>> (round 8/3)
+
+==> 3
+
+; === expt — identities
+
+>>> (expt 5 0)
+
+==> 1
+
+>>> (expt 0 5)
+
+==> 0
+
+>>> (expt 1 100)
+
+==> 1
+
+>>> (expt 10 3)
+
+==> 1000
+
+>>> (expt -2 3)
+
+==> -8
+
+>>> (expt -2 4)
+
+==> 16
+
+; negative exact fractional base, integer exponent
+
+>>> (expt 2/3 2)
+
+==> 4/9
+
+>>> (expt -1/2 3)
+
+==> -1/8
+
+>>> (expt 3 -2)
+
+==> 1/9
+
+; === sqrt — exact perfect square of larger value
+
+>>> (sqrt 16)
+
+==> 4 or ==> 4.0
+
+>>> (sqrt 100)
+
+==> 10 or ==> 10.0
+
+>>> (sqrt 144)
+
+==> 12 or ==> 12.0
+
+; === square / sqrt round trip on inexact
+
+>>> (< (abs (- (sqrt (square 7.0)) 7.0)) 1e-10)
+
+==> #t
+
+; === exp / log inverse relationship (tolerance-based; digits impl-dependent)
+
+>>> (< (abs (- (log (exp 1.0)) 1.0)) 1e-10)
+
+==> #t
+
+>>> (< (abs (- (exp 0.0) 1.0)) 1e-10)
+
+==> #t
+
+>>> (< (abs (- (log 1.0) 0.0)) 1e-10)
+
+==> #t
+
+; two-argument log: (log z1 z2) is log base z2
+
+>>> (< (abs (- (log 8 2) 3.0)) 1e-10)
+
+==> #t
+
+>>> (< (abs (- (log 100 10) 2.0)) 1e-10)
+
+==> #t
+
+; === trig identities (tolerance-based)
+
+>>> (< (abs (- (sin 0.0) 0.0)) 1e-10)
+
+==> #t
+
+>>> (< (abs (- (cos 0.0) 1.0)) 1e-10)
+
+==> #t
+
+>>> (< (abs (- (tan 0.0) 0.0)) 1e-10)
+
+==> #t
+
+>>> (< (abs (- (atan 0.0) 0.0)) 1e-10)
+
+==> #t
+
+; sin^2 + cos^2 = 1
+>>> (< (abs (- (+ (square (sin 1.0)) (square (cos 1.0))) 1.0)) 1e-10)
+
+==> #t
+
+; asin/sin and acos/cos inverse on a value in range
+>>> (< (abs (- (asin (sin 0.5)) 0.5)) 1e-10)
+
+==> #t
+
+>>> (< (abs (- (acos (cos 0.5)) 0.5)) 1e-10)
+
+==> #t
+
+; two-argument atan
+>>> (< (abs (- (atan 1.0 1.0) 0.7853981633974483)) 1e-10)
+
+==> #t
+
+; === number->string — negatives, fractions, radix edge cases
+
+>>> (number->string -10)
+
+==> "-10"
+
+>>> (number->string -1/3)
+
+==> "-1/3"
+
+>>> (number->string 1 2)
+
+==> "1"
+
+>>> (number->string 7 2)
+
+==> "111"
+
+>>> (number->string -255 16)
+
+==> "-ff"
+
+>>> (number->string 100 10)
+
+==> "100"
+
+; === string->number — leading plus, fractions, negatives
+
+>>> (string->number "+5")
+
+==> 5
+
+>>> (string->number "+1/2")
+
+==> 1/2
+
+>>> (string->number "-1/2")
+
+==> -1/2
+
+>>> (string->number "-3.5")
+
+==> -3.5
+
+; whitespace / garbage → #f
+
+>>> (string->number " 5")
+
+==> #f or ==> 5
+
+>>> (string->number "5x")
+
+==> #f
+
+>>> (string->number "+")
+
+==> #f
+
+; === string->number — exactness prefixes combined with radix prefix
+
+>>> (string->number "#e#xff")
+
+==> 255
+
+>>> (string->number "#x#eff")
+
+==> 255
+
+>>> (string->number "#i#b1010")
+
+==> 10.0
+
+>>> (exact? (string->number "#e1.0"))
+
+==> #t
+
+>>> (inexact? (string->number "#i10"))
+
+==> #t
+
+; === number->string / string->number radix round trips
+
+>>> (= 255 (string->number (number->string 255 2) 2))
+
+==> #t
+
+>>> (= 4095 (string->number (number->string 4095 16) 16))
+
+==> #t
+
+>>> (= -100 (string->number (number->string -100 8) 8))
+
+==> #t
+
+; === rationalize — exactness preserved; inexact arg gives inexact result
+
+>>> (exact? (rationalize 1/4 1/100))
+
+==> #t
+
+>>> (rationalize 3/10 1/10)
+
+==> 1/3 or ==> 1/4
+
+>>> (inexact? (rationalize 0.3 1/10))
+
+==> #t

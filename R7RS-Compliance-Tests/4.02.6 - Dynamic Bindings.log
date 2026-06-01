@@ -389,3 +389,90 @@
 
 ==> global
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === parameterize: new value is computed before any rebinding (eval in outer dyn env) ===
+
+>>> (define pv (make-parameter 1))
+
+>>> (parameterize ((pv (+ (pv) 10)))
+...   (pv))
+
+==> 11
+
+>>> (pv)
+
+==> 1
+
+; === parameterize: sequential nested rebind of same parameter restores stepwise ===
+
+>>> (define lvl (make-parameter 0))
+
+>>> (parameterize ((lvl 1))
+...   (let ((a (lvl)))
+...     (parameterize ((lvl 2))
+...       (let ((b (lvl)))
+...         (list a b (begin (quote x) (lvl)))))))
+
+==> (1 2 2)
+
+; === make-parameter converter applied to parameterize value, not the raw arg ===
+
+>>> (define cp (make-parameter 10 (lambda (x) (* x x))))
+
+>>> (cp)
+
+==> 100
+
+>>> (parameterize ((cp 3))
+...   (cp))
+
+==> 9
+
+>>> (cp)
+
+==> 100
+
+; === parameterize: body sees rebinding even through an intervening procedure call ===
+
+>>> (define depthp (make-parameter (quote top)))
+
+>>> (define (peek) (depthp))
+
+>>> (parameterize ((depthp (quote mid)))
+...   (parameterize ((depthp (quote bottom)))
+...     (peek)))
+
+==> bottom
+
+; === parameter object is itself a procedure callable with no args repeatedly ===
+
+>>> (define rep (make-parameter 42))
+
+>>> (list (rep) (rep) (rep))
+
+==> (42 42 42)
+
+; === parameterize: value restored after an exception escapes via guard ===
+
+>>> (define ep (make-parameter (quote safe)))
+
+>>> (guard (e (else (ep)))
+...   (parameterize ((ep (quote danger)))
+...     (raise (quote boom))))
+
+==> safe
+
+; === parameterize: multiple params, only listed ones change ===
+
+>>> (define m1 (make-parameter (quote a)))
+
+>>> (define m2 (make-parameter (quote b)))
+
+>>> (parameterize ((m1 (quote x)))
+...   (list (m1) (m2)))
+
+==> (x b)

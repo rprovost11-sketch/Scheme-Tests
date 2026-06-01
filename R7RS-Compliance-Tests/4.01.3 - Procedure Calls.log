@@ -274,3 +274,102 @@
 
 %%% %any-error%
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Spec example: ((if #f + *) 3 4)  ==>  12
+; the operator subexpression is itself evaluated to choose the procedure
+; ===
+
+>>> ((if #f + *) 3 4)
+
+==> 12
+
+>>> ((if #t + *) 3 4)
+
+==> 7
+
+; ===
+; Spec example: a procedure defined via lambda, then applied
+; (reverse-subtract 7 10) ==> 3
+; ===
+
+>>> (define reverse-subtract (lambda (x y) (- y x)))
+
+>>> (reverse-subtract 7 10)
+
+==> 3
+
+; ===
+; Spec example: operator is a closure capturing a let-bound variable
+; (add4 6) ==> 10
+; ===
+
+>>> (define add4 (let ((x 4)) (lambda (y) (+ x y))))
+
+>>> (add4 6)
+
+==> 10
+
+; ===
+; The operator subexpression may be an arbitrarily nested call returning
+; a procedure
+; ===
+
+>>> (((lambda (n) (lambda (x) (+ x n))) 5) 100)
+
+==> 105
+
+; ===
+; Operands are evaluated and passed; nested calls as operands compose
+; ===
+
+>>> (cons (car '(1 2)) (cdr '(1 2)))
+
+==> (1 2)
+
+>>> (apply + (list 1 2 3 4))
+
+==> 10
+
+; ===
+; A call may return more than one value via values (R7RS: procedure calls
+; can return any number of values); call-with-values consumes them
+; ===
+
+>>> (call-with-values (lambda () (values 1 2 3)) +)
+
+==> 6
+
+>>> (call-with-values (lambda () (values 4 5)) list)
+
+==> (4 5)
+
+; ===
+; R7RS 4.1.3 Note: "In contrast to other dialects of Lisp ... the empty
+; list, (), is a legitimate expression evaluating to itself. In Scheme,
+; it is an error."  Evaluating () must signal an error.
+; ===
+
+>>> ()
+
+%%% %any-error%
+
+; ===
+; A call returning zero values (via (values)) consumed by call-with-values
+; ===
+
+>>> (call-with-values (lambda () (values)) list)
+
+==> ()
+
+; ===
+; A call returning exactly one value via values is consumed normally
+; ===
+
+>>> (call-with-values (lambda () (values 42)) (lambda (x) x))
+
+==> 42

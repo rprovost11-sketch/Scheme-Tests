@@ -423,3 +423,170 @@
 
 ==> (1 0)
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === define-library — export with rename (internal name differs from exported)
+; (export (rename <internal> <external>) ...) exposes internal-foo as foo.
+
+>>> (define-library (test exp-rename)
+...   (export (rename internal-area area)
+...           (rename internal-perimeter perimeter))
+...   (import (scheme base))
+...   (begin
+...     (define (internal-area w h) (* w h))
+...     (define (internal-perimeter w h) (* 2 (+ w h)))))
+
+>>> (import (test exp-rename))
+
+>>> (area 3 4)
+
+==> 12
+
+>>> (perimeter 3 4)
+
+==> 14
+
+; The internal names are not exported.
+>>> internal-area
+
+%%% %any-error%
+
+; === define-library — a library may export some names plainly and others renamed
+
+>>> (define-library (test mixed-export)
+...   (export plain-val (rename hidden-val shown-val))
+...   (import (scheme base))
+...   (begin
+...     (define plain-val 1)
+...     (define hidden-val 2)))
+
+>>> (import (test mixed-export))
+
+>>> plain-val
+
+==> 1
+
+>>> shown-val
+
+==> 2
+
+>>> hidden-val
+
+%%% %any-error%
+
+; === define-library — re-export: a library re-exports a name it imported
+; (test reexporter) imports (test math) and re-exports square.
+
+>>> (define-library (test reexporter)
+...   (export square triple-square)
+...   (import (scheme base) (test math))
+...   (begin
+...     (define (triple-square x) (* 3 (square x)))))
+
+>>> (import (test reexporter))
+
+>>> (square 4)
+
+==> 16
+
+>>> (triple-square 2)
+
+==> 12
+
+; === define-library — exporting a macro defined with define-syntax inline
+
+>>> (define-library (test macro-lib)
+...   (export swap-pair)
+...   (import (scheme base))
+...   (begin
+...     (define-syntax swap-pair
+...       (syntax-rules ()
+...         ((swap-pair (a b)) (list b a))))))
+
+>>> (import (test macro-lib))
+
+>>> (swap-pair (1 2))
+
+==> (2 1)
+
+; === define-library — multiple import declarations in one library
+
+>>> (define-library (test multi-import)
+...   (export upper-first)
+...   (import (scheme base))
+...   (import (scheme char))
+...   (begin
+...     (define (upper-first ch) (char-upcase ch))))
+
+>>> (import (test multi-import))
+
+>>> (upper-first #\a)
+
+==> #\A
+
+; === define-library — cond-expand selecting on a library being available
+; (cond-expand ((library (scheme base)) ...) (else ...)): the base library is
+; always present, so the first clause applies.
+
+>>> (define-library (test ce-lib-avail)
+...   (export ce-result)
+...   (import (scheme base))
+...   (cond-expand
+...     ((library (scheme base))
+...      (begin (define ce-result 'has-base)))
+...     (else
+...      (begin (define ce-result 'no-base)))))
+
+>>> (import (test ce-lib-avail))
+
+>>> ce-result
+
+==> has-base
+
+; === define-library — cond-expand with 'and'/'or' feature combinations
+; (and r7rs) is true on an R7RS implementation; (or ...) with else fallback.
+
+>>> (define-library (test ce-combo)
+...   (export combo-val)
+...   (import (scheme base))
+...   (cond-expand
+...     ((or some-unlikely-feature r7rs)
+...      (begin (define combo-val 'ok)))
+...     (else
+...      (begin (define combo-val 'fallback)))))
+
+>>> (import (test ce-combo))
+
+>>> (symbol? combo-val)
+
+==> #t
+
+; === define-library — empty export list is allowed (library with no exports)
+; Importing it adds no names but is not an error.
+
+>>> (define-library (test no-exports)
+...   (export)
+...   (import (scheme base))
+...   (begin
+...     (define internal-only 123)))
+
+>>> (import (test no-exports))
+...
+... ; No error; internal-only is still not visible.
+
+>>> internal-only
+
+%%% %any-error%
+
+; === Error: define-library export of a name that is not defined in the body
+
+>>> (define-library (test bad-export)
+...   (export not-defined-anywhere)
+...   (import (scheme base))
+...   (begin
+...     (define something-else 1)))
+
+%%% %any-error%
+

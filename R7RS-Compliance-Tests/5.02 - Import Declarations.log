@@ -493,3 +493,124 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === except — listed names removed, others remain usable
+
+>>> (import (except (scheme base) car cdr))
+
+>>> (cons 1 2)
+
+==> (1 . 2)
+
+>>> (+ 10 20)
+
+==> 30
+
+; === prefix applied to except
+
+>>> (import (prefix (except (scheme base) error) e2:))
+
+>>> (e2:+ 4 5)
+
+==> 9
+
+>>> (e2:list 1 2 3)
+
+==> (1 2 3)
+
+; === rename applied to except
+
+>>> (import (rename (except (scheme base) error)
+...                 (cons pair-up)
+...                 (list make-list*)))
+
+>>> (pair-up 'a 'b)
+
+==> (a . b)
+
+>>> (make-list* 1 2 3)
+
+==> (1 2 3)
+
+; === prefix applied to rename — rename happens first, then prefix added
+
+>>> (import (prefix (rename (scheme base) (car head) (cdr tail)) g:))
+
+>>> (g:head '(1 2 3))
+
+==> 1
+
+>>> (g:tail '(1 2 3))
+
+==> (2 3)
+
+; === only with several modifiers stacked: only over rename over only
+
+>>> (import (only (rename (only (scheme base) car cdr cons)
+...                       (car a-car) (cdr a-cdr))
+...               a-car a-cdr))
+
+>>> (a-car '(7 8 9))
+
+==> 7
+
+>>> (a-cdr '(7 8 9))
+
+==> (8 9)
+
+; === multiple import sets, each with a different modifier, in one form
+
+>>> (import (prefix (only (scheme base) +) m:)
+...         (rename (only (scheme base) *) (* times)))
+
+>>> (m:+ 2 3)
+
+==> 5
+
+>>> (times 4 5)
+
+==> 20
+
+; === only restricting to a single name still imports just that one
+
+>>> (import (only (scheme base) reverse))
+
+>>> (reverse '(1 2 3))
+
+==> (3 2 1)
+
+; === import (scheme base) provides 'features' / cond-expand support names
+; 'features' returns a list (R7RS 6.14); confirm it is a procedure here.
+
+>>> (import (scheme base))
+
+>>> (procedure? vector-for-each)
+
+==> #t
+
+>>> (procedure? list-copy)
+
+==> #t
+
+; === Error: rename of a name not exported by the library
+
+>>> (import (rename (scheme base) (nonexistent-xyz alias-xyz)))
+
+%%% %any-error%
+
+; === Error: prefix over only with a name not exported
+
+>>> (import (prefix (only (scheme base) nonexistent-abc) bad:))
+
+%%% %any-error%
+
+>>> (import (except (scheme base) nonexistent-zzz))
+... ; R7RS 5.2: excepting (or renaming) an identifier that is not in the
+... ; original import set "is an error" -- undefined behavior, so signaling is
+... ; optional; %optional-error% accepts either outcome.
+
+%%% %optional-error%
+

@@ -707,3 +707,134 @@
 
 ==> outer-caught
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; raise-continuable — R7RS spec example (string? branch returns 42)
+; ===
+
+>>> (with-exception-handler
+...   (lambda (con)
+...     (cond ((string? con) 42)
+...           (else (error "unexpected"))))
+...   (lambda ()
+...     (+ (raise-continuable "should be a number") 23)))
+
+==> 65
+
+; ===
+; raise-continuable — handler return value is the value of the call
+; ===
+
+>>> (with-exception-handler
+...   (lambda (e) 'resumed)
+...   (lambda () (list 'before (raise-continuable 'x) 'after)))
+
+==> (before resumed after)
+
+; A handler returning multiple values delivers them to raise-continuable's
+; continuation.
+
+>>> (call-with-values
+...   (lambda ()
+...     (with-exception-handler
+...       (lambda (e) (values 1 2))
+...       (lambda () (raise-continuable 'go))))
+...   list)
+
+==> (1 2)
+
+; ===
+; error-object? — true for errors raised by built-in operations
+; ===
+
+>>> (guard (exn (#t (error-object? exn)))
+...   (string-ref "abc" 10))
+
+==> #t
+
+>>> (guard (exn (#t (error-object? exn)))
+...   (list-ref '(1 2 3) 10))
+
+==> #t
+
+>>> (guard (exn (#t (error-object? exn)))
+...   (apply + '(1 2 not-a-number)))
+
+==> #t
+
+; ===
+; raise — re-raise of a caught condition via raise-continuable handler path
+; ===
+
+; The handler installed for raise-continuable is the one in place before the
+; with-exception-handler call; a raise inside it goes to the outer handler.
+
+>>> (guard (outer (#t (list 'outer outer)))
+...   (with-exception-handler
+...     (lambda (e) (raise (list 'rethrown e)))
+...     (lambda () (raise-continuable 'seed))))
+
+==> (outer (rethrown seed))
+
+; ===
+; guard — => clause receiver applied to the test value
+; ===
+
+>>> (guard (exn ((memv exn '(a b c)) => car))
+...   (raise 'b))
+
+==> b
+
+; guard — first matching clause wins; later clauses not evaluated
+
+>>> (guard (exn ((symbol? exn) 'sym)
+...             ((number? exn) 'num))
+...   (raise 'hello))
+
+==> sym
+
+>>> (guard (exn ((symbol? exn) 'sym)
+...             ((number? exn) 'num))
+...   (raise 99))
+
+==> num
+
+; ===
+; error — message and irritants preserved through with-exception-handler
+; ===
+
+>>> (call-with-values
+...   (lambda ()
+...     (guard (e (#t (values (error-object-message e)
+...                           (error-object-irritants e))))
+...       (error "msg" 'a 'b)))
+...   list)
+
+==> ("msg" (a b))
+
+; error-object-message and irritants accessible inside a nested handler chain
+
+>>> (guard (outer (#t (error-object-message outer)))
+...   (with-exception-handler
+...     (lambda (e) (raise e))
+...     (lambda () (error "deep message" 1 2 3))))
+
+==> "deep message"
+
+; ===
+; read-error? / file-error? — disjoint from ordinary error objects
+; ===
+
+>>> (guard (exn (#t (read-error? exn)))
+...   (error "ordinary"))
+
+==> #f
+
+>>> (guard (exn (#t (file-error? exn)))
+...   (error "ordinary"))
+
+==> #f
+

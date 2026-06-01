@@ -917,3 +917,76 @@
 
 ==> matched
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === cond: => clause does not evaluate proc when test is false ===
+
+>>> (cond (#f => (lambda (x) (* x 100)))
+...       (7 => (lambda (x) (+ x 1))))
+
+==> 8
+
+; === cond: multiple => clauses, first true test selected ===
+
+>>> (cond ((memv 2 (list 1 2 3)) => car)
+...       (else (quote none)))
+
+==> 2
+
+; === cond: => test value used exactly once ===
+
+>>> (define arrow-count 0)
+
+>>> (cond ((begin (set! arrow-count (+ arrow-count 1)) 5) => (lambda (x) x)))
+
+==> 5
+
+>>> arrow-count
+
+==> 1
+
+; === case: => after a matched datum clause ===
+
+>>> (case 3
+...   ((1 2) (quote low))
+...   ((3 4) => (lambda (k) (list (quote hit) k)))
+...   (else (quote none)))
+
+==> (hit 3)
+
+; === case: char datums, multiple per clause ===
+
+>>> (case (char-downcase #\X)
+...   ((#\a #\e #\i #\o #\u) (quote vowel))
+...   ((#\x #\y #\z) (quote late))
+...   (else (quote other)))
+
+==> late
+
+; === when/unless: return value is last expr, test truthy by non-#f ===
+
+>>> (when (memq (quote c) (quote (a b c))) (quote member))
+
+==> member
+
+>>> (unless (memq (quote z) (quote (a b c))) (quote not-member))
+
+==> not-member
+
+; === and: nested in cond test position ===
+
+>>> (cond ((and 1 2 3) => (lambda (x) (* x 2)))
+...       (else (quote no)))
+
+==> 6
+
+; === or: returns first non-#f preserving identity of compound value ===
+
+>>> (define or-lst (list 1 2))
+
+>>> (eq? or-lst (or #f or-lst))
+
+==> #t

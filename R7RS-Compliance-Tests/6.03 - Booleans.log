@@ -329,7 +329,7 @@
 
 ==> true
 
->>> (if #\nul 'true 'false)
+>>> (if #\null 'true 'false)
 
 ==> true
 
@@ -448,6 +448,119 @@
 ==> #f
 
 >>> (both? #f #t)
+
+==> #f
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; boolean=? returns an actual boolean and accepts long argument lists
+; ===
+
+>>> (boolean? (boolean=? #t #t))
+
+==> #t
+
+>>> (boolean? (boolean=? #t #f))
+
+==> #t
+
+>>> (boolean=? #t #t #t #t #t)
+
+==> #t
+
+>>> (boolean=? #t #t #t #f #t)
+
+==> #f
+
+>>> (boolean=? #f #f #f #f #f #f)
+
+==> #t
+
+; ===
+; boolean=? compares boolean VALUE, not truthiness — only #t and #f are
+; valid arguments (it is an error to pass non-booleans)
+; ===
+
+>>> (boolean=? 1 1)
+
+%%% %any-error%
+
+>>> (boolean=? #t 1)
+
+%%% %any-error%
+
+>>> (boolean=? '() '())
+
+%%% %any-error%
+
+; ===
+; not always yields one of the two boolean objects
+; ===
+
+>>> (eq? (not #f) #t)
+
+==> #t
+
+>>> (eq? (not 42) #f)
+
+==> #t
+
+>>> (eq? (not '()) #f)
+
+==> #t
+
+; ===
+; #true / #false spellings are interchangeable with #t / #f everywhere
+; ===
+
+>>> (boolean=? #true #t)
+
+==> #t
+
+>>> (boolean=? #false #f)
+
+==> #t
+
+>>> (not #true)
+
+==> #f
+
+>>> (not #false)
+
+==> #t
+
+>>> (eqv? #true #t)
+
+==> #t
+
+>>> (eqv? #false #f)
+
+==> #t
+
+>>> #true
+... ; R7RS 6.3: #true and #false are alternate written constants that, like
+... ; #t and #f, are self-evaluating (evaluate to themselves unquoted).
+
+==> #t
+
+>>> #false
+
+==> #f
+
+>>> (eq? #f '())
+... ; R7RS 6.3 Note: Scheme distinguishes #f, the empty list, and the symbol nil
+... ; from one another (unlike some Lisps); neither '() nor 'nil is eq? to #f.
+
+==> #f
+
+>>> (eq? #f 'nil)
+
+==> #f
+
+>>> (not 'nil)
 
 ==> #f
 

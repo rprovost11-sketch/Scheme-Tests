@@ -375,6 +375,26 @@
 
 ==> 30
 
+>>> (call-with-output-file "6.14-load-env.tmp"
+...   (lambda (p) (write '(define loaded-in-env 99) p) (newline p)))
+... ; load with an explicit environment-specifier (R7RS 6.14): the file's forms
+... ; are evaluated in the given environment; (interaction-environment) is the
+... ; mutable global, so the new definition is visible afterwards.
+
+>>> (load "6.14-load-env.tmp" (interaction-environment))
+
+>>> loaded-in-env
+
+==> 99
+
+>>> (delete-file "6.14-load-env.tmp")
+... ; load's optional second argument must be an environment specifier (the
+... ; check happens before the file is opened, so the filename is irrelevant)
+
+>>> (load "6.14-no-such-file.tmp" 42)
+
+%%% %any-error%
+
 ; Cleanup test files
 
 >>> (delete-file "6.14-load-test.tmp")
@@ -411,6 +431,82 @@
 ...        (_ (apply + (make-list 10000 1)))
 ...        (s2 (current-second)))
 ...   (>= (- s2 s1) 0))
+
+==> #t
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; features — list of feature identifiers (§6.14, scheme base)
+; ===
+
+>>> (procedure? features)
+
+==> #t
+
+; features returns a list
+
+>>> (list? (features))
+
+==> #t
+
+; Every element of the features list is a symbol
+
+>>> (let loop ((fs (features)))
+...   (cond ((null? fs) #t)
+...         ((symbol? (car fs)) (loop (cdr fs)))
+...         (else #f)))
+
+==> #t
+
+; The features list includes r7rs (this is an R7RS implementation)
+
+>>> (and (memq 'r7rs (features)) #t)
+
+==> #t
+
+; A feature known to cond-expand as true must appear in (features);
+; r7rs is true under cond-expand and so is listed.
+
+>>> (cond-expand (r7rs (and (memq 'r7rs (features)) #t)) (else #f))
+
+==> #t
+
+; ===
+; get-environment-variable — returns #f (not error) for a missing variable
+; ===
+
+>>> (eq? #f (get-environment-variable "DEFINITELY_MISSING_VAR_ABC_98765"))
+
+==> #t
+
+; ===
+; current-jiffy / jiffies-per-second — exact integers, jps positive
+; ===
+
+>>> (and (exact? (current-jiffy)) (integer? (current-jiffy)))
+
+==> #t
+
+>>> (and (exact? (jiffies-per-second)) (positive? (jiffies-per-second)))
+
+==> #t
+
+; ===
+; exit / emergency-exit — accept an exit-status argument without being called
+; (cannot invoke without terminating; verify first-class + arity-tolerant)
+; ===
+
+>>> (procedure? (if #t exit emergency-exit))
+
+==> #t
+
+; Both are bindable and remain procedures
+
+>>> (let ((quit exit) (boom emergency-exit))
+...   (and (procedure? quit) (procedure? boom)))
 
 ==> #t
 

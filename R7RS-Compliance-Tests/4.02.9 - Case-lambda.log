@@ -408,3 +408,122 @@
 
 ==> (many 5 (1 2 3 4 5))
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === case-lambda: rest clause matches counts above the fixed clauses ===
+
+>>> (define cl-rest
+...   (case-lambda
+...     ((a b) (list (quote pair) a b))
+...     ((a b c . more) (list (quote more) a b c more))))
+
+>>> (cl-rest 1 2)
+
+==> (pair 1 2)
+
+>>> (cl-rest 1 2 3)
+
+==> (more 1 2 3 ())
+
+>>> (cl-rest 1 2 3 4 5)
+
+==> (more 1 2 3 (4 5))
+
+; === case-lambda: a fixed clause is preferred over an earlier-listed rest clause only by order ===
+
+>>> (define cl-order
+...   (case-lambda
+...     ((a . r) (list (quote rest) a r))
+...     ((a b)   (list (quote two) a b))))
+
+>>> (cl-order 1 2)
+
+==> (rest 1 (2))
+
+; === case-lambda: variadic sole-rest clause collects all into a list ===
+
+>>> (define cl-var (case-lambda (xs (apply + xs))))
+
+>>> (cl-var)
+
+==> 0
+
+>>> (cl-var 1 2 3 4)
+
+==> 10
+
+; === case-lambda: clause with rest of minimum arity 2 ===
+
+>>> (define cl-min2
+...   (case-lambda
+...     ((a b . rest) (length rest))))
+
+>>> (cl-min2 1 2)
+
+==> 0
+
+>>> (cl-min2 1 2 3 4 5)
+
+==> 3
+
+; === case-lambda: returns procedure usable with apply ===
+
+>>> (define cl-apply
+...   (case-lambda
+...     ((x) x)
+...     ((x y) (+ x y))))
+
+>>> (apply cl-apply (quote (3 4)))
+
+==> 7
+
+>>> (apply cl-apply (quote (9)))
+
+==> 9
+
+; === case-lambda: each clause body is a sequence with internal define ===
+
+>>> (define cl-seq
+...   (case-lambda
+...     ((n)
+...      (define t (* n n))
+...      (define u (+ t 1))
+...      u)))
+
+>>> (cl-seq 4)
+
+==> 17
+
+; === case-lambda: predicate-style dispatch returns correct arity result ===
+
+>>> (define rng
+...   (case-lambda
+...     ((end)            (list 0 end))
+...     ((start end)      (list start end))
+...     ((start end step) (list start end step))))
+
+>>> (rng 5)
+
+==> (0 5)
+
+>>> (rng 2 8)
+
+==> (2 8)
+
+>>> (rng 2 8 2)
+
+==> (2 8 2)
+
+; === Error: argument count between two fixed clauses with no rest clause ===
+
+>>> (define cl-gap
+...   (case-lambda
+...     ((a) (quote one))
+...     ((a b c) (quote three))))
+
+>>> (cl-gap 1 2)
+
+%%% %any-error%

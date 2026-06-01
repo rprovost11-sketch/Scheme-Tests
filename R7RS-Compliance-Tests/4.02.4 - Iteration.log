@@ -297,3 +297,90 @@
 
 ==> done
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === do: command refers to current (pre-step) variable values ===
+
+>>> (define do-cmd-log (quote ()))
+
+>>> (do ((i 0 (+ i 1)))
+...     ((= i 3) do-cmd-log)
+...   (set! do-cmd-log (cons (* i 10) do-cmd-log)))
+
+==> (20 10 0)
+
+>>> (do ((i 0 (+ i 1))
+...      (prev 0 i)
+...      (sum 0 (+ sum prev)))
+...     ((= i 4) (list i prev sum)))
+... ; do: step may reference other variables (parallel update).  All step exprs
+... ; see the OLD values of every variable, then all rebind simultaneously
+... ; (R7RS 4.2.4).  Trace (i prev sum):
+... ;   (0 0 0)->(1 0 0)->(2 1 0)->(3 2 1)->(4 3 3); sum lags because
+... ;   (+ sum prev) always uses the pre-step sum and prev.
+
+==> (4 3 3)
+
+; === do: variable with no step keeps init across iterations ===
+
+>>> (do ((k 7)
+...      (i 0 (+ i 1)))
+...     ((= i 3) (list k i)))
+
+==> (7 3)
+
+; === do: test true on entry runs result, no commands executed ===
+
+>>> (define do-entry 0)
+
+>>> (do ((i 0 (+ i 1)))
+...     ((>= i 0) (quote immediate))
+...   (set! do-entry (+ do-entry 1)))
+
+==> immediate
+
+>>> do-entry
+
+==> 0
+
+; === do: result is sequence; last expression returned ===
+
+>>> (do ((i 0 (+ i 1)))
+...     ((= i 2) (quote ignored) (quote also) (* i i)))
+
+==> 4
+
+; === do: inits evaluated in outer env (left-to-right is unspecified, no cross ref) ===
+
+>>> (let ((base 100))
+...   (do ((x base (- x 1)))
+...       ((= x 97) x)))
+
+==> 97
+
+; === named let: accumulator building, tail recursive ===
+
+>>> (let build ((n 5) (acc (quote ())))
+...   (if (= n 0) acc (build (- n 1) (cons n acc))))
+
+==> (1 2 3 4 5)
+
+; === named let: zero bindings with body side effect then result ===
+
+>>> (define nl-side 0)
+
+>>> (let spin ()
+...   (set! nl-side (+ nl-side 1))
+...   (if (< nl-side 4) (spin) nl-side))
+
+==> 4
+
+; === named let: mutual-style via single self recursion (count down) ===
+
+>>> (let go ((i 1000000))
+...   (if (= i 0) (quote finished) (go (- i 1))))
+
+==> finished

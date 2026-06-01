@@ -784,3 +784,259 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; digit-value — numeric value (0..9) of a digit char, #f otherwise (R7RS 6.6)
+; ===
+
+>>> (digit-value #\0)
+
+==> 0
+
+>>> (digit-value #\3)
+
+==> 3
+
+>>> (digit-value #\9)
+
+==> 9
+
+>>> (digit-value #\a)
+
+==> #f
+
+>>> (digit-value #\A)
+
+==> #f
+
+>>> (digit-value #\space)
+
+==> #f
+
+>>> (digit-value #\.)
+
+==> #f
+
+>>> (digit-value #\-)
+
+==> #f
+
+; Spec examples with non-ASCII decimal digits
+; (#\x0664 = ARABIC-INDIC DIGIT FOUR, #\x0AE6 = GUJARATI DIGIT ZERO)
+
+>>> (digit-value #\x0664)
+
+==> 4 or ==> #f
+
+>>> (digit-value #\x0AE6)
+
+==> 0 or ==> #f
+
+; digit-value of a non-decimal-digit numeric-ish char is #f
+; (#\x0EA6 is not a numeric digit)
+
+>>> (digit-value #\x0EA6)
+
+==> #f
+
+; ===
+; char=? / char<? family return actual booleans
+; ===
+
+>>> (boolean? (char=? #\a #\a))
+
+==> #t
+
+>>> (boolean? (char<? #\a #\b))
+
+==> #t
+
+>>> (boolean? (char-ci=? #\a #\A))
+
+==> #t
+
+; ===
+; Long multi-argument chains for every comparison procedure
+; ===
+
+>>> (char=? #\a #\a #\a #\a)
+
+==> #t
+
+>>> (char<? #\a #\b #\c #\d)
+
+==> #t
+
+>>> (char<=? #\a #\a #\b #\b #\c)
+
+==> #t
+
+>>> (char>? #\d #\c #\b #\a)
+
+==> #t
+
+>>> (char>=? #\c #\c #\b #\a #\a)
+
+==> #t
+
+>>> (char-ci=? #\a #\A #\a #\A)
+
+==> #t
+
+>>> (char-ci<? #\a #\B #\c #\D)
+
+==> #t
+
+>>> (char-ci>? #\D #\c #\B #\a)
+
+==> #t
+
+>>> (char-ci<=? #\A #\a #\B #\b)
+
+==> #t
+
+>>> (char-ci>=? #\B #\b #\A #\a)
+
+==> #t
+
+; ===
+; Single-argument comparison: every char relates to itself (R7RS allows 1+ args)
+; ===
+
+>>> (char=? #\a)
+
+==> #t
+
+>>> (char<? #\a)
+
+==> #t
+
+>>> (char-ci=? #\a)
+
+==> #t
+
+; ===
+; char-ci comparisons are defined as comparing the char-foldcase images
+; ===
+
+>>> (char-ci=? #\A #\a)
+
+==> #t
+
+>>> (eqv? (char-ci=? #\A #\a) (char=? (char-foldcase #\A) (char-foldcase #\a)))
+
+==> #t
+
+>>> (char-ci<? #\Z #\a)
+
+==> #f
+
+; ===
+; char-upcase / char-downcase / char-foldcase round-trips and idempotence
+; ===
+
+>>> (char-upcase (char-downcase #\A))
+
+==> #\A
+
+>>> (char-downcase (char-upcase #\a))
+
+==> #\a
+
+>>> (char-foldcase (char-foldcase #\A))
+
+==> #\a
+
+>>> (char-upcase (char-upcase #\m))
+
+==> #\M
+
+; Case operations leave non-cased characters unchanged
+
+>>> (char-upcase #\9)
+
+==> #\9
+
+>>> (char-downcase #\!)
+
+==> #\!
+
+>>> (char-foldcase #\space)
+
+==> #\space
+
+; ===
+; integer->char round-trips for named characters and roundtrip identity
+; ===
+
+>>> (char=? #\tab (integer->char (char->integer #\tab)))
+
+==> #t
+
+>>> (char=? #\null (integer->char (char->integer #\null)))
+
+==> #t
+
+>>> (integer->char 13)
+
+==> #\return
+
+>>> (integer->char 9)
+
+==> #\tab
+
+>>> (integer->char 7)
+
+==> #\alarm
+
+>>> (integer->char 8)
+
+==> #\backspace
+
+>>> (integer->char 27)
+
+==> #\escape
+
+; ===
+; digit-value is #f exactly where char-numeric? is #f (consistency)
+; ===
+
+>>> (digit-value #\b)
+
+==> #f
+
+>>> (char-numeric? #\b)
+
+==> #f
+
+>>> (if (char-numeric? #\7) (digit-value #\7) 'no)
+
+==> 7
+
+; ===
+; char predicates return actual booleans
+; ===
+
+>>> (boolean? (char-alphabetic? #\a))
+
+==> #t
+
+>>> (boolean? (char-numeric? #\a))
+
+==> #t
+
+>>> (boolean? (char-whitespace? #\a))
+
+==> #t
+
+>>> (boolean? (char-upper-case? #\a))
+
+==> #t
+
+>>> (boolean? (char-lower-case? #\a))
+
+==> #t
+

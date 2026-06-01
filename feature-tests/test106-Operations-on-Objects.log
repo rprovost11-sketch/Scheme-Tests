@@ -1512,13 +1512,13 @@
 ==> 1.0-2.0i
 
 >>> (exact-integer-sqrt 0)
-==> #<values 0 0>
+==> 0 0
 
 >>> (exact-integer-sqrt 9)
-==> #<values 3 0>
+==> 3 0
 
 >>> (exact-integer-sqrt 19)
-==> #<values 4 3>
+==> 4 3
 
 >>> (exp 0.0)
 ==> 1.0

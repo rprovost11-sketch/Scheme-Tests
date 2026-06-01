@@ -476,3 +476,100 @@
 
 ==> done
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; apply must call its first argument via a tail call (R7RS 3.5):
+; "The first argument passed to apply ... must be called via a tail call."
+; A loop that recurs through apply must run in bounded space.
+; ===
+
+>>> (define (loop-apply n)
+...   (if (= n 0)
+...       'done
+...       (apply loop-apply (list (- n 1)))))
+
+>>> (loop-apply 1000000)
+
+==> done
+
+; apply with leading fixed arguments plus a final list argument
+
+>>> (define (loop-apply2 acc n)
+...   (if (= n 0)
+...       acc
+...       (apply loop-apply2 (+ acc n) (list (- n 1)))))
+
+>>> (loop-apply2 0 1000000)
+
+==> 500000500000
+
+; ===
+; call-with-current-continuation must call its first argument via a tail
+; call (R7RS 3.5).  Looping by re-entering call/cc each iteration must run
+; in bounded space when the escape procedure is not used.
+; ===
+
+>>> (define (loop-callcc n)
+...   (if (= n 0)
+...       'done
+...       (call-with-current-continuation
+...         (lambda (k)
+...           (loop-callcc (- n 1))))))
+
+>>> (loop-callcc 1000000)
+
+==> done
+
+; ===
+; call-with-values must call its second argument (the consumer) via a tail
+; call (R7RS 3.5).
+; ===
+
+>>> (define (loop-cwv n)
+...   (if (= n 0)
+...       'done
+...       (call-with-values
+...         (lambda () (values (- n 1)))
+...         loop-cwv)))
+
+>>> (loop-cwv 1000000)
+
+==> done
+
+; ===
+; A tail call to the body of dynamic-wind is NOT required to be a tail call
+; (only the explicitly listed procedures are).  This test instead confirms
+; the listed guarantee for the consumer when multiple values flow through.
+; ===
+
+>>> (define (loop-cwv2 acc n)
+...   (if (= n 0)
+...       acc
+...       (call-with-values
+...         (lambda () (values (+ acc n) (- n 1)))
+...         loop-cwv2)))
+
+>>> (loop-cwv2 0 1000000)
+
+==> 500000500000
+
+; ===
+; The final expression of a lambda body reached after a sequence of
+; internal definitions is a tail call (R7RS 3.5: tail body =
+; definition* tail sequence).
+; ===
+
+>>> (define (loop-after-defs n)
+...   (define limit 0)
+...   (define (step k) (- k 1))
+...   (if (= n limit)
+...       'done
+...       (loop-after-defs (step n))))
+
+>>> (loop-after-defs 1000000)
+
+==> done

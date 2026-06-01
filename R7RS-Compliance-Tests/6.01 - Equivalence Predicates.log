@@ -591,3 +591,126 @@
 
 ==> #t
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === eqv? — +nan.0 (unspecified, but commonly #t since it's the same object)
+; R7RS 6.1: (eqv? +nan.0 +nan.0) is unspecified. We only test the safe,
+; required identity case: a NaN bound to a name is eqv? to itself.
+
+>>> (define the-nan +nan.0)
+
+>>> (eqv? the-nan the-nan)
+
+==> #t
+
+; === eqv? — exactness distinguishes otherwise-equal numbers
+; 6.1: eqv? returns #f when one is exact and the other inexact.
+
+>>> (eqv? 2 2.0)
+
+==> #f
+
+>>> (eqv? 0 0.0)
+
+==> #f
+
+>>> (eqv? 1/2 1/2)
+
+==> #t
+
+; === eqv? — special inexact values bound to names (identity)
+
+>>> (define pos-inf +inf.0)
+
+>>> (eqv? pos-inf pos-inf)
+
+==> #t
+
+; === eq? — empty list distinct from #f and from 0
+; 6.1: these are different objects of different types.
+
+>>> (eq? '() #f)
+
+==> #f
+
+>>> (eq? '() 0)
+
+==> #f
+
+; === equal? — exactness is significant (falls back to eqv? for numbers)
+; 6.1: equal? compares numbers with eqv?, so exact vs inexact differ.
+
+>>> (equal? 2 2.0)
+
+==> #f
+
+>>> (equal? 1.0 1.0)
+
+==> #t
+
+>>> (equal? 1/2 1/2)
+
+==> #t
+
+; === equal? — vectors of differing length are not equal
+
+>>> (equal? #(1 2 3) #(1 2))
+
+==> #f
+
+>>> (equal? #(1 2) #(1 2 3))
+
+==> #f
+
+; === equal? — bytevectors of differing length are not equal
+
+>>> (equal? (bytevector 1 2 3) (bytevector 1 2))
+
+==> #f
+
+; === equal? — a vector and a list with same elements are NOT equal
+; 6.1: equal? only recurses within the same aggregate type.
+
+>>> (equal? #(1 2 3) (list 1 2 3))
+
+==> #f
+
+; === equal? — a string and a symbol with same characters are not equal
+
+>>> (equal? "abc" 'abc)
+
+==> #f
+
+; === equal? — proper vs improper list of same prefix differ
+
+>>> (equal? '(1 2 . 3) '(1 2 3))
+
+==> #f
+
+>>> (equal? '(1 2 . 3) '(1 2 . 3))
+
+==> #t
+
+; === equal? — nested mixture with bytevectors
+
+>>> (equal? (list #(1) (bytevector 2) "3") (list #(1) (bytevector 2) "3"))
+
+==> #t
+
+>>> (equal? (list #(1) (bytevector 2) "3") (list #(1) (bytevector 9) "3"))
+
+==> #f
+
+; === eqv? — characters: distinct case-variant chars
+; 6.1: chars are eqv? iff (char=?). Already tested #\A vs #\a; add digits.
+
+>>> (eqv? #\0 #\0)
+
+==> #t
+
+>>> (eqv? #\0 #\1)
+
+==> #f

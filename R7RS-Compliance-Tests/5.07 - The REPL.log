@@ -451,3 +451,102 @@
 >>> (reverse repl-dw-log)
 
 ==> (in body out)
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === A define made via eval into interaction-environment is callable directly
+
+>>> (eval '(define (repl-eval-cube n) (* n n n)) (interaction-environment))
+
+>>> (repl-eval-cube 3)
+
+==> 27
+
+; === A direct top-level define is observable via eval and used in eval
+
+>>> (define repl-shared 21)
+
+>>> (eval '(* repl-shared 2) (interaction-environment))
+
+==> 42
+
+; === A define-syntax made via eval is usable in a later direct expression
+
+>>> (eval '(define-syntax repl-eval-mac
+...          (syntax-rules ()
+...            ((repl-eval-mac x) (+ x 100))))
+...        (interaction-environment))
+
+>>> (repl-eval-mac 5)
+
+==> 105
+
+; === (environment ...) yields a fresh environment usable by eval (scheme eval)
+; A program-style environment evaluates standard forms.
+
+>>> (eval '(let ((x 4)) (* x x)) (environment '(scheme base)))
+
+==> 16
+
+>>> (eval '(map (lambda (n) (+ n 1)) '(1 2 3)) (environment '(scheme base)))
+
+==> (2 3 4)
+
+; === set! via eval mutates the interaction environment's binding
+
+>>> (define repl-set-target 0)
+
+>>> (eval '(set! repl-set-target 77) (interaction-environment))
+
+>>> repl-set-target
+
+==> 77
+
+; === Top-level define-values observable through eval
+
+>>> (define-values (repl-ev-a repl-ev-b) (values 'x 'y))
+
+>>> (eval 'repl-ev-a (interaction-environment))
+
+==> x
+
+>>> (eval 'repl-ev-b (interaction-environment))
+
+==> y
+
+; === Sequential top-level evaluation: a later expression sees an eval-define
+
+>>> (eval '(define repl-chain 1) (interaction-environment))
+
+>>> (define repl-chain2 (+ repl-chain 1))
+
+>>> repl-chain2
+
+==> 2
+
+; === guard recovers from an eval-signaled error; session continues
+
+>>> (guard (e (#t 'recovered-eval))
+...   (eval '(car '()) (interaction-environment)))
+
+==> recovered-eval
+
+>>> (+ 2 3)
+
+==> 5
+
+; === Redefinition via eval shadows the earlier binding for later references
+
+>>> (eval '(define repl-redef-eval 'one) (interaction-environment))
+
+>>> repl-redef-eval
+
+==> one
+
+>>> (eval '(define repl-redef-eval 'two) (interaction-environment))
+
+>>> repl-redef-eval
+
+==> two

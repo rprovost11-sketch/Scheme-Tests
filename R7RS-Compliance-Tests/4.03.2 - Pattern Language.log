@@ -583,3 +583,220 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === tail patterns after an ellipsis (R7RS: (P1 ... Pk Pe ellipsis Pm+1 ... Pn))
+; A subpattern followed by ellipsis may be followed by further fixed
+; subpatterns; those match the LAST elements of the input.
+
+>>> (define-syntax split-last
+...   (syntax-rules ()
+...     ((split-last x ... last)
+...      (list (list x ...) last))))
+
+>>> (split-last 1 2 3 4)
+
+==> ((1 2 3) 4)
+
+>>> (split-last 1)
+
+==> (() 1)
+
+>>> (split-last 1 2)
+
+==> ((1) 2)
+
+; === fixed patterns both before AND after an ellipsis
+
+>>> (define-syntax first-mid-last
+...   (syntax-rules ()
+...     ((first-mid-last a mid ... z)
+...      (list a (list mid ...) z))))
+
+>>> (first-mid-last 1 2 3 4 5)
+
+==> (1 (2 3 4) 5)
+
+>>> (first-mid-last 1 2)
+
+==> (1 () 2)
+
+; === two fixed tail patterns after an ellipsis
+
+>>> (define-syntax all-but-two
+...   (syntax-rules ()
+...     ((all-but-two init ... y z)
+...      (list (list init ...) y z))))
+
+>>> (all-but-two 1 2 3 4 5)
+
+==> ((1 2 3) 4 5)
+
+>>> (all-but-two 1 2)
+
+==> (() 1 2)
+
+; === tail pattern after ellipsis in a vector pattern
+
+>>> (define-syntax vec-split-last
+...   (syntax-rules ()
+...     ((vec-split-last #(x ... last))
+...      (list (list x ...) last))))
+
+>>> (vec-split-last #(1 2 3 4))
+
+==> ((1 2 3) 4)
+
+>>> (vec-split-last #(9))
+
+==> (() 9)
+
+; === improper-list pattern with ellipsis and a dotted tail variable
+; (P1 ... Pe ellipsis . Px): the final cdr is bound to Px.
+
+>>> (define-syntax dotted-collect
+...   (syntax-rules ()
+...     ((dotted-collect (a ... . rest))
+...      (list (list a ...) 'rest))))
+
+>>> (dotted-collect (1 2 3 . 4))
+
+==> ((1 2 3) 4)
+
+>>> (dotted-collect (1 2 3))
+
+==> ((1 2 3) ())
+
+; === custom ellipsis identifier (alternate syntax-rules form)
+; (syntax-rules <ellipsis> (<literal> ...) <rule> ...) lets a program choose
+; a different ellipsis identifier, so that ... can appear literally.
+
+>>> (define-syntax my-list-ee
+...   (syntax-rules ::: ()
+...     ((my-list-ee x :::) (list x :::))))
+
+>>> (my-list-ee 1 2 3)
+
+==> (1 2 3)
+
+>>> (my-list-ee)
+
+==> ()
+
+; With a custom ellipsis, the default ... is an ordinary identifier and can
+; be carried through to the template literally.
+
+>>> (define-syntax literal-dots
+...   (syntax-rules ::: ()
+...     ((literal-dots a b) (list a '... b))))
+
+>>> (literal-dots 1 2)
+
+==> (1 ... 2)
+
+; === nested ellipsis: pattern variable under two ellipsis levels
+; (x ...) ... in the pattern, replayed as ((x ...) ...) and as a flattened
+; (x ... ...) in the template.
+
+>>> (define-syntax nest2
+...   (syntax-rules ()
+...     ((nest2 (x ...) ...)
+...      (list (list x ...) ...))))
+
+>>> (nest2 (1 2) (3 4 5) ())
+
+==> ((1 2) (3 4 5) ())
+
+>>> (nest2)
+
+==> ()
+
+>>> (define-syntax flatten2
+...   (syntax-rules ()
+...     ((flatten2 (x ...) ...)
+...      (list x ... ...))))
+
+>>> (flatten2 (1 2) (3) (4 5 6))
+
+==> (1 2 3 4 5 6)
+
+>>> (flatten2 () (7) ())
+
+==> (7)
+
+>>> (define-syntax pair-up
+...   (syntax-rules ()
+...     ((pair-up (k ...) (v ...))
+...      (list (cons 'k v) ...))))
+... ; ellipsis count must agree across pattern variables in a template group;
+... ; the key is quoted so the symbolic keys are data, not variable references
+
+>>> (pair-up (a b c) (1 2 3))
+
+==> ((a . 1) (b . 2) (c . 3))
+
+; === (... ...) template escape produces a single literal ellipsis
+; This lets a macro expand into another syntax-rules form that itself uses
+; ellipsis.  (R7RS 4.3.2: the template (... ...) produces a single ...)
+
+>>> (define-syntax be-like-begin
+...   (syntax-rules ()
+...     ((be-like-begin name)
+...      (define-syntax name
+...        (syntax-rules ()
+...          ((name expr (... ...))
+...           (begin expr (... ...))))))))
+
+>>> (be-like-begin sequence)
+
+>>> (sequence 1 2 3 4)
+
+==> 4
+
+>>> (sequence (+ 1 1))
+
+==> 2
+
+; === (... <template>) escape: ellipses inside are treated literally
+
+>>> (define-syntax quote-with-dots
+...   (syntax-rules ()
+...     ((quote-with-dots) '(... (a ... b)))))
+
+>>> (quote-with-dots)
+
+==> (a ... b)
+
+; === a literal in the pattern need not be 'else'; any identifier works
+; Here => is used as a literal keyword.
+
+>>> (define-syntax arrow-mac
+...   (syntax-rules (=>)
+...     ((arrow-mac x => y) (list 'mapped x y))
+...     ((arrow-mac x y)    (list 'plain x y))))
+
+>>> (arrow-mac 1 => 2)
+
+==> (mapped 1 2)
+
+>>> (arrow-mac 1 2)
+
+==> (plain 1 2)
+
+; === ellipsis following a subpattern that is itself a list
+
+>>> (define-syntax sum-pairs
+...   (syntax-rules ()
+...     ((sum-pairs (a b) ...)
+...      (list (+ a b) ...))))
+
+>>> (sum-pairs (1 2) (3 4) (10 20))
+
+==> (3 7 30)
+
+>>> (sum-pairs)
+
+==> ()
+

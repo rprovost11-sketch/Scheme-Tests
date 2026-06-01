@@ -373,3 +373,97 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === §3.4: a fetched object is eqv? to the object last stored ===
+; (vector-set! then vector-ref returns an object eqv? to what was stored)
+
+>>> (define ev (vector 0))
+
+>>> (vector-set! ev 0 'sym)
+
+>>> (eqv? (vector-ref ev 0) 'sym)
+
+==> #t
+
+; set-car! then car returns an object eqv? to what was stored
+
+>>> (define ep (cons 'a 'b))
+
+>>> (set-car! ep 'z)
+
+>>> (eqv? (car ep) 'z)
+
+==> #t
+
+; === §3.4: storing into a location does not change which object denotes it ===
+; A string mutated by string-set! continues to be the same (eq?) object;
+; the change is visible through an alias.
+
+>>> (define id-s (string-copy "abc"))
+
+>>> (define id-s2 id-s)
+
+>>> (string-set! id-s 0 #\Z)
+
+>>> (eq? id-s id-s2)
+
+==> #t
+
+>>> id-s2
+
+==> "Zbc"
+
+; === §3.4: the empty list is a unique object; it cannot be newly allocated ===
+
+>>> (eq? '() '())
+
+==> #t
+
+>>> (eq? (cdr (list 1)) '())
+
+==> #t
+
+; === §3.4: all objects created by procedures (other than the immutable ===
+; cases) are mutable. string-append produces a mutable string.
+
+>>> (define app-s (string-append "ab" "cd"))
+
+>>> (string-set! app-s 0 #\X)
+
+>>> app-s
+
+==> "Xbcd"
+
+; list-copy produces a mutable list
+
+>>> (define lc (list-copy '(1 2 3)))
+
+>>> (set-car! lc 99)
+
+>>> lc
+
+==> (99 2 3)
+
+; vector-copy produces a mutable vector
+
+>>> (define vc (vector-copy #(1 2 3)))
+
+>>> (vector-set! vc 0 99)
+
+>>> vc
+
+==> #(99 2 3)
+
+; bytevector-copy produces a mutable bytevector
+
+>>> (define bc (bytevector-copy #u8(1 2 3)))
+
+>>> (bytevector-u8-set! bc 0 99)
+
+>>> bc
+
+==> #u8(99 2 3)
+

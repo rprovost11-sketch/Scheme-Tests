@@ -225,11 +225,14 @@
 ==> 3
 
 ; Multiple libraries
+; Per R7RS 6.12, an environment from (environment ...) is immutable, so an
+; (import ...) inside eval signals an error; supply the libraries up front
+; (as the (scheme base)+(scheme inexact) test below does) instead.
 
->>> (eval '(begin (import (scheme write)) (procedure? write))
-...        (environment '(scheme base)))
+>>> (eval '(procedure? write)
+...        (environment '(scheme base) '(scheme write)))
 
-==> #t or ==> #t
+==> #t
 
 >>> (eval '(sqrt 4.0) (environment '(scheme base) '(scheme inexact)))
 
@@ -407,6 +410,25 @@
 
 ==> 3
 
+>>> (scheme-report-environment 99)
+... ; R7RS 6.12: only version 5 (R5RS) need be supported; if version is neither
+... ; 5 nor another value the implementation supports, an error is signaled.
+... ; These implementations support only version 5, so any other is an error.
+
+%%% %any-error%
+
+>>> (scheme-report-environment 0)
+
+%%% %any-error%
+
+>>> (null-environment 7)
+
+%%% %any-error%
+
+>>> (null-environment 4)
+
+%%% %any-error%
+
 ; eval can be passed as an argument
 
 >>> (define (eval-all exprs env)
@@ -416,4 +438,118 @@
 ...            (environment '(scheme base)))
 
 ==> (3 12 5)
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; eval — R7RS spec examples
+; ===
+
+>>> (eval '(* 7 3) (environment '(scheme base)))
+
+==> 21
+
+; A procedure produced by eval in null-environment is a plain procedure
+
+>>> (let ((f (eval '(lambda (f x) (f x x)) (null-environment 5))))
+...   (f + 10))
+
+==> 20
+
+; Defining a binding in an (environment ...) specifier is an error
+; (the environment and its bindings are immutable).
+
+>>> (eval '(define foo 32) (environment '(scheme base)))
+
+%%% %any-error%
+
+; ===
+; eval — recursion via letrec* and named let
+; ===
+
+>>> (eval '(letrec* ((even? (lambda (n) (if (= n 0) #t (odd? (- n 1)))))
+...                  (odd?  (lambda (n) (if (= n 0) #f (even? (- n 1))))))
+...           (even? 10))
+...        (environment '(scheme base)))
+
+==> #t
+
+>>> (eval '(let loop ((i 0) (acc 0))
+...           (if (> i 5) acc (loop (+ i 1) (+ acc i))))
+...        (environment '(scheme base)))
+
+==> 15
+
+; ===
+; eval — derived forms and quasiquote evaluate in the given environment
+; ===
+
+>>> (eval '(case 2 ((1) 'one) ((2) 'two) (else 'many))
+...        (environment '(scheme base)))
+
+==> two
+
+>>> (eval '(do ((i 0 (+ i 1)) (s 0 (+ s i)))
+...            ((= i 4) s))
+...        (environment '(scheme base)))
+
+==> 6
+
+>>> (eval '(let ((n 7)) `(a b ,n ,(* n n)))
+...        (environment '(scheme base)))
+
+==> (a b 7 49)
+
+; ===
+; eval — begin with internal definitions returns last value
+; ===
+
+>>> (eval '(let () (define x 10) (define y 20) (+ x y))
+...        (environment '(scheme base)))
+
+==> 30
+
+; ===
+; eval — multiple values via let-values / define-values
+; ===
+
+>>> (eval '(let-values (((q r) (floor/ 17 5))) (list q r))
+...        (environment '(scheme base)))
+
+==> (3 2)
+
+>>> (eval '(let ()
+...           (define-values (a b c) (values 1 2 3))
+...           (+ a b c))
+...        (environment '(scheme base)))
+
+==> 6
+
+; ===
+; eval — interaction-environment is mutable across separate eval calls
+; ===
+
+>>> (eval '(define eval-acc 0) (interaction-environment))
+
+>>> (eval '(set! eval-acc (+ eval-acc 5)) (interaction-environment))
+
+>>> (eval '(set! eval-acc (+ eval-acc 7)) (interaction-environment))
+
+>>> (eval 'eval-acc (interaction-environment))
+
+==> 12
+
+; ===
+; null-environment — syntactic keywords present, library bindings absent
+; ===
+
+>>> (eval '(let ((x 'same) (y 'diff)) (if #t x y)) (null-environment 5))
+
+==> same
+
+>>> (eval '(cons 1 2) (null-environment 5))
+
+%%% %any-error%
 

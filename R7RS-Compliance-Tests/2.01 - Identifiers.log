@@ -666,3 +666,305 @@
 
 ==> (1 2)
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ==========================================================================
+; Identifiers from the R7RS examples list (R7RS 2.1)
+; The report gives these as sample valid identifiers:
+;   ... + +soup+ <=? ->string a34kTMNs lambda* list->vector q V17a
+;   the-word-recursion-has-many-meanings
+; ==========================================================================
+
+; +soup+ : peculiar-looking but a valid ordinary identifier (sign as subsequent)
+
+>>> (define +soup+ 100)
+
+>>> +soup+
+
+==> 100
+
+; <=? : special initials and a subsequent ? character
+
+>>> (define <=? 101)
+
+>>> <=?
+
+==> 101
+
+; ->string : peculiar identifier -> followed by subsequent letters
+
+>>> (define ->string 102)
+
+>>> ->string
+
+==> 102
+
+; a34kTMNs : letters mixed with digits, case-significant
+
+>>> (define a34kTMNs 103)
+
+>>> a34kTMNs
+
+==> 103
+
+; list->vector : letters with -> inside (the canonical conversion-name shape)
+
+>>> (define list->vector 104)
+
+>>> list->vector
+
+==> 104
+
+; V17a : an identifier beginning with an uppercase letter
+
+>>> (define V17a 105)
+
+>>> V17a
+
+==> 105
+
+; the-word-recursion-has-many-meanings : many hyphens, all one identifier
+
+>>> (define the-word-recursion-has-many-meanings 106)
+
+>>> the-word-recursion-has-many-meanings
+
+==> 106
+
+; ==========================================================================
+; A sequence of two or more periods is an identifier (R7RS 2.3)
+; A single period is the dot token, but two or more periods form an identifier.
+; ==========================================================================
+
+>>> (define .. 110)
+
+>>> ..
+
+==> 110
+
+>>> (define .... 111)
+
+>>> ....
+
+==> 111
+
+; The ellipsis ... and the two-period identifier .. are distinct symbols
+
+>>> (eq? '.. '...)
+
+==> #f
+
+; ==========================================================================
+; An identifier must not have a prefix that is a valid number (R7RS 2.1)
+; A single period is not an identifier — bare . is the dot token and is
+; an error outside dotted-pair position.
+; ==========================================================================
+
+>>> .
+
+%%% %any-error%
+
+; ==========================================================================
+; Symbols read via string->symbol round-trip with identical printed names
+; (cross-checks the identifier reader against the symbol constructor)
+; ==========================================================================
+
+>>> (eq? (string->symbol "abc") 'abc)
+
+==> #t
+
+>>> (symbol->string 'set-x!)
+
+==> "set-x!"
+
+>>> (eq? (string->symbol "hello world") '|hello world|)
+
+==> #t
+
+; A symbol whose name needs vertical-bar quoting on output round-trips by name
+
+>>> (symbol->string '|hello world|)
+
+==> "hello world"
+
+; ==========================================================================
+; @ as an initial character is NOT permitted; @ is only a subsequent char
+; (R7RS extended identifier chars: @ appears only in subsequent position).
+; A bare @ is therefore not an ordinary identifier.
+; ==========================================================================
+
+; @foo would begin with @, which is not a valid initial character
+
+>>> (define @foo 1)
+
+%%% %any-error%
+
+; ==========================================================================
+; Hex-escape case-insensitivity inside |...| (R7RS 2.1: hex escapes do not
+; distinguish upper and lower case)
+; ==========================================================================
+
+>>> (eq? '|\x41;| '|\x41;|)
+
+==> #t
+
+>>> (eq? '|\x6a;| '|\x6A;|)
+
+==> #t
+
+; |\x41;| is the symbol named "A" (uppercase A, U+0041)
+
+>>> (symbol->string '|\x41;|)
+
+==> "A"
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Spec example identifiers q and lambda used as quoted symbols (R7RS 2.1)
+; The report's identifier-example list includes single-letter q and the
+; word lambda; as quoted data these denote symbols.
+; ===
+
+>>> (symbol? 'q)
+
+==> #t
+
+>>> (symbol? 'lambda)
+
+==> #t
+
+>>> (symbol->string 'lambda)
+
+==> "lambda"
+
+; ===
+; |two\x20;words| equals |two words| (R7RS 2.1 worked example)
+; \x20; is the hex escape for U+0020 (space); both spell the same symbol.
+; ===
+
+>>> (eq? '|two\x20;words| '|two words|)
+
+==> #t
+
+>>> (symbol->string '|two\x20;words|)
+
+==> "two words"
+
+; ===
+; A sign followed by subsequent characters is an ordinary identifier
+; (peculiar identifier:  (explicit-sign sign-subsequent subsequent*)).
+; ===
+
+>>> (define +x 200)
+
+>>> +x
+
+==> 200
+
+>>> (define -y 201)
+
+>>> -y
+
+==> 201
+
+>>> (define +@ 202)
+
+>>> +@
+
+==> 202
+
+; ===
+; A dot-subsequent peculiar identifier: a sign or . followed by . then
+; subsequents (e.g. -.foo, .+).  R7RS 7.1.1 dot-subsequent grammar.
+; ===
+
+>>> (define -.x 203)
+
+>>> -.x
+
+==> 203
+
+; ===
+; symbol->string on a |...| symbol returns the unescaped character content
+; (R7RS 2.1: hex/mnemonic escapes denote the literal characters).
+; ===
+
+>>> (string-length (symbol->string '|a b|))
+
+==> 3
+
+>>> (string-ref (symbol->string '|a\x20;b|) 1)
+
+==> #\space
+
+; ===
+; || is a valid identifier different from any other identifier (R7RS 2.1)
+; The report states: "Note that || is a valid identifier that is different
+; from any other identifier."
+; ===
+
+>>> (symbol? '||)
+
+==> #t
+
+>>> (eq? '|| 'x)
+
+==> #f
+
+; The empty symbol || is the same symbol as (string->symbol "")
+
+>>> (eq? '|| (string->symbol ""))
+
+==> #t
+
+; ===
+; Vertical-bar quoting of a name that is already a valid ordinary identifier
+; denotes the SAME symbol (R7RS 2.1: |H\x65;llo| is the same identifier as
+; Hello; the same holds when no escapes are involved).
+; ===
+
+>>> (eq? '|abc| 'abc)
+
+==> #t
+
+>>> (eq? '|list->vector| 'list->vector)
+
+==> #t
+
+; ===
+; Vertical-bar quoting of a peculiar identifier denotes the same symbol
+; as its ordinary spelling (R7RS 2.1 / 7.1.1).
+; ===
+
+>>> (eq? '|+| '+)
+
+==> #t
+
+>>> (eq? '|...| '...)
+
+==> #t
+
+; ===
+; symbol->string resolves the escapes in a |...| identifier to its literal
+; characters: |H\x65;llo| names the symbol whose name is "Hello"
+; (R7RS 2.1 worked example).
+; ===
+
+>>> (symbol->string '|H\x65;llo|)
+
+==> "Hello"
+
+; ===
+; A symbol created by string->symbol with embedded whitespace is the same
+; symbol as its vertical-bar written form (R7RS 2.1 / 6.5).
+; ===
+
+>>> (eq? (string->symbol "two words") '|two words|)
+
+==> #t

@@ -147,3 +147,96 @@
 ; have guard return 'caught.  Both are conformant; the essential fact is
 ; that (one-arg) is an error and the evaluator must not hang.
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === syntax-error in a fallback rule signals an error
+; R7RS 4.3.3: syntax-error behaves like error but implementations with a
+; separate expansion pass should signal as soon as it is expanded.  It is
+; commonly used as the template of a "catch-all" rule that flags an invalid
+; use of the macro.  message is a string literal; args are arbitrary.
+
+>>> (define-syntax must-have-one
+...   (syntax-rules ()
+...     ((must-have-one x) x)
+...     ((must-have-one . whatever)
+...      (syntax-error "must-have-one: expected exactly one argument"))))
+
+>>> (must-have-one 42)
+... ; the valid (single-argument) use still works
+==> 42
+
+; The catch-all rule fires syntax-error — this is an error.
+>>> (must-have-one 1 2 3)
+
+%%% %any-error%
+
+>>> (must-have-one)
+
+%%% %any-error%
+
+; === syntax-error with extra argument expressions (args ...)
+; The args provide additional information; presence of args is still an error.
+
+>>> (define-syntax checked-pair
+...   (syntax-rules ()
+...     ((checked-pair (a b)) (cons a b))
+...     ((checked-pair other)
+...      (syntax-error "checked-pair: expected a two-element list, got" other))))
+
+>>> (checked-pair (1 2))
+
+==> (1 . 2)
+
+>>> (checked-pair 5)
+
+%%% %any-error%
+
+; === syntax-error reached even when the offending form would otherwise be
+; syntactically valid Scheme — the macro deliberately rejects it.
+
+>>> (define-syntax reject-zero
+...   (syntax-rules ()
+...     ((reject-zero 0) (syntax-error "reject-zero: zero is not allowed"))
+...     ((reject-zero n) n)))
+
+>>> (reject-zero 7)
+
+==> 7
+
+>>> (reject-zero 0)
+
+%%% %any-error%
+
+; === syntax-error in a nested macro expansion still signals an error
+
+>>> (define-syntax inner-checked
+...   (syntax-rules ()
+...     ((inner-checked x) x)
+...     ((inner-checked . bad)
+...      (syntax-error "inner-checked: bad use"))))
+
+>>> (define-syntax outer-uses-inner
+...   (syntax-rules ()
+...     ((outer-uses-inner)
+...      (inner-checked 1 2))))
+
+>>> (outer-uses-inner)
+
+%%% %any-error%
+
+; === guard cannot be relied upon to catch a syntax-error
+; R7RS: "Applications cannot count on being able to catch syntax errors with
+; exception handlers or guards."  Wrapping the bad use in guard is therefore
+; still an error (the evaluator must not hang).
+
+>>> (guard (e (#t 'caught))
+...   (must-have-one 1 2 3))
+
+%%% %any-error%
+
+; This is implementation-defined: an expand-time syntax-error escapes guard
+; (the case asserted here), while a run-time signaller might let guard return
+; 'caught.  The essential fact is that it is an error and does not hang.
+

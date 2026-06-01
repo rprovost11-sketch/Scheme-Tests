@@ -596,3 +596,262 @@
 
 ==> 3
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ==========================================================================
+; Comments are treated exactly like whitespace (R7RS 2.2)
+; A comment can therefore separate tokens that would otherwise merge.
+; ==========================================================================
+
+; A line comment terminates a token: 1<newline>2 are two separate datums,
+; the line comment runs to end of line and the next datum is on the next line
+
+>>> (+ 1 ;
+... 2)
+
+==> 3
+
+; A block comment acts as a token separator between two numbers
+
+>>> (list 1#|sep|#2 3)
+
+==> (1 2 3)
+
+; A datum comment that removes the operator-position datum leaves the next
+; datum as the operator
+
+>>> (#;car cdr '(1 2 3))
+
+==> (2 3)
+
+; ==========================================================================
+; #; skipping the final datum of a form (R7RS 2.2)
+; ==========================================================================
+
+; #; on the last element removes it entirely
+
+>>> (+ 1 2 #; 3)
+
+==> 3
+
+; #; skipping the only remaining argument
+
+>>> (list #; 1)
+
+==> ()
+
+; ==========================================================================
+; Nested block comment whose inner text contains an unbalanced-looking |#
+; only when it is escaped within a string — strings are not scanned inside
+; block comments, but the |# still must pair. Here we verify deeper nesting
+; and that the FIRST |# after the LAST #| closes the innermost level.
+; ==========================================================================
+
+; Five levels of nesting
+
+>>> (+ #| 1 #| 2 #| 3 #| 4 #| 5 |# 4 |# 3 |# 2 |# 1 |# 100 200)
+
+==> 300
+
+; Nested block comment immediately adjacent (no whitespace) to its opener
+
+>>> (+ #|#|inner|#|# 1 2)
+
+==> 3
+
+; ==========================================================================
+; A block comment may span the position between every pair of tokens
+; ==========================================================================
+
+>>> #|a|#(#|b|#+#|c|#1#|d|#2#|e|#)#|f|#
+
+==> 3
+
+; ==========================================================================
+; #| does not nest with a string's contents, and a string inside an
+; expression after a block comment is read normally
+; ==========================================================================
+
+>>> (string-append #| skip |# "ab" #| skip |# "cd")
+
+==> "abcd"
+
+; ==========================================================================
+; Datum comment in front of a quote/quasiquote abbreviation consumes the
+; whole abbreviated datum
+; ==========================================================================
+
+>>> (list #; 'skipped 'kept)
+
+==> (kept)
+
+>>> (list #; `(a ,b) 'kept)
+
+==> (kept)
+
+>>> (list 'a #; ,@xs 'b)
+
+==> (a b)
+
+; ==========================================================================
+; A line comment as the entire content of a continuation line
+; ==========================================================================
+
+>>> (+ 1
+... ; this line is only a comment
+...    2)
+
+==> 3
+
+; ==========================================================================
+; Whitespace-only and comment-only top-level input produces no value;
+; the following real expression is unaffected
+; ==========================================================================
+
+>>> #| just a comment, nothing else |#
+
+>>> (* 6 7)
+
+==> 42
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; A block comment does NOT scan for string contents (R7RS 2.2)
+; Only #| and |# pairs are recognized inside a block comment; a double
+; quote is just ordinary text, so the first |# closes the comment.
+; ===
+
+>>> (+ #| a "string-looking |# 1 2)
+
+==> 3
+
+; ===
+; A datum comment may skip a character literal whose name contains a
+; delimiter-like spelling (R7RS 2.2 + 6.6): #\( is one datum.
+; ===
+
+>>> (list #; #\( 1 2)
+
+==> (1 2)
+
+>>> (list #; #\) 1 2)
+
+==> (1 2)
+
+>>> (list #; #\space 1 2)
+
+==> (1 2)
+
+; ===
+; A line comment ends exactly at the newline; the datum on the next line
+; is unaffected even with no intervening blank (R7RS 2.2).
+; ===
+
+>>> (+ 1 ; comment
+... 2 ; another comment
+... 3)
+
+==> 6
+
+; ===
+; #; skipping a datum whose first token is itself a #!fold-case-shaped
+; token is not relevant here; instead verify #; before a vector datum
+; that contains nested block comments (R7RS 2.2).
+; ===
+
+>>> (list 1 #; #(a #| x |# b) 2)
+
+==> (1 2)
+
+; ===
+; Datum comment removing the dotted-pair tail's datum: the #; consumes the
+; element after the dot so it is NOT a valid improper list anymore -> error
+; OR the reader removes the element leaving a proper list. R7RS leaves the
+; interaction unspecified; only the clearly-correct case is tested here:
+; #; before a normal element of a proper list.
+; ===
+
+>>> (list 'a #; 'b 'c)
+
+==> (a c)
+
+; ===
+; A block comment spanning a string boundary in surrounding code: the
+; string after the comment is read normally and its quotes are intact.
+; ===
+
+>>> (string-length #|skip|# "ab|#cd")
+
+==> 6
+
+; ===
+; Empty datum-comment target is impossible: #; with end-of-input or with
+; only a closing paren following has no datum to skip -> error.
+; ===
+
+>>> (list 1 2 #;)
+
+%%% %any-error%
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Whitespace occurring inside a symbol delimited by vertical lines is
+; significant (R7RS 2.2). A space between |...| bars is part of the symbol.
+; ===
+
+>>> (symbol->string (quote |a b|))
+
+==> "a b"
+
+>>> (string-length (symbol->string (quote |a b|)))
+
+==> 3
+
+; A single space between the bars yields a one-character symbol name
+
+>>> (string-length (symbol->string (quote | |)))
+
+==> 1
+
+; A tab inside the |...| symbol is significant as well: t w o <tab> w o r d s
+
+>>> (string-length (symbol->string (quote |two	words|)))
+
+==> 9
+
+; ===
+; A vertical-bar-delimited symbol with no significant characters denotes the
+; same symbol as the ordinary spelling (R7RS 2.2 / 7.1.1).
+; ===
+
+>>> (eq? (quote |Hello|) (quote Hello))
+
+==> #t
+
+; ===
+; The #!fold-case and #!no-fold-case directives may appear anywhere comments
+; are permitted and are treated as comments (R7RS 2.2). Here we verify only
+; the "treated as whitespace/comment between tokens" aspect: the directive
+; separates tokens and contributes nothing to the surrounding form.
+; ===
+
+>>> (+ #!fold-case 1 2)
+
+==> 3
+
+>>> (+ #!no-fold-case 1 2)
+
+==> 3
+
+>>> (list #!fold-case 1 2)
+
+==> (1 2)

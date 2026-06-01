@@ -770,3 +770,158 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === string-map — single string ===
+; string-map applies proc element-wise and returns a new string.
+
+>>> (string-map char-upcase "hello")
+
+==> "HELLO"
+
+>>> (string-map char-downcase "HELLO")
+
+==> "hello"
+
+>>> (string-map char-foldcase "AbdEgH")
+
+==> "abdegh"
+
+>>> (string-map (lambda (c) c) "")
+
+==> ""
+
+>>> (string-map (lambda (c) #\*) "abc")
+
+==> "***"
+
+; string-map returns a new string; original is unchanged.
+
+>>> (define sm-orig "abc")
+
+>>> (define sm-result (string-map char-upcase sm-orig))
+
+>>> sm-result
+
+==> "ABC"
+
+>>> sm-orig
+
+==> "abc"
+
+; === string-map — multiple strings (parallel, stops at shortest) ===
+
+>>> (string-map
+...   (lambda (c k)
+...     ((if (eqv? k #\u) char-upcase char-downcase) c))
+...   "studlycaps xxx"
+...   "ululululul")
+
+==> "StUdLyCaPs"
+
+; Two strings of equal length
+
+>>> (string-map (lambda (a b) (if (char<? a b) a b)) "abc" "cba")
+
+==> "aba"
+
+; Unequal length: terminates when the shortest string runs out
+
+>>> (string-map (lambda (a b) a) "abcde" "xy")
+
+==> "ab"
+
+>>> (string-map (lambda (a b) b) "ab" "xyzwv")
+
+==> "xy"
+
+; === string comparison — multi-argument (3+) and transitivity ===
+; These predicates are required to be transitive.
+
+>>> (string=? "a" "a" "a" "a")
+
+==> #t
+
+>>> (string<? "a" "b" "c" "d")
+
+==> #t
+
+>>> (string<? "a" "b" "b" "d")
+
+==> #f
+
+>>> (string<=? "a" "a" "b" "b")
+
+==> #t
+
+>>> (string>? "d" "c" "b" "a")
+
+==> #t
+
+>>> (string>=? "c" "c" "b" "a")
+
+==> #t
+
+>>> (string-ci<? "a" "B" "c")
+
+==> #t
+
+>>> (string-ci>? "C" "b" "A")
+
+==> #t
+
+; === string comparison — length differences and prefixes ===
+
+>>> (string<? "abc" "abcd")
+
+==> #t
+
+>>> (string>? "abcd" "abc")
+
+==> #t
+
+>>> (string<? "Z" "a")
+
+==> #t
+
+; === string comparison — type error on non-string argument ===
+
+>>> (string=? "abc" 42)
+
+%%% %any-error%
+
+>>> (string<? "abc" 'abc)
+
+%%% %any-error%
+
+; === substring equivalent to string-copy ===
+
+>>> (substring "hello" 1 4)
+
+==> "ell"
+
+>>> (string=? (substring "hello" 1 4) (string-copy "hello" 1 4))
+
+==> #t
+
+; === make-string error — negative length ===
+
+>>> (make-string -1)
+
+%%% %any-error%
+
+; === string-append type error ===
+
+>>> (string-append "abc" 42)
+
+%%% %any-error%
+
+>>> (let ((s (symbol->string 'immutable))) (string-set! s 0 #\?) s)
+... ; R7RS 6.7 / 3.4: the string returned by symbol->string is immutable, and
+... ; storing into an immutable string "is an error" -- undefined behavior, so
+... ; signaling is optional; %optional-error% accepts either outcome.
+
+%%% %optional-error%
+

@@ -449,3 +449,105 @@
 
 ==> #f
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; symbol=? returns an actual boolean; it is an error to pass non-symbols
+; ===
+
+>>> (boolean? (symbol=? 'a 'a))
+
+==> #t
+
+>>> (boolean? (symbol=? 'a 'b))
+
+==> #t
+
+>>> (symbol=? 'a "a")
+
+%%% %any-error%
+
+>>> (symbol=? 'a 1)
+
+%%% %any-error%
+
+; ===
+; Symbols are identical in the sense of eqv? when spelled the same (R7RS 6.5)
+; ===
+
+>>> (eqv? 'foo 'foo)
+
+==> #t
+
+>>> (eqv? (string->symbol "bar") (string->symbol "bar"))
+
+==> #t
+
+>>> (eqv? 'foo 'bar)
+
+==> #f
+
+; ===
+; write/read invariance: a symbol written and read back is eqv? (R7RS 6.5)
+; ===
+
+>>> (eqv? 'hello (string->symbol (symbol->string 'hello)))
+
+==> #t
+
+>>> (eqv? '|hello world| (string->symbol (symbol->string '|hello world|)))
+
+==> #t
+
+; ===
+; Pipe notation with inline hex / mnemonic escapes denotes ordinary symbols
+; |H\x65;llo| is the same identifier as Hello (R7RS 2.1)
+; ===
+
+>>> (eq? '|H\x65;llo| 'Hello)
+
+==> #t
+
+>>> (symbol->string '|H\x65;llo|)
+
+==> "Hello"
+
+>>> (eq? '|\x9;\x9;| '|		|)
+
+==> #t
+
+; ===
+; symbol->string of a symbol whose name needs vertical-bar quoting on output
+; round-trips through string->symbol back to the same symbol
+; ===
+
+>>> (eq? (string->symbol "two words")
+...      (string->symbol (symbol->string (string->symbol "two words"))))
+
+==> #t
+
+>>> (symbol->string (string->symbol "a|b"))
+
+==> "a|b"
+
+; ===
+; string->symbol does NOT share with / is not affected by its argument string
+; (the argument may be mutated afterwards without changing the symbol)
+; ===
+
+>>> (define str (string #\f #\o #\o))
+
+>>> (define sym (string->symbol str))
+
+>>> (string-set! str 0 #\b)
+
+>>> (symbol->string sym)
+
+==> "foo"
+
+>>> (eq? sym 'foo)
+
+==> #t
+

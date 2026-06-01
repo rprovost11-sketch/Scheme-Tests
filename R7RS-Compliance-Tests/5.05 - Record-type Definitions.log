@@ -546,3 +546,138 @@
 
 ==> #t
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === Generativity: two define-record-type forms of identical structure
+; create DISTINCT, disjoint types (R7RS: each use creates a new type, even
+; record types of the same structure).
+
+>>> (define-record-type <cellA>
+...   (make-cellA v) cellA? (v cellA-v))
+
+>>> (define-record-type <cellB>
+...   (make-cellB v) cellB? (v cellB-v))
+
+>>> (cellA? (make-cellB 1))
+
+==> #f
+
+>>> (cellB? (make-cellA 1))
+
+==> #f
+
+>>> (cellA? (make-cellA 1))
+
+==> #t
+
+; Accessor of one type applied to the other type's instance is an error.
+
+>>> (cellA-v (make-cellB 1))
+
+%%% %any-error%
+
+; === Constructor is first-class: usable with apply and map
+; The printed form of a record is implementation-defined, so we verify the
+; constructed instance through its accessors rather than by printing it.
+
+>>> (point-x (apply make-point '(7 8)))
+
+==> 7
+
+>>> (point-y (apply make-point '(7 8)))
+
+==> 8
+
+; === Accessor is first-class: usable with map over a list of records
+
+>>> (define pt-list (list (make-point 1 10) (make-point 2 20) (make-point 3 30)))
+
+>>> (map point-x pt-list)
+
+==> (1 2 3)
+
+>>> (map point-y pt-list)
+
+==> (10 20 30)
+
+; === Predicate is first-class: usable with filter
+
+>>> (define mixed (list (make-point 0 0) 5 (make-point 1 1) 'sym (make-foo 9)))
+
+>>> (length (filter point? mixed))
+
+==> 2
+
+; === Modifier returns an unspecified value (mutation procedures, R7RS 3.4)
+; We only require: no error, and the field is updated.
+
+>>> (define mp2 (make-mpoint 1 2))
+
+>>> (set-mpoint-x! mp2 (+ (mpoint-x mp2) 100))
+
+>>> (mpoint-x mp2)
+
+==> 101
+
+; === Field clause order is independent of accessor naming
+; Accessors are matched to fields by the field name, not by position.
+
+>>> (define-record-type <kv>
+...   (make-kv key value)
+...   kv?
+...   (value kv-value)
+...   (key   kv-key))
+
+>>> (define entry (make-kv 'name "Ada"))
+
+>>> (kv-key entry)
+
+==> name
+
+>>> (kv-value entry)
+
+==> "Ada"
+
+; === A record instance is not equal? to a list with the same data
+; (records are a disjoint type; equal? recurses only into known aggregates).
+
+>>> (equal? (make-point 1 2) (list 1 2))
+
+==> #f
+
+>>> (equal? (make-point 1 2) #(1 2))
+
+==> #f
+
+; === Self-referential / recursive structure via a mutable field
+
+>>> (define-record-type <node>
+...   (make-node value next)
+...   node?
+...   (value node-value)
+...   (next  node-next set-node-next!))
+
+>>> (define n1 (make-node 1 '()))
+
+>>> (define n2 (make-node 2 '()))
+
+>>> (set-node-next! n1 n2)
+
+>>> (node-value (node-next n1))
+
+==> 2
+
+>>> (node? (node-next n1))
+
+==> #t
+
+; A cycle is allowed: point a node's next back to itself.
+
+>>> (set-node-next! n2 n2)
+
+>>> (eq? (node-next n2) n2)
+
+==> #t
+

@@ -202,3 +202,134 @@
 %%% %any-error%
 
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; include is effectively a begin of the file contents: re-including a file
+; re-runs its definitions, leaving the same bindings in effect
+; ===
+
+>>> (include "4.1.7-aux1.scm")
+
+>>> (set! included-var 0)
+
+>>> included-var
+
+==> 0
+
+>>> (include "4.1.7-aux1.scm")
+
+>>> included-var
+
+==> 42
+
+; ===
+; A procedure defined in an included file behaves like any other procedure
+; and can be passed to higher-order procedures
+; ===
+
+>>> (include "4.1.7-aux1.scm")
+
+>>> (map included-double '(1 2 3 4))
+
+==> (2 4 6 8)
+
+; ===
+; include inside a lambda body splices the file's definitions into that
+; body (letrec* region); they are visible to following body expressions
+; ===
+
+>>> (define (use-aux2)
+...   (include "4.1.7-aux2.scm")
+...   (aux2-sum 10 20 30))
+
+>>> (use-aux2)
+
+==> 60
+
+; ===
+; A single include form listing two files makes all definitions from both
+; available, evaluated left to right
+; ===
+
+>>> (include "4.1.7-aux1.scm" "4.1.7-aux2.scm")
+
+>>> (list included-var aux2-var)
+
+==> (42 99)
+
+>>> (included-double (aux2-sum 1 2 3))
+
+==> 12
+
+; ===
+; include-ci folds identifiers to lowercase; the folded names are bound and
+; the folded symbol in quoted data is eqv? to the lowercase symbol
+; ===
+
+>>> (include-ci "4.1.7-aux-ci.scm")
+
+>>> (eqv? (caddr camelcaselist) 'gamma)
+
+==> #t
+
+>>> (map (lambda (x) x) camelcaselist)
+
+==> (alpha beta gamma)
+
+>>> (uppercase-proc 5)
+
+==> 15
+
+; ===
+; "include does not" fold case: a plain include of the same file that
+; include-ci folds preserves the original mixed-case identifiers AND the
+; mixed-case symbols in quoted data (R7RS 4.1.7).
+; ===
+
+>>> (include "4.1.7-aux-ci.scm")
+
+>>> MixedCase-Value
+
+==> 7
+
+>>> (UPPERCASE-PROC 2)
+
+==> 6
+
+>>> CamelCaseList
+
+==> (Alpha Beta Gamma)
+
+; With plain include the symbols in the quoted list keep their original case,
+; so they are NOT eq? to the lowercase-folded symbols.
+
+>>> (eq? (car CamelCaseList) 'Alpha)
+
+==> #t
+
+>>> (eq? (car CamelCaseList) 'alpha)
+
+==> #f
+
+; ===
+; The #!fold-case effect of include-ci is confined to the file it reads;
+; it does not persist to a later plain include in the same session, and a
+; plain include never folds an identifier's case (the uppercased spelling of
+; a lowercase definition stays unbound).
+; ===
+
+>>> (include-ci "4.1.7-aux-ci.scm")
+
+>>> (include "4.1.7-aux1.scm")
+
+>>> included-var
+
+==> 42
+
+>>> INCLUDED-VAR
+
+%%% %any-error%

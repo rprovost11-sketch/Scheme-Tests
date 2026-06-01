@@ -719,3 +719,189 @@
 
 ==> #f
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Record types are disjoint from all 12 standard type predicates (R7RS 3.2:
+; "and all predicates created by define-record-type").  A record instance
+; satisfies its own predicate and none of the standard ones.
+; ===
+
+>>> (define-record-type point
+...   (make-point x y)
+...   point?
+...   (x point-x)
+...   (y point-y))
+
+>>> (define the-point (make-point 1 2))
+
+>>> (point? the-point)
+
+==> #t
+
+>>> (boolean? the-point)
+
+==> #f
+
+>>> (bytevector? the-point)
+
+==> #f
+
+>>> (char? the-point)
+
+==> #f
+
+>>> (eof-object? the-point)
+
+==> #f
+
+>>> (null? the-point)
+
+==> #f
+
+>>> (number? the-point)
+
+==> #f
+
+>>> (pair? the-point)
+
+==> #f
+
+>>> (port? the-point)
+
+==> #f
+
+>>> (procedure? the-point)
+
+==> #f
+
+>>> (string? the-point)
+
+==> #f
+
+>>> (symbol? the-point)
+
+==> #f
+
+>>> (vector? the-point)
+
+==> #f
+
+; A record predicate is false for non-record values
+
+>>> (point? 42)
+
+==> #f
+
+>>> (point? '(1 . 2))
+
+==> #f
+
+; Two distinct record types have mutually-false predicates
+
+>>> (define-record-type box (make-box v) box? (v box-v))
+
+>>> (box? the-point)
+
+==> #f
+
+>>> (point? (make-box 9))
+
+==> #f
+
+; ===
+; Negative and large integers, and 0, are all numbers and nothing else
+; (R7RS 3.2): additional number representatives.
+; ===
+
+>>> (number? -1000000000000)
+
+==> #t
+
+>>> (pair? -1000000000000)
+
+==> #f
+
+; ===
+; A string and a symbol with the same spelling are disjoint (R7RS 3.2):
+; string? is true only for the string, symbol? only for the symbol.
+; ===
+
+>>> (string? (symbol->string 'abc))
+
+==> #t
+
+>>> (symbol? (symbol->string 'abc))
+
+==> #f
+
+>>> (symbol? (string->symbol "abc"))
+
+==> #t
+
+>>> (string? (string->symbol "abc"))
+
+==> #f
+
+; ===
+; Completes the procedure-type row of the disjointness matrix: a procedure
+; value must satisfy none of the other 11 predicates, including symbol?
+; (R7RS 3.2).  The existing block tested (symbol? 'car) on the *symbol*;
+; this tests symbol? on the *procedure* itself.
+; ===
+
+>>> (symbol? car)
+
+==> #f
+
+; ===
+; The predicate, constructor, and accessors created by define-record-type
+; are procedures, satisfying procedure? and (by disjointness) no other
+; type predicate (R7RS 3.2, 5.5).  The point record type is defined above.
+; ===
+
+>>> (procedure? point?)
+
+==> #t
+
+>>> (procedure? make-point)
+
+==> #t
+
+>>> (procedure? point-x)
+
+==> #t
+
+; A record predicate is itself a procedure, not a record nor a pair
+
+>>> (point? point?)
+
+==> #f
+
+>>> (pair? point?)
+
+==> #f
+
+; ===
+; The infinities and NaN are numbers (R7RS 3.2: number type), and by
+; disjointness satisfy no other standard predicate.
+; ===
+
+>>> (number? +inf.0)
+
+==> #t
+
+>>> (number? +nan.0)
+
+==> #t
+
+>>> (pair? +inf.0)
+
+==> #f
+
+>>> (procedure? +nan.0)
+
+==> #f

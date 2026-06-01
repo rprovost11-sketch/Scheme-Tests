@@ -361,7 +361,7 @@
 ==> 1
 
 >>> (values 1 2 3)
-==> #<values 1 2 3>
+==> 1 2 3
 
 >>> (define head&tail
 ...   (lambda (ls)
@@ -369,7 +369,7 @@
 ==>
 
 >>> (head&tail '(a b c))
-==> #<values a (b c)>
+==> a (b c)
 
 >>> (call-with-values
 ...   (lambda () (values 'bond 'james))
@@ -420,7 +420,7 @@
 ==>
 
 >>> (dxdy '(0 . 0) '(0 . 5))
-==> #<values 0 5>
+==> 0 5
 
 >>> (segment-length '(1 . 4) '(4 . 8))
 ==> 5
@@ -429,10 +429,10 @@
 ==> 4/3
 
 >>> (describe-segment '(1 . 4) '(4 . 8))
-==> #<values 5 4/3>
+==> 5 4/3
 
 >>> (split '(a b c d e f))
-==> #<values (a c e) (b d f)>
+==> (a c e) (b d f)
 
 >>> (+ (values 2) 4)
 ==> 6

@@ -755,3 +755,210 @@
 
 >>> (delete-file "6.13-binary-out.tmp")
 
+>>> (port? (current-output-port))
+
+==> #t
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===  open-input-file / open-binary-input-file signal a file-error?  ===
+; R7RS 6.13.1: "If the file does not exist or cannot be opened, an error
+; that satisfies file-error? is signaled."
+
+>>> (file-error?
+...   (guard (e (#t e)) (open-input-file "no-such-file-abc987.txt")))
+
+==> #t
+
+>>> (file-error?
+...   (guard (e (#t e)) (open-binary-input-file "no-such-binary-abc987.bin")))
+
+==> #t
+
+>>> (procedure? file-error?)
+
+==> #t
+
+; ===  get-output-string: it is an error if port not from open-output-string  ===
+; R7RS 6.13.1.
+
+>>> (get-output-string (open-input-string "x"))
+
+%%% %any-error%
+
+; ===  get-output-bytevector: error if port not from open-output-bytevector  ===
+
+>>> (get-output-bytevector (open-output-string))
+
+%%% %any-error%
+
+; ===  close-port / close-input-port have no effect if already closed  ===
+; R7RS 6.13.1: "These routines have no effect if the port has already
+; been closed."
+
+>>> (define dbl-close (open-input-string "y"))
+
+>>> (close-port dbl-close)
+
+>>> (close-port dbl-close)
+
+>>> (input-port-open? dbl-close)
+
+==> #f
+
+; ===  call-with-port returns the values yielded by proc (multiple values)  ===
+; R7RS 6.13.1: "the values yielded by the proc are returned."
+
+>>> (call-with-values
+...   (lambda ()
+...     (call-with-port (open-input-string "1 2")
+...       (lambda (p) (values (read p) (read p)))))
+...   list)
+
+==> (1 2)
+
+; ===  call-with-output-file closes the port after proc returns  ===
+; R7RS 6.13.1: behaves "as if by ... call-with-port" -> port is closed.
+
+>>> (define cof-saved #f)
+
+>>> (call-with-output-file "6.13-cof.tmp"
+...   (lambda (p) (set! cof-saved p) (display "x" p)))
+
+>>> (output-port-open? cof-saved)
+
+==> #f
+
+; ===  call-with-input-file closes the port after proc returns  ===
+
+>>> (define cif-saved #f)
+
+>>> (call-with-input-file "6.13-cof.tmp"
+...   (lambda (p) (set! cif-saved p) (read-char p)))
+
+==> #\x
+
+>>> (input-port-open? cif-saved)
+
+==> #f
+
+; ===  open-output-file returns a textual output port (not binary)  ===
+; R7RS 6.13.1: open-output-file "returns a textual output port".
+
+>>> (define oof-p (open-output-file "6.13-oof.tmp"))
+
+>>> (output-port? oof-p)
+
+==> #t
+
+>>> (textual-port? oof-p)
+
+==> #t
+
+>>> (binary-port? oof-p)
+
+==> #f
+
+>>> (close-port oof-p)
+
+>>> (output-port-open? oof-p)
+
+==> #f
+
+; ===  binary file ports are binary, not textual  ===
+; open-binary-input-file "returns a ... binary input port".
+
+>>> (call-with-port (open-binary-output-file "6.13-bdisjoint.tmp")
+...   (lambda (p) (write-u8 7 p)))
+
+>>> (define bdj (open-binary-input-file "6.13-bdisjoint.tmp"))
+
+>>> (textual-port? bdj)
+
+==> #f
+
+>>> (binary-port? bdj)
+
+==> #t
+
+>>> (close-port bdj)
+
+>>> (input-port-open? bdj)
+
+==> #f
+
+; ===  empty accumulator ports: get on a fresh port yields empty result  ===
+
+>>> (get-output-string (open-output-string))
+
+==> ""
+
+>>> (get-output-bytevector (open-output-bytevector))
+
+==> #u8()
+
+; ===  open-input-bytevector on empty bytevector is immediately at eof  ===
+
+>>> (eof-object? (read-u8 (open-input-bytevector #u8())))
+
+==> #t
+
+; ===  Cleanup additional temp files  ===
+
+>>> (delete-file "6.13-cof.tmp")
+
+>>> (delete-file "6.13-oof.tmp")
+
+>>> (delete-file "6.13-bdisjoint.tmp")
+
+>>> (define cp-out (open-output-string))
+... ; === R7RS 6.13.1: closing an already-closed port has no effect (closing
+... ; repeatedly via any of the three close procedures is not an error) ===
+
+>>> (begin (close-output-port cp-out) (close-output-port cp-out) (close-port cp-out) 'thrice-ok)
+... ; reaching 'thrice-ok proves the 2nd close-output-port and the close-port on
+... ; the already-closed port raised no error
+
+==> thrice-ok
+
+>>> (define cp-in (open-input-string "abc"))
+
+>>> (begin (close-input-port cp-in) (close-input-port cp-in) (close-port cp-in) 'in-ok)
+
+==> in-ok
+
+>>> (close-input-port (open-output-string))
+... ; close-input-port / close-output-port still type-check the argument even
+... ; when closed: it must be an input / output port respectively
+
+%%% %any-error%
+
+>>> (close-output-port (open-input-string "z"))
+
+%%% %any-error%
+
+>>> (define po (open-output-string))
+... ; R7RS 6.13.1: current-output-port / current-input-port / current-error-port
+... ; are parameter objects, so parameterize can rebind them; output produced in
+... ; the body is captured by the bound port.
+
+>>> (parameterize ((current-output-port po)) (display "captured!") (write 42))
+
+>>> (get-output-string po)
+
+==> "captured!42"
+
+>>> (parameterize ((current-input-port (open-input-string "(a b c) 99")))
+...   (list (read) (read)))
+... ; current-input-port rebinds the source that read / read-char draw from
+
+==> ((a b c) 99)
+
+>>> (output-port? (parameterize ((current-output-port (open-output-string)))
+...                  (current-output-port)))
+... ; the accessor itself sees the rebinding inside the parameterize body
+
+==> #t
+

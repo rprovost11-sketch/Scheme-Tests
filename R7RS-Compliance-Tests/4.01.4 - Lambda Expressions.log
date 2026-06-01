@@ -367,3 +367,142 @@
 
 %%% %any-error%
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Spec examples (R7RS §4.1.4):
+;   ((lambda x x) 3 4 5 6)        ==> (3 4 5 6)
+;   ((lambda (x y . z) z) 3 4 5 6) ==> (5 6)
+; ===
+
+>>> ((lambda x x) 3 4 5 6)
+
+==> (3 4 5 6)
+
+>>> ((lambda (x y . z) z) 3 4 5 6)
+
+==> (5 6)
+
+; ===
+; Each lambda evaluation produces a procedure tagged with a distinct
+; storage location, so eqv?/eq? distinguish separately-created procedures
+; (R7RS §4.1.4 / §6.1)
+; ===
+
+>>> (define (gen) (lambda (x) x))
+
+>>> (eq? (gen) (gen))
+
+==> #f
+
+; A procedure is eqv? to itself
+
+>>> (define self-proc (lambda (x) x))
+
+>>> (eqv? self-proc self-proc)
+
+==> #t
+
+; ===
+; Body with zero definitions and a single expression is the minimal body
+; ===
+
+>>> ((lambda (x) x) 'only)
+
+==> only
+
+; ===
+; Body definitions form a letrec*: a later internal define may call an
+; earlier one, and forward textual reference is permitted within procedures
+; ===
+
+>>> ((lambda ()
+...    (define (even? n) (if (= n 0) #t (odd? (- n 1))))
+...    (define (odd? n) (if (= n 0) #f (even? (- n 1))))
+...    (even? 8)))
+
+==> #t
+
+; ===
+; Dotted formal with the rest list empty when exactly the required count
+; of arguments is supplied
+; ===
+
+>>> ((lambda (a b . rest) (list a b rest)) 1 2)
+
+==> (1 2 ())
+
+; ===
+; A lambda whose formals are a single rest variable accepts zero arguments,
+; binding the rest variable to the empty list
+; ===
+
+>>> ((lambda args (list? args)))
+
+==> #t
+
+; ===
+; Error: dotted-formal procedure called with fewer than the required
+; number of leading arguments
+; ===
+
+>>> ((lambda (a b . rest) rest) 1)
+
+%%% %any-error%
+
+; ===
+; Spec example (R7RS §4.1.4): ((lambda (x) (+ x x)) 4) = 8
+; ===
+
+>>> ((lambda (x) (+ x x)) 4)
+
+==> 8
+
+; ===
+; Spec example (R7RS §4.1.4): a two-argument procedure named via define
+;   (define reverse-subtract (lambda (x y) (- y x)))
+;   (reverse-subtract 7 10) = 3
+; ===
+
+>>> (define reverse-subtract (lambda (x y) (- y x)))
+
+>>> (reverse-subtract 7 10)
+
+==> 3
+
+; ===
+; Spec example (R7RS §4.1.4): a closure capturing a let-bound variable
+;   (define add4 (let ((x 4)) (lambda (y) (+ x y))))
+;   (add4 6) = 10
+; ===
+
+>>> (define add4 (let ((x 4)) (lambda (y) (+ x y))))
+
+>>> (add4 6)
+
+==> 10
+
+; ===
+; Error: "It is an error for a variable to appear more than once in
+; formals" (R7RS §4.1.4) — duplicate variable in a fixed-arity formals list
+; ===
+
+>>> ((lambda (x x) x) 1 2)
+
+%%% %any-error%
+
+; ===
+; Error: duplicate variable in formals also forbidden when the repeated
+; name is the rest variable of a dotted formals list (R7RS §4.1.4)
+; ===
+
+>>> ((lambda (x . x) x) 1 2 3)
+
+%%% %any-error%
+
+>>> ((lambda (x y . x) x) 1 2 3)
+
+%%% %any-error%

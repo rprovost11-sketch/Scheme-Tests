@@ -286,3 +286,110 @@
 
 %%% %any-error% forward reference to undefined datum label #0#
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; A label whose object is the reference itself is an error (R7RS 2.4):
+; "it is an error if the reference appears as the labelled object itself
+; (as in #n=#n#), because the object labelled by #n= is not well defined."
+; ===
+
+>>> '#0=#0#
+
+%%% %any-error% labelled object is its own reference
+
+; ===
+; The set-cdr! worked example from R7RS 2.4 produces a circular list whose
+; printed form uses datum-label notation.  Built with mutation, not a
+; literal, so it is legal (literals may not be circular but mutated objects
+; may).
+; ===
+
+>>> (define lab-ex
+...   (let ((x (list 'a 'b 'c)))
+...     (set-cdr! (cddr x) x)
+...     x))
+
+>>> (car lab-ex)
+
+==> a
+
+>>> (cadr lab-ex)
+
+==> b
+
+>>> (caddr lab-ex)
+
+==> c
+
+>>> (eq? lab-ex (cdddr lab-ex))
+
+==> #t
+
+; Printed representation uses a datum label for the cycle (R7RS 2.4)
+
+>>> lab-ex
+
+==> #0=(a b c . #0#)
+
+; ===
+; A label and its reference sharing a string object: both list positions
+; are the same string, so mutating one is visible at the other only if the
+; string is mutable.  Identity is the testable invariant.
+; ===
+
+>>> (let ((x '(#0="ab" #0#))) (eq? (car x) (cadr x)))
+
+==> #t
+
+; ===
+; A datum label referenced inside a nested vector within a list (R7RS 2.4):
+; the label scope is the whole outermost datum.
+; ===
+
+>>> (let ((x '(#0=(1 2) #(#0#))))
+...   (eq? (car x) (vector-ref (cadr x) 0)))
+
+==> #t
+
+; ===
+; Reference reachable through several levels of nesting before its first
+; textual reuse (R7RS 2.4 shared substructure).
+; ===
+
+>>> (let ((x '#0=(1 (2 (3 #0#)))))
+...   (eq? x (cadr (cadr (cadr x)))))
+
+==> #t
+
+; ===
+; A whole vector object labelled with #n= and shared between two positions
+; of an enclosing list: #n# is the SAME object as #n= (R7RS 2.4, section 6.1).
+; Distinct from labelling a pair *inside* a vector.
+; ===
+
+>>> (let ((x '(#0=#(1 2) #0#))) (eq? (car x) (cadr x)))
+
+==> #t
+
+; ===
+; A self-referential vector whose reference is at a non-tail index:
+; #0=#(1 #0# 3) — element 1 is the vector itself (R7RS 2.4 circular literal).
+; ===
+
+>>> (define vmid '#0=#(1 #0# 3))
+
+>>> (eq? (vector-ref vmid 1) vmid)
+
+==> #t
+
+>>> (vector-ref (vector-ref vmid 1) 0)
+
+==> 1
+
+>>> (vector-ref (vector-ref vmid 1) 2)
+
+==> 3

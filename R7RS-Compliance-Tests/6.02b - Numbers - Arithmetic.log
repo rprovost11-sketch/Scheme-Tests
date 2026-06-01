@@ -733,3 +733,233 @@
 
 ==> #t
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === square — (square z) is (* z z)
+; R7RS 6.2.6.
+
+>>> (square 0)
+
+==> 0
+
+>>> (square 4)
+
+==> 16
+
+>>> (square -4)
+
+==> 16
+
+>>> (square 42)
+
+==> 1764
+
+>>> (square 2.0)
+
+==> 4.0
+
+>>> (square 1/2)
+
+==> 1/4
+
+>>> (square -3/4)
+
+==> 9/16
+
+>>> (exact? (square 5))
+
+==> #t
+
+>>> (inexact? (square 2.0))
+
+==> #t
+
+; === unary / on exact fractions and inexact
+
+>>> (/ 1/2)
+
+==> 2
+
+>>> (/ 2/3)
+
+==> 3/2
+
+>>> (/ 4)
+
+==> 1/4
+
+>>> (/ 2.0)
+
+==> 0.5
+
+; === - with single inexact
+
+>>> (- 2.5)
+
+==> -2.5
+
+>>> (- 1/4)
+
+==> -1/4
+
+; === + and * with a single inexact argument keep exactness unchanged
+
+>>> (+ 2.5)
+
+==> 2.5
+
+>>> (* 2.5)
+
+==> 2.5
+
+; === Integer division by zero is an error
+; R7RS 6.2.6: "It is an error if n2 is zero."
+
+>>> (quotient 5 0)
+
+%%% %any-error%
+
+>>> (remainder 5 0)
+
+%%% %any-error%
+
+>>> (modulo 5 0)
+
+%%% %any-error%
+
+>>> (floor-quotient 5 0)
+
+%%% %any-error%
+
+>>> (floor-remainder 5 0)
+
+%%% %any-error%
+
+>>> (truncate-quotient 5 0)
+
+%%% %any-error%
+
+>>> (truncate-remainder 5 0)
+
+%%% %any-error%
+
+; === abs — exact zero and fractional/inexact edges
+
+>>> (abs -0.0)
+
+==> 0.0
+
+>>> (abs -7/8)
+
+==> 7/8
+
+>>> (abs +nan.0)
+
+==> +nan.0
+
+; === gcd / lcm — single argument returns its absolute value
+
+>>> (gcd 5)
+
+==> 5
+
+>>> (gcd -5)
+
+==> 5
+
+>>> (lcm 5)
+
+==> 5
+
+>>> (lcm -5)
+
+==> 5
+
+; === gcd / lcm — more multi-argument cases
+
+>>> (gcd 0)
+
+==> 0
+
+>>> (lcm 0)
+
+==> 0
+
+>>> (gcd 18 24 30)
+
+==> 6
+
+>>> (lcm 2 3 4)
+
+==> 12
+
+; === numerator / denominator on exact integers
+
+>>> (numerator 0)
+
+==> 0
+
+>>> (denominator 0)
+
+==> 1
+
+>>> (numerator -7)
+
+==> -7
+
+>>> (denominator -7)
+
+==> 1
+
+; === floor/ and truncate/ — same result when signs agree (both positive)
+
+>>> (call-with-values (lambda () (floor/ 17 5)) list)
+
+==> (3 2)
+
+>>> (call-with-values (lambda () (truncate/ 17 5)) list)
+
+==> (3 2)
+
+; === modulo / remainder — quotient*divisor + remainder identity (mixed signs)
+
+>>> (let ((n 13) (d -4))
+...   (= n (+ (* (quotient n d) d) (remainder n d))))
+
+==> #t
+
+>>> (let ((n -13) (d -4))
+...   (= n (+ (* (quotient n d) d) (remainder n d))))
+
+==> #t
+
+; === modulo identity: n = (floor-quotient n d)*d + (modulo n d)
+
+>>> (let ((n -13) (d 4))
+...   (= n (+ (* (floor-quotient n d) d) (modulo n d))))
+
+==> #t
+
+>>> (let ((n 13) (d -4))
+...   (= n (+ (* (floor-quotient n d) d) (modulo n d))))
+
+==> #t
+
+; === Exact/inexact contagion in subtraction and division
+
+>>> (- 5 2.0)
+
+==> 3.0
+
+; (* exact-0 inexact): R7RS does not mandate the exact-0 shortcut here, so
+; some implementations return exact 0 and others inexact 0.0 (contagion).
+>>> (* 0 2.5)
+
+==> 0 or ==> 0.0
+
+>>> (* 0.0 5)
+
+==> 0.0

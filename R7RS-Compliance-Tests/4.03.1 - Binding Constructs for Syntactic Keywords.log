@@ -285,3 +285,102 @@
 
 ==> 9
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === let-syntax as an expression (in operand / initializer position)
+; The whole let-syntax form is an expression, so it may appear anywhere an
+; expression is expected, e.g. a let binding initializer or a procedure arg.
+
+>>> (let ((v (let-syntax ((tw (syntax-rules ()
+...                             ((tw x) (* x 2)))))
+...            (tw 21))))
+...   v)
+
+==> 42
+
+>>> (+ 1 (let-syntax ((inc (syntax-rules ()
+...                          ((inc x) (+ x 1)))))
+...        (inc 10)))
+
+==> 12
+
+; === letrec-syntax as an expression in operand position
+
+>>> (* 2 (letrec-syntax ((cnt (syntax-rules ()
+...                             ((cnt) 0)
+...                             ((cnt x rest ...) (+ 1 (cnt rest ...))))))
+...         (cnt a b c)))
+
+==> 6
+
+; === let-syntax body splices a begin containing definitions
+
+>>> (let-syntax ((mk (syntax-rules ()
+...                    ((mk name val) (define name val)))))
+...   (begin
+...     (mk ls-a 3)
+...     (mk ls-b 4))
+...   (+ ls-a ls-b))
+
+==> 7
+
+; === let-syntax macro using a custom ellipsis identifier
+; The alternate (syntax-rules <ellipsis> (<lit> ...) ...) form is available
+; inside let-syntax just as at top level.
+
+>>> (let-syntax ((collect (syntax-rules ::: ()
+...                         ((collect x :::) (list x :::)))))
+...   (collect 1 2 3 4))
+
+==> (1 2 3 4)
+
+; === letrec-syntax: a keyword may expand to a use of itself in tail position
+; (single-keyword recursive expansion, distinct from the earlier my-or test)
+
+>>> (letrec-syntax ((rep (syntax-rules ()
+...                        ((rep) '())
+...                        ((rep x rest ...) (cons 'x (rep rest ...))))))
+...   (rep a b c))
+
+==> (a b c)
+
+; === let-syntax keyword shadows an outer keyword of the same name
+; The inner binding wins within the inner body; the outer is restored after.
+
+>>> (define-syntax shdw
+...   (syntax-rules ()
+...     ((shdw x) (list 'outer x))))
+
+>>> (shdw 1)
+
+==> (outer 1)
+
+>>> (let-syntax ((shdw (syntax-rules ()
+...                      ((shdw x) (list 'inner x)))))
+...   (shdw 2))
+
+==> (inner 2)
+
+>>> (shdw 3)
+
+==> (outer 3)
+
+; === let-syntax with no matching pattern in the local macro is an error
+
+>>> (let-syntax ((only1 (syntax-rules ()
+...                       ((only1 x) x))))
+...   (only1 1 2))
+
+%%% %any-error%
+
+>>> (let-syntax ((dup (syntax-rules () ((dup) 1)))
+...              (dup (syntax-rules () ((dup) 2))))
+...   (dup))
+... ; R7RS 4.3.1: "it is an error for a keyword to appear more than once" in the
+... ; bindings of let-syntax -- undefined behavior, so signaling is optional;
+... ; %optional-error% accepts either a raised error or the last binding winning.
+
+%%% %optional-error%
+

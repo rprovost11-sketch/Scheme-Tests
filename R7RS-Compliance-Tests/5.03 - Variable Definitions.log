@@ -564,3 +564,180 @@
 
 ==> (7)
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === 5.3.1 — variadic shorthand: (define (f . args) ...) with zero required
+; Already tested for my-list; here confirm the value passed is a fresh list
+; and that the body may use it as an ordinary list.
+
+>>> (define (sum-all . xs) (apply + xs))
+
+>>> (sum-all)
+
+==> 0
+
+>>> (sum-all 1 2 3 4)
+
+==> 10
+
+; === 5.3.1 — body of a shorthand define may contain internal define-values
+
+>>> (define (minmax lst)
+...   (define-values (lo hi)
+...     (values (apply min lst) (apply max lst)))
+...   (list lo hi))
+
+>>> (minmax '(3 1 4 1 5 9 2 6))
+
+==> (1 9)
+
+; === 5.3.2 — internal defines: a later init may call an earlier-defined proc
+
+>>> (let ()
+...   (define (twice f x) (f (f x)))
+...   (define add3 (lambda (n) (+ n 3)))
+...   (define result (twice add3 10))
+...   result)
+
+==> 16
+
+; === 5.3.2 — internal define inside a nested lambda body sees enclosing args
+
+>>> (define (outer-fn a)
+...   (define (inner-fn b)
+...     (define c (+ a b))
+...     (* c 2))
+...   (inner-fn 5))
+
+>>> (outer-fn 10)
+
+==> 30
+
+; === 5.3.2 — define-values as an internal definition (letrec* region)
+
+>>> (let ()
+...   (define-values (p q) (values 2 3))
+...   (define s (+ p q))
+...   (list p q s))
+
+==> (2 3 5)
+
+; === 5.3.2 — internal define-values with a rest variable
+
+>>> (define (split-first . items)
+...   (define-values (head . others) (apply values items))
+...   (list head others))
+
+>>> (split-first 1 2 3 4)
+
+==> (1 (2 3 4))
+
+>>> (split-first 'only)
+
+==> (only ())
+
+; === define-values — expression evaluated once, multiple names bound
+
+>>> (define dv-call-count 0)
+
+>>> (define-values (dv-1 dv-2)
+...   (begin
+...     (set! dv-call-count (+ dv-call-count 1))
+...     (values 'first 'second)))
+
+>>> (list dv-1 dv-2 dv-call-count)
+
+==> (first second 1)
+
+; === define-values — single value with rest collects empty list
+
+>>> (define-values (lone . extras) (values 42))
+
+>>> lone
+
+==> 42
+
+>>> extras
+
+==> ()
+
+; === 5.3.1 — nested internal defines mutually visible via lambda (letrec*)
+
+>>> (define (parity-pair n)
+...   (define (ev? k) (if (= k 0) #t (od? (- k 1))))
+...   (define (od? k) (if (= k 0) #f (ev? (- k 1))))
+...   (list (ev? n) (od? n)))
+
+>>> (parity-pair 4)
+
+==> (#t #f)
+
+>>> (parity-pair 5)
+
+==> (#f #t)
+
+; === define-values — error: too few values for the formals (no rest)
+
+>>> (define-values (e1 e2 e3) (values 1 2))
+
+%%% %any-error%
+
+; === 5.3.1 — spec example: define one variable to the value of another
+; (define first car) (first '(1 2)) => 1   [R7RS 5.3.1]
+
+>>> (define first-elt car)
+
+>>> (first-elt '(1 2))
+
+==> 1
+
+; === 5.3.1 — spec example: (define add3 (lambda (x) (+ x 3))) (add3 3) => 6
+
+>>> (define add3 (lambda (x) (+ x 3)))
+
+>>> (add3 3)
+
+==> 6
+
+; === 5.3.1 — top-level define on an already-bound name acts like set!
+; (the name keeps its single location; later reads see the new value)
+
+>>> (define rebind-top 1)
+
+>>> (define rebind-top 2)
+
+>>> rebind-top
+
+==> 2
+
+; === 5.3.2 — canonical internal-definition example from R7RS 5.3.2
+; foo refers forward to bar (deferred via lambda); evaluates to 45.
+
+>>> (let ((x 5))
+...   (define foo (lambda (y) (bar x y)))
+...   (define bar (lambda (a b) (+ (* a b) a)))
+...   (foo (+ x 3)))
+
+==> 45
+
+; === 5.3.2 — "It is an error to define the same identifier more than once
+; in the same body."  A duplicate internal definition is an error.
+
+>>> (let ()
+...   (define dup-id 1)
+...   (define dup-id 2)
+...   dup-id)
+
+%%% %any-error%
+
+; === 5.3.3 — spec example: define-values as an internal definition
+; (let () (define-values (x y) (values 1 2)) (+ x y)) => 3   [R7RS 5.3.2]
+
+>>> (let ()
+...   (define-values (dvx dvy) (values 1 2))
+...   (+ dvx dvy))
+
+==> 3
+

@@ -939,3 +939,166 @@
 
 ==> "1 2 3"
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; write — improper / dotted lists (§6.13.3)
+; ===
+
+>>> (define di1 (open-output-string))
+
+>>> (write '(1 2 . 3) di1)
+
+>>> (get-output-string di1)
+
+==> "(1 2 . 3)"
+
+>>> (define di2 (open-output-string))
+
+>>> (write (cons 'a 'b) di2)
+
+>>> (get-output-string di2)
+
+==> "(a . b)"
+
+; ===
+; write — negative and rational numbers
+; ===
+
+>>> (define num1 (open-output-string))
+
+>>> (write -42 num1)
+
+>>> (get-output-string num1)
+
+==> "-42"
+
+>>> (define num2 (open-output-string))
+
+>>> (write -1/2 num2)
+
+>>> (get-output-string num2)
+
+==> "-1/2"
+
+; ===
+; write generates datum labels for circular structure;
+; write-simple never does (§6.13.3, §7.x)
+; ===
+
+; write of a circular list must terminate and use datum labels (#n= / #n#)
+
+>>> (define wc-circ (list 1 2 3))
+
+>>> (set-cdr! (cddr wc-circ) wc-circ)
+
+>>> (define wc-out (open-output-string))
+
+>>> (write wc-circ wc-out)
+
+>>> (string? (get-output-string wc-out))
+
+==> #t
+
+; The labelled output read back reconstructs a circular structure
+
+>>> (define wc-rt (read (open-input-string (get-output-string wc-out))))
+
+>>> (eq? wc-rt (list-tail wc-rt 3))
+
+==> #t
+
+; write-simple on shared (non-circular) structure repeats the substructure
+
+>>> (define shared (list 9 9))
+
+>>> (define wsimp (open-output-string))
+
+>>> (write-simple (list shared shared) wsimp)
+
+>>> (get-output-string wsimp)
+
+==> "((9 9) (9 9))"
+
+; ===
+; display — bytevector and nested improper list
+; ===
+
+>>> (define disp-bv (open-output-string))
+
+>>> (display #u8(1 2 3) disp-bv)
+
+>>> (get-output-string disp-bv)
+
+==> "#u8(1 2 3)"
+
+>>> (define disp-dotted (open-output-string))
+
+>>> (display '(1 . 2) disp-dotted)
+
+>>> (get-output-string disp-dotted)
+
+==> "(1 . 2)"
+
+; ===
+; write — string escapes for backslash and double-quote
+; ===
+
+>>> (define esc-bs (open-output-string))
+
+>>> (write "a\\b" esc-bs)
+
+>>> (get-output-string esc-bs)
+
+==> "\"a\\\\b\""
+
+>>> (define esc-q (open-output-string))
+
+>>> (write "say \"hi\"" esc-q)
+
+>>> (get-output-string esc-q)
+
+==> "\"say \\\"hi\\\"\""
+
+; ===
+; write-char — return-value position / chaining via output port
+; ===
+
+; write-char of a non-ASCII character round-trips through the port
+
+>>> (define wc-uni (open-output-string))
+
+>>> (write-char #\x3bb wc-uni)
+
+>>> (string-length (get-output-string wc-uni))
+
+==> 1
+
+>>> (char=? (string-ref (get-output-string wc-uni) 0) #\x3bb)
+
+==> #t
+
+; ===
+; write-bytevector — default subrange equals full bytevector
+; ===
+
+>>> (define wbv-def (open-output-bytevector))
+
+>>> (write-bytevector #u8(100 101 102) wbv-def)
+
+>>> (get-output-bytevector wbv-def)
+
+==> #u8(100 101 102)
+
+; ===
+; flush-output-port — no argument flushes current-output-port without error
+; ===
+
+>>> (flush-output-port)
+
+>>> (begin (flush-output-port) 'flushed)
+
+==> flushed
+

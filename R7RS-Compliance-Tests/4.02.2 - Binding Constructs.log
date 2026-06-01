@@ -504,3 +504,89 @@
 
 ==> done
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === let: R7RS spec example — inner z init sees outer x,y (not inner x) ===
+; (R7RS 4.2.2: "(let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))) => 35")
+
+>>> (let ((x 2) (y 3))
+...   (let ((x 7) (z (+ x y)))
+...     (* z x)))
+
+==> 35
+
+; === let*: R7RS spec example — z init sees the let*-rebound x=7 ===
+; (R7RS 4.2.2: "(let ((x 2) (y 3)) (let* ((x 7) (z (+ x y))) (* z x))) => 70")
+
+>>> (let ((x 2) (y 3))
+...   (let* ((x 7) (z (+ x y)))
+...     (* z x)))
+
+==> 70
+
+; === letrec*: R7RS spec example — non-lambda inits referencing earlier procs ===
+; (R7RS 4.2.2: p,q mutually recursive, x=(p 5), y=x => 5)
+
+>>> (letrec* ((p (lambda (x) (+ 1 (q (- x 1)))))
+...           (q (lambda (y) (if (zero? y) 0 (+ 1 (p (- y 1))))))
+...           (x (p 5))
+...           (y x))
+...   y)
+
+==> 5
+
+; === let-values: R7RS spec example with exact-integer-sqrt ===
+; (R7RS 4.2.2: "(let-values (((root rem) (exact-integer-sqrt 32))) (* root rem)) => 35")
+
+>>> (let-values (((root rem) (exact-integer-sqrt 32)))
+...   (* root rem))
+
+==> 35
+
+; === let*-values: R7RS spec example — second init sees first set's bindings ===
+; (R7RS 4.2.2: swap idiom yields (x y x y))
+
+>>> (let ((a 'a) (b 'b) (x 'x) (y 'y))
+...   (let*-values (((a b) (values x y))
+...                 ((x y) (values a b)))
+...     (list a b x y)))
+
+==> (x y x y)
+
+; === let: it is an error for a variable to appear more than once ===
+; (R7RS 4.2.2: "It is an error for a variable to appear more than once
+; in the list of variables being bound.")
+
+>>> (let ((x 1) (x 2)) x)
+
+%%% %any-error%
+
+; === letrec: duplicate bound variable is an error ===
+
+>>> (letrec ((x 1) (x 2)) x)
+
+%%% %any-error%
+
+; === letrec*: duplicate bound variable is an error ===
+
+>>> (letrec* ((x 1) (x 2)) x)
+
+%%% %any-error%
+
+; === let-values: it is an error for a variable to appear more than once
+; in the set of formals ===
+
+>>> (let-values (((a a) (values 1 2))) a)
+
+%%% %any-error%
+
+>>> (let-values (((a b) (values 1 2 3))) (list a b))
+... ; R7RS 4.2.2: "it is an error if the formals do not match the number of
+... ; values" -- undefined behavior, so a conforming implementation MAY signal
+... ; or MAY proceed; %optional-error% accepts either outcome.
+
+%%% %optional-error%
+

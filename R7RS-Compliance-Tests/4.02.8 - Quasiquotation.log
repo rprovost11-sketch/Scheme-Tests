@@ -405,3 +405,78 @@
 
 ==> (node (node (node 1 2) 3) (node 4 (node 5 6)))
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === nested quasiquote: inner unquote-splicing preserved as data at outer level ===
+
+>>> `(a `(b ,@(c d)) e)
+
+==> (a (quasiquote (b (unquote-splicing (c d)))) e)
+
+; === nested quasiquote: only the deeper-level unquote is evaluated ===
+
+>>> (define nq 7)
+
+>>> `(1 `(2 ,(+ 1 ,nq)))
+
+==> (1 (quasiquote (2 (unquote (+ 1 7)))))
+
+; === unquote-splicing into a dotted-tail position via final splice ===
+
+>>> `(a ,@(list 1 2 3))
+
+==> (a 1 2 3)
+
+; === unquote producing a list is NOT spliced (stays nested) ===
+
+>>> `(a ,(list 1 2 3) b)
+
+==> (a (1 2 3) b)
+
+; === unquote-splicing mid-vector ===
+
+>>> `#(0 ,@(list 1 2) 3)
+
+==> #(0 1 2 3)
+
+; === multiple unquote-splicing combined with literals in a vector ===
+
+>>> `#(,@(list 1 2) x ,@(list 3 4))
+
+==> #(1 2 x 3 4)
+
+; === unquote of nested expression inside splice argument ===
+
+>>> (define qa 2)
+
+>>> `(start ,@(map (lambda (n) (* n qa)) (quote (1 2 3))) end)
+
+==> (start 2 4 6 end)
+
+; === quasiquote with both dotted unquote tail and leading splice ===
+
+>>> `(,@(list 1 2) . ,(+ 1 2))
+
+==> (1 2 . 3)
+
+; === empty splice between elements yields adjacency ===
+
+>>> `(a ,@(quote ()) b ,@(quote ()) c)
+
+==> (a b c)
+
+; === quasiquoted symbol that looks like a keyword stays a symbol ===
+
+>>> `else
+
+==> else
+
+; === equivalence: ,@ abbreviation equals (unquote-splicing ...) inside qq ===
+
+>>> (equal? `(1 ,@(list 2 3) 4)
+...         (quasiquote (1 (unquote-splicing (list 2 3)) 4)))
+
+==> #t

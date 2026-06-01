@@ -349,3 +349,91 @@
 
 ==> propagated
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === raise-continuable: handler return value becomes the raise expression value ===
+
+; From R7RS 6.11: with-exception-handler whose handler returns 65, used in
+; (+ (raise-continuable ...) 23) => 65.
+
+>>> (with-exception-handler
+...   (lambda (con) 42)
+...   (lambda ()
+...     (+ (raise-continuable "should be a number") 23)))
+
+==> 65
+
+; === raise-continuable: handler installed is the one in place when handler was installed ===
+
+>>> (define rc-result
+...   (with-exception-handler
+...     (lambda (e) 10)
+...     (lambda () (raise-continuable (quote x)))))
+
+>>> rc-result
+
+==> 10
+
+; === guard: => clause selects proc; non-matching falls through to else ===
+
+>>> (guard (e ((assv e (quote ((1 . one) (2 . two)))) => cdr)
+...           (else (quote unknown)))
+...   (raise 2))
+
+==> two
+
+>>> (guard (e ((assv e (quote ((1 . one) (2 . two)))) => cdr)
+...           (else (quote unknown)))
+...   (raise 9))
+
+==> unknown
+
+; === guard: error-object-irritants with no irritants is empty list ===
+
+>>> (guard (e (else (error-object-irritants e)))
+...   (error "no irritants"))
+
+==> ()
+
+; === guard: condition re-raised through two levels reaches outermost ===
+
+>>> (guard (top (else (list (quote top) top)))
+...   (guard (mid ((number? mid) (quote num)))
+...     (guard (low ((string? low) (quote str)))
+...       (raise (quote sym)))))
+
+==> (top sym)
+
+; === guard: body value preserved when no clause needed (compound result) ===
+
+>>> (guard (e (else (quote err)))
+...   (cons 1 (cons 2 (quote ()))))
+
+==> (1 2)
+
+; === guard: handler can itself use guard to catch a re-raise ===
+
+>>> (guard (outer ((symbol? outer) (list (quote outer-sym) outer)))
+...   (guard (inner ((number? inner) (quote was-num)))
+...     (raise (quote escalate))))
+
+==> (outer-sym escalate)
+
+; === guard: clause with side effect then value ===
+
+>>> (define gx 0)
+
+>>> (guard (e (#t (set! gx (+ gx 5)) gx))
+...   (raise (quote anything)))
+
+==> 5
+
+; === error-object?: #f for a raised non-error object ===
+
+>>> (guard (e (else (error-object? e)))
+...   (raise (quote plain-symbol)))
+
+==> #f

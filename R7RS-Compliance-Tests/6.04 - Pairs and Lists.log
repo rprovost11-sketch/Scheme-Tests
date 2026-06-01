@@ -873,3 +873,199 @@
 
 ==> #f
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; append — only the LAST argument is shared; earlier arguments are copied
+; (R7RS 6.4: "the resulting list ... shares structure with the last argument")
+; ===
+
+>>> (define a1 (list 1 2))
+
+>>> (define a2 (list 3 4))
+
+>>> (define a3 (append a1 a2))
+
+>>> (eq? a3 a1)
+... ; an earlier list is copied, so its pairs are not shared with the result
+==> #f
+
+>>> (eq? (cdr a3) (cdr a1))
+
+==> #f
+
+; the last argument IS shared (same pairs)
+
+>>> (eq? (cddr a3) a2)
+
+==> #t
+
+; mutating the copied portion does not affect the original first arg
+
+>>> (set-car! a3 99)
+
+>>> (car a1)
+
+==> 1
+
+>>> (car a3)
+
+==> 99
+
+; with three or more lists, only the final one is shared
+
+>>> (define b1 (list 'x))
+
+>>> (define b2 (list 'y))
+
+>>> (define b3 (list 'z))
+
+>>> (define bcat (append b1 b2 b3))
+
+>>> (eq? (cddr bcat) b3)
+
+==> #t
+
+>>> (eq? (cdr bcat) b2)
+
+==> #f
+
+; appending the empty list as the only/last arg returns it; a single arg
+; is returned as-is (not copied)
+
+>>> (eq? (append a2) a2)
+
+==> #t
+
+; ===
+; list-copy — atoms returned unchanged; improper lists copied with shared
+; final cdr (eqv?) (R7RS 6.4)
+; ===
+
+; A non-list object is returned unchanged (eqv?)
+
+>>> (eqv? 5 (list-copy 5))
+
+==> #t
+
+>>> (eq? 'sym (list-copy 'sym))
+
+==> #t
+
+>>> (let ((s "str")) (eq? s (list-copy s)))
+
+==> #t
+
+; Improper list: result is improper and equal? to original
+
+>>> (equal? (list-copy '(1 2 . 3)) '(1 2 . 3))
+
+==> #t
+
+>>> (cdr (cdr (list-copy '(1 2 . 3))))
+
+==> 3
+
+; The final cdr (the improper tail) is shared in the sense of eqv?
+
+>>> (define improp (cons 1 (cons 2 'tail)))
+
+>>> (define improp-copy (list-copy improp))
+
+>>> (eq? improp improp-copy)
+
+==> #f
+
+>>> (eqv? (cddr improp) (cddr improp-copy))
+
+==> #t
+
+; The car objects are shared (eqv?), only pairs are fresh
+
+>>> (define shared-car (list (list 1 2) (list 3 4)))
+
+>>> (define sc-copy (list-copy shared-car))
+
+>>> (eq? (car shared-car) (car sc-copy))
+
+==> #t
+
+>>> (eq? (cadr shared-car) (cadr sc-copy))
+
+==> #t
+
+; ===
+; member / assoc 3-arg compare — comparator is called as (compare obj elt)
+; obj is the FIRST argument, the list element is the SECOND (R7RS 6.4)
+; ===
+
+; A comparator sensitive to which side a value is on
+
+>>> (member 1 '(2 3 4) (lambda (obj elt) (< obj elt)))
+
+==> (2 3 4)
+
+>>> (member 10 '(2 3 4) (lambda (obj elt) (< obj elt)))
+
+==> #f
+
+; assoc passes (compare obj car-of-pair)
+
+>>> (assoc 2 '((1 a) (2 b) (3 c)) (lambda (obj key) (= obj key)))
+
+==> (2 b)
+
+>>> (assoc 2 '((1 a) (4 b) (3 c)) (lambda (obj key) (= obj key)))
+
+==> #f
+
+>>> (assoc 5 '((1 a) (10 b) (3 c)) (lambda (obj key) (< obj key)))
+
+==> (10 b)
+
+; spec example: assoc with = comparator over inexact key
+
+>>> (assoc 2.0 '((1 1) (2 4) (3 9)) =)
+
+==> (2 4)
+
+; ===
+; make-list with fill — every element is the SAME object as fill (eqv?)
+; ===
+
+>>> (define fillobj (list 'z))
+
+>>> (define ml (make-list 3 fillobj))
+
+>>> (eq? (car ml) fillobj)
+
+==> #t
+
+>>> (eq? (cadr ml) fillobj)
+
+==> #t
+
+>>> (eq? (caddr ml) fillobj)
+
+==> #t
+
+; all elements are the same object as each other
+
+>>> (eq? (car ml) (caddr ml))
+
+==> #t
+
+; mutating the shared fill object is visible through every element
+
+>>> (set-car! fillobj 'mutated)
+
+>>> (car (car ml))
+
+==> mutated
+
+>>> (car (caddr ml))
+
+==> mutated
+

@@ -552,3 +552,198 @@
 
 ==> 42
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; read — quasiquotation abbreviations (§4.2.8, §7.1.2)
+; ===
+
+>>> (read (open-input-string "`x"))
+
+==> (quasiquote x)
+
+>>> (read (open-input-string ",x"))
+
+==> (unquote x)
+
+>>> (read (open-input-string ",@x"))
+
+==> (unquote-splicing x)
+
+>>> (read (open-input-string "`(a ,b ,@c)"))
+
+==> (quasiquote (a (unquote b) (unquote-splicing c)))
+
+; ===
+; read — dotted pairs and nested abbreviations
+; ===
+
+>>> (read (open-input-string "(1 . 2)"))
+
+==> (1 . 2)
+
+>>> (read (open-input-string "(a b . c)"))
+
+==> (a b . c)
+
+>>> (read (open-input-string "''x"))
+
+==> (quote (quote x))
+
+; ===
+; read — datum labels for shared/circular structure (§2.4)
+; ===
+
+; #n= labels a datum; #n# refers back to it.  A shared substructure read
+; back is eq? in both positions.
+
+>>> (define shared-read (read (open-input-string "(#0=(1 2) #0#)")))
+
+>>> (eq? (car shared-read) (cadr shared-read))
+
+==> #t
+
+>>> (equal? (car shared-read) '(1 2))
+
+==> #t
+
+; A circular structure read via datum labels is its own tail
+
+>>> (define circ-read (read (open-input-string "#0=(a . #0#)")))
+
+>>> (eq? circ-read (cdr circ-read))
+
+==> #t
+
+>>> (eq? (car circ-read) 'a)
+
+==> #t
+
+; ===
+; peek-char vs read-char — peek never advances, then read-char sees same char
+; ===
+
+>>> (define pc (open-input-string "Q"))
+
+>>> (char=? (peek-char pc) (read-char pc))
+
+==> #t
+
+>>> (eof-object? (read-char pc))
+
+==> #t
+
+; ===
+; read-string — EOF only when zero characters available, otherwise partial
+; ===
+
+; k > 0 but no chars available => eof-object
+
+>>> (eof-object? (read-string 3 (open-input-string "")))
+
+==> #t
+
+; Partial read at end of file returns the available characters (not eof)
+
+>>> (define rs-partial (open-input-string "ab"))
+
+>>> (read-string 5 rs-partial)
+
+==> "ab"
+
+>>> (eof-object? (read-string 5 rs-partial))
+
+==> #t
+
+; ===
+; read-bytevector! — return value when target is exactly filled / partially filled
+; ===
+
+; Fills the whole target and returns its length
+
+>>> (define rbv-full (make-bytevector 3 0))
+
+>>> (read-bytevector! rbv-full (open-input-bytevector #u8(7 8 9 10 11)))
+
+==> 3
+
+>>> rbv-full
+
+==> #u8(7 8 9)
+
+; Second read on the already-exhausted port returns eof
+
+>>> (define rbv-port (open-input-bytevector #u8(1 2)))
+
+>>> (read-bytevector! (make-bytevector 2) rbv-port)
+
+==> 2
+
+>>> (eof-object? (read-bytevector! (make-bytevector 2) rbv-port))
+
+==> #t
+
+; ===
+; peek-u8 — does not consume; at EOF returns eof-object
+; ===
+
+>>> (define pu (open-input-bytevector #u8(99)))
+
+>>> (= (peek-u8 pu) (read-u8 pu))
+
+==> #t
+
+>>> (eof-object? (peek-u8 pu))
+
+==> #t
+
+>>> (define cr (string #\return))
+... ; === R7RS 6.13.2: read-line ends a line on a linefeed, a carriage return,
+... ; OR a carriage return followed by a linefeed (CRLF is one end-of-line).
+... ; Built with real #\return chars so the result is independent of how the
+... ; reader decodes the \r string escape. ===
+
+>>> (define lf (string #\newline))
+... ; lone carriage return terminates a line
+
+>>> (read-line (open-input-string (string-append "x" cr "y")))
+
+==> "x"
+
+>>> (read-line (open-input-string (string-append "p" cr lf "q")))
+... ; carriage-return + linefeed counts as a SINGLE end of line (no empty line)
+
+==> "p"
+
+>>> (define mixed (open-input-string (string-append "a" cr "b" lf "c")))
+... ; mixed CR and LF endings in one stream split into successive lines
+
+>>> (read-line mixed)
+
+==> "a"
+
+>>> (read-line mixed)
+
+==> "b"
+
+>>> (read-line mixed)
+
+==> "c"
+
+>>> (eof-object? (read-line mixed))
+
+==> #t
+
+>>> (define crlf2 (open-input-string (string-append "one" cr lf "two" cr lf)))
+... ; CRLF split across two lines leaves no stray carriage return on either side
+
+>>> (read-line crlf2)
+
+==> "one"
+
+>>> (read-line crlf2)
+
+==> "two"
+

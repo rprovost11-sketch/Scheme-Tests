@@ -297,3 +297,85 @@
 
 ==> #f
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Spec examples (R7RS §4.1.5):
+;   (if (> 3 2) 'yes 'no) ==> yes
+;   (if (> 2 3) 'yes 'no) ==> no
+;   (if (> 3 2) (- 3 2) (+ 3 2)) ==> 1
+; ===
+
+>>> (if (> 3 2) 'yes 'no)
+
+==> yes
+
+>>> (if (> 2 3) 'yes 'no)
+
+==> no
+
+>>> (if (> 3 2) (- 3 2) (+ 3 2))
+
+==> 1
+
+; ===
+; if returns exactly the value of the chosen branch (a single value)
+; ===
+
+>>> (if #t (values 'one) 'other)
+
+==> one
+
+; ===
+; The test may itself be any expression, including a nested if
+; ===
+
+>>> (if (if #t #f #t) 'a 'b)
+
+==> b
+
+>>> (if (not #f) 'taken 'skipped)
+
+==> taken
+
+; ===
+; Only #f is false: a value produced by an expression that yields #f
+; selects the alternate; any other produced value selects the consequent
+; ===
+
+>>> (if (memq 'x '(a b c)) 'found 'absent)
+
+==> absent
+
+>>> (if (memq 'b '(a b c)) 'found 'absent)
+
+==> found
+
+; ===
+; A one-armed if whose test is true returns the consequent value, usable
+; directly in an enclosing expression
+; ===
+
+>>> (+ 1 (if (> 2 1) 9))
+
+==> 10
+
+; ===
+; Spec: "its values are returned" — if propagates ALL values produced by the
+; chosen branch, not just one (consequent branch yields multiple values)
+; ===
+
+>>> (call-with-values (lambda () (if #t (values 1 2) (values 3 4))) +)
+
+==> 3
+
+; ===
+; Spec: the alternate branch likewise returns all of its values
+; ===
+
+>>> (call-with-values (lambda () (if #f 'x (values 5 6))) list)
+
+==> (5 6)

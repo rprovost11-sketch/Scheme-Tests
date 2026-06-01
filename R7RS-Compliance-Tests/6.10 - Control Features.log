@@ -731,3 +731,175 @@
 
 ==> 10000
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; map — terminates when the shortest list runs out (unequal lengths)
+; ===
+
+>>> (map + '(1 2 3) '(10 20 30 40 50))
+
+==> (11 22 33)
+
+>>> (map list '(a b) '(1 2 3 4))
+
+==> ((a 1) (b 2))
+
+>>> (map cons '(1 2 3 4 5) '(a b))
+
+==> ((1 . a) (2 . b))
+
+; map with three lists of differing length stops at the shortest
+
+>>> (map + '(1 2 3 4) '(10 20 30) '(100 200))
+
+==> (111 222)
+
+; ===
+; apply — final list combined with multiple leading arguments
+; ===
+
+>>> (apply + 1 2 3 '(4 5))
+
+==> 15
+
+>>> (apply list 1 2 3 '())
+
+==> (1 2 3)
+
+>>> (apply cons 'a '(b))
+
+==> (a . b)
+
+; apply where the spread list is the only argument and is empty
+
+>>> (apply + 10 '())
+
+==> 10
+
+; apply with vector — proc receives spread elements
+
+>>> (apply vector 1 2 '(3 4 5))
+
+==> #(1 2 3 4 5)
+
+; ===
+; call-with-values — consumer's continuation is that of call-with-values
+; ===
+
+>>> (+ 1 (call-with-values (lambda () (values 2 3)) +))
+
+==> 6
+
+>>> (call-with-values (lambda () (values 1 2 3 4 5)) +)
+
+==> 15
+
+; producer returning a single value; consumer of one argument
+
+>>> (call-with-values (lambda () (* 4 5)) (lambda (x) (+ x 1)))
+
+==> 21
+
+; truncate/ delivers two values to a list consumer
+
+>>> (call-with-values (lambda () (truncate/ 7 2)) list)
+
+==> (3 1)
+
+; ===
+; values — extra values discarded by a sequence's non-final continuation
+; ===
+
+; The continuation of a non-final expression in begin discards all values.
+
+>>> (begin (values 1 2 3) 'last)
+
+==> last
+
+>>> (let ((x 5)) (values 1 2) x)
+
+==> 5
+
+; A single value flows through an ordinary continuation unchanged
+
+>>> (+ 1 (values 41))
+
+==> 42
+
+; ===
+; dynamic-wind — before/after run on continuation escape out of extent
+; ===
+
+>>> (define dw-escape-log '())
+
+>>> (call/cc
+...   (lambda (k)
+...     (dynamic-wind
+...       (lambda () (set! dw-escape-log (cons 'before dw-escape-log)))
+...       (lambda () (k 'escaped))
+...       (lambda () (set! dw-escape-log (cons 'after dw-escape-log))))))
+
+==> escaped
+
+>>> (reverse dw-escape-log)
+
+==> (before after)
+
+; ===
+; dynamic-wind — re-entry via continuation re-runs before, then after
+; (R7RS connect/talk/disconnect example)
+; ===
+
+>>> (let ((path '())
+...       (c #f))
+...   (let ((add (lambda (s) (set! path (cons s path)))))
+...     (dynamic-wind
+...       (lambda () (add 'connect))
+...       (lambda ()
+...         (add (call-with-current-continuation
+...                (lambda (c0)
+...                  (set! c c0)
+...                  'talk1))))
+...       (lambda () (add 'disconnect)))
+...     (if (< (length path) 4)
+...         (c 'talk2)
+...         (reverse path))))
+
+==> (connect talk1 disconnect connect talk2 disconnect)
+
+; ===
+; call/cc — re-invoking a saved continuation iterates (counts to a limit)
+; ===
+
+>>> (let ((count 0) (k #f))
+...   (call/cc (lambda (c) (set! k c)))
+...   (set! count (+ count 1))
+...   (if (< count 5) (k #f) count))
+
+==> 5
+
+; call/cc — product where the continuation supplies a value mid-expression
+
+>>> (* 2 (call/cc (lambda (k) (+ 1 (k 21)))))
+
+==> 42
+
+; ===
+; procedure? — true for continuations and values-returning consumers
+; ===
+
+>>> (procedure? (call/cc (lambda (k) k)))
+
+==> #t
+
+>>> (procedure? dynamic-wind)
+
+==> #t
+
+>>> (procedure? apply)
+
+==> #t
+

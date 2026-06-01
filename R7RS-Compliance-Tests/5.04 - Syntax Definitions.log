@@ -414,3 +414,129 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === define-syntax with the alternate (custom-ellipsis) syntax-rules form
+
+>>> (define-syntax ce-list
+...   (syntax-rules ::: ()
+...     ((ce-list x :::) (list x :::))))
+
+>>> (ce-list 1 2 3)
+
+==> (1 2 3)
+
+>>> (ce-list)
+
+==> ()
+
+; === define-syntax — macro expanding to define-values
+
+>>> (define-syntax def-two
+...   (syntax-rules ()
+...     ((def-two a b expr)
+...      (define-values (a b) expr))))
+
+>>> (def-two d2-x d2-y (values 11 22))
+
+>>> (list d2-x d2-y)
+
+==> (11 22)
+
+; === define-syntax — macro whose template introduces a local helper define
+; The introduced helper is hygienic and does not leak to the use site.
+
+>>> (define-syntax with-tmp-sum
+...   (syntax-rules ()
+...     ((with-tmp-sum a b)
+...      (let ()
+...        (define helper (+ a b))
+...        (* helper helper)))))
+
+>>> (with-tmp-sum 3 4)
+
+==> 49
+
+; helper is not visible at the use site
+>>> helper
+
+%%% %any-error%
+
+; === define-syntax — recursive expansion building a nested expression
+
+>>> (define-syntax nested-add
+...   (syntax-rules ()
+...     ((nested-add x) x)
+...     ((nested-add x y ...) (+ x (nested-add y ...)))))
+
+>>> (nested-add 1 2 3 4 5)
+
+==> 15
+
+>>> (nested-add 10)
+
+==> 10
+
+; === define-syntax — ellipsis pattern that wraps each element (template group)
+
+>>> (define-syntax tag-each
+...   (syntax-rules ()
+...     ((tag-each x ...) (list (list 'item x) ...))))
+
+>>> (tag-each 'a 'b 'c)
+
+==> ((item a) (item b) (item c))
+
+>>> (tag-each)
+
+==> ()
+
+; === define-syntax — keyword used in operator position only
+; The keyword is a valid macro use as a form head, but using bare keyword as
+; a value is an error (re-confirm with a fresh keyword and a working use).
+
+>>> (define-syntax op-only
+...   (syntax-rules ()
+...     ((op-only x y) (cons x y))))
+
+>>> (op-only 1 2)
+
+==> (1 . 2)
+
+>>> op-only
+
+%%% %any-error%
+
+; === Internal define-syntax visible to a sibling internal define's body
+; (define and define-syntax share one letrec* region in a body.)
+
+>>> (let ()
+...   (define-syntax plus2
+...     (syntax-rules ()
+...       ((plus2 n) (+ n 2))))
+...   (define (apply-plus2 x) (plus2 x))
+...   (apply-plus2 40))
+
+==> 42
+
+; === define-syntax — generated macro via (... ...) escape, used immediately
+
+>>> (define-syntax make-listish
+...   (syntax-rules ()
+...     ((make-listish name)
+...      (define-syntax name
+...        (syntax-rules ()
+...          ((name a (... ...)) (list a (... ...))))))))
+
+>>> (make-listish my-vector-list)
+
+>>> (my-vector-list 1 2 3)
+
+==> (1 2 3)
+
+>>> (my-vector-list)
+
+==> ()
+

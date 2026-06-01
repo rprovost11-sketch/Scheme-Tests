@@ -380,3 +380,82 @@
 
 ==> #t
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === force: forcing an already-forced make-promise returns its value ===
+
+>>> (force (make-promise 123))
+
+==> 123
+
+; === force: nested delay (a promise whose value is a promise) ===
+
+; (force p) forces only the outer promise; the inner promise is the value.
+
+>>> (define inner-pr (delay 5))
+
+>>> (promise? (force (delay inner-pr)))
+
+==> #t
+
+>>> (force (force (delay inner-pr)))
+
+==> 5
+
+; === delay: memoization caches the first forced value even with side effects ===
+
+>>> (define dm-count 0)
+
+>>> (define dm (delay (begin (set! dm-count (+ dm-count 1)) (* 6 7))))
+
+>>> (+ (force dm) (force dm))
+
+==> 84
+
+>>> dm-count
+
+==> 1
+
+; === delay-force: result satisfies promise? and forces to underlying value ===
+
+>>> (force (delay-force (delay (quote deep))))
+
+==> deep
+
+; === make-promise: idempotent on a promise (force gives same value twice) ===
+
+>>> (define mp (make-promise (quote once)))
+
+>>> (list (force mp) (force mp))
+
+==> (once once)
+
+; === promise? distinguishes promises from procedures and pairs ===
+
+>>> (promise? car)
+
+==> #f
+
+>>> (promise? (cons (delay 1) (quote ())))
+
+==> #f
+
+; === stream: building and summing first n via delay/force ===
+
+>>> (define (ints-from n) (delay (cons n (ints-from (+ n 1)))))
+
+>>> (define (sum-stream s n)
+...   (if (= n 0) 0 (let ((p (force s))) (+ (car p) (sum-stream (cdr p) (- n 1))))))
+
+>>> (sum-stream (ints-from 1) 5)
+
+==> 15
+
+; === force: value of delay that returns multiple-level computation ===
+
+>>> (force (delay (force (delay (+ 100 1)))))
+
+==> 101

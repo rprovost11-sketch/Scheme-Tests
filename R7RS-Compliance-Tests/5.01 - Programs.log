@@ -342,3 +342,108 @@
 
 ==> (2 3 5 7 11 13 17 19 23 29)
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === Top-level define-syntax is visible to subsequent top-level forms
+; A syntactic keyword defined at top level affects all later top-level forms.
+
+>>> (define-syntax tl-twice
+...   (syntax-rules ()
+...     ((tl-twice e) (begin e e))))
+
+>>> (define tl-sx-log '())
+
+>>> (tl-twice (set! tl-sx-log (cons 'x tl-sx-log)))
+
+>>> tl-sx-log
+
+==> (x x)
+
+; A macro defined at top level can be used inside a later procedure body.
+
+>>> (define (tl-use-macro n)
+...   (tl-twice (set! n (+ n 1)))
+...   n)
+
+>>> (tl-use-macro 0)
+
+==> 2
+
+; === Top-level: a later define-syntax can redefine an earlier keyword
+
+>>> (define-syntax tl-tag
+...   (syntax-rules ()
+...     ((tl-tag x) (list 'v1 x))))
+
+>>> (tl-tag 1)
+
+==> (v1 1)
+
+>>> (define-syntax tl-tag
+...   (syntax-rules ()
+...     ((tl-tag x) (list 'v2 x))))
+
+>>> (tl-tag 1)
+
+==> (v2 1)
+
+; === Top-level define-record-type makes constructor/predicate/accessors
+; visible to subsequent forms (5.5 type at program top level).
+
+>>> (define-record-type <tl-box>
+...   (tl-box val)
+...   tl-box?
+...   (val tl-box-val tl-box-set!))
+
+>>> (define the-box (tl-box 10))
+
+>>> (tl-box? the-box)
+
+==> #t
+
+>>> (tl-box-val the-box)
+
+==> 10
+
+>>> (tl-box-set! the-box 99)
+
+>>> (tl-box-val the-box)
+
+==> 99
+
+; === Top-level begin may interleave definitions and expressions; the value
+; of the begin form is the value of its last expression.
+
+>>> (begin
+...   (define tl-bx 6)
+...   (define tl-by 7)
+...   (* tl-bx tl-by))
+
+==> 42
+
+; === Nested top-level begin splices definitions through both levels
+
+>>> (begin
+...   (begin
+...     (define tl-nest-a 100))
+...   (begin
+...     (define tl-nest-b 200)))
+
+>>> (+ tl-nest-a tl-nest-b)
+
+==> 300
+
+; === Top-level define using a macro defined earlier in the program
+
+>>> (define-syntax tl-def-sq
+...   (syntax-rules ()
+...     ((tl-def-sq name v) (define name (* v v)))))
+
+>>> (tl-def-sq tl-nine 3)
+
+>>> tl-nine
+
+==> 9
+

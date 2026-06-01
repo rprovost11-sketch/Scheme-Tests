@@ -550,3 +550,133 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === bytevector-copy! — overlapping, source AFTER destination (move left) ===
+; The existing file covers moving data right; this covers moving left.
+; Spec: copying takes place as if source is first copied to a temporary.
+
+>>> (define bvl (bytevector 1 2 3 4 5))
+
+>>> (bytevector-copy! bvl 0 bvl 1 5)
+
+>>> bvl
+
+==> #u8(2 3 4 5 5)
+
+; === bytevector-copy! — spec example ===
+
+>>> (define bcb-a (bytevector 1 2 3 4 5))
+
+>>> (define bcb-b (bytevector 10 20 30 40 50))
+
+>>> (bytevector-copy! bcb-b 1 bcb-a 0 2)
+
+>>> bcb-b
+
+==> #u8(10 1 2 40 50)
+
+; === bytevector-copy! — error: at out of range ===
+
+>>> (bytevector-copy! (make-bytevector 3 0) 4 #u8(1))
+
+%%% %any-error%
+
+>>> (bytevector-copy! (make-bytevector 3 0) -1 #u8(1))
+
+%%% %any-error%
+
+; === bytevector-copy! — error: source too large for destination space ===
+
+>>> (bytevector-copy! (make-bytevector 3 0) 1 #u8(1 2 3))
+
+%%% %any-error%
+
+; === Type errors — non-bytevector arguments ===
+
+>>> (bytevector-length #(1 2 3))
+
+%%% %any-error%
+
+>>> (bytevector-u8-ref '(1 2 3) 0)
+
+%%% %any-error%
+
+>>> (bytevector-u8-set! "abc" 0 65)
+
+%%% %any-error%
+
+>>> (bytevector-append #u8(1 2) #(3 4))
+
+%%% %any-error%
+
+>>> (bytevector-copy #(1 2 3))
+
+%%% %any-error%
+
+; === bytevector-copy — error: invalid range ===
+
+>>> (bytevector-copy #u8(1 2 3) 2 1)
+
+%%% %any-error%
+
+>>> (bytevector-copy #u8(1 2 3) 0 4)
+
+%%% %any-error%
+
+; === string->utf8 — multibyte (non-ASCII) encoding ===
+; U+00E9 (e with acute) encodes as two bytes 195 169 in UTF-8.
+
+>>> (string->utf8 "\xe9;")
+
+==> #u8(195 169)
+
+>>> (bytevector-length (string->utf8 "\xe9;"))
+
+==> 2
+
+; === utf8->string — decode multibyte back ===
+
+>>> (utf8->string #u8(195 169))
+
+==> "é"
+
+>>> (string=? "\xe9;" (utf8->string (string->utf8 "\xe9;")))
+
+==> #t
+
+; === string->utf8 — partial range over a multibyte string ===
+; "aé" is two characters; index 1 selects only the é (2 bytes).
+
+>>> (string->utf8 "a\xe9;" 1)
+
+==> #u8(195 169)
+
+>>> (string->utf8 "a\xe9;" 0 1)
+
+==> #u8(97)
+
+; === utf8->string — type error on non-bytevector ===
+
+>>> (utf8->string "abc")
+
+%%% %any-error%
+
+; === string->utf8 — type error on non-string ===
+
+>>> (string->utf8 #u8(1 2 3))
+
+%%% %any-error%
+
+; === bytevector — type error on non-integer argument ===
+
+>>> (bytevector 1 2.5 3)
+
+%%% %any-error%
+
+>>> (bytevector 1 'a 3)
+
+%%% %any-error%
+

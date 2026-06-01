@@ -618,3 +618,138 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === vector-map — terminates at the SHORTEST vector ===
+; If vectors differ in length, vector-map stops when the shortest runs out.
+
+>>> (vector-map + #(1 2 3) #(10 20 30 40 50))
+
+==> #(11 22 33)
+
+>>> (vector-map + #(1 2 3 4 5) #(10 20))
+
+==> #(11 22)
+
+>>> (vector-map list #(a b c d) #(1 2))
+
+==> #((a 1) (b 2))
+
+; Three vectors of differing length
+
+>>> (vector-map + #(1 2 3) #(10 20 30 40) #(100 200))
+
+==> #(111 222)
+
+; === vector-for-each — terminates at the SHORTEST vector ===
+
+>>> (define vfe-short '())
+
+>>> (vector-for-each
+...   (lambda (a b) (set! vfe-short (cons (+ a b) vfe-short)))
+...   #(1 2 3 4 5)
+...   #(10 20))
+
+>>> (reverse vfe-short)
+
+==> (11 22)
+
+; === vector-copy! — overlapping, source BEFORE destination (move right) ===
+; Spec: copying takes place as if source is first copied to a temporary.
+
+>>> (define vov1 (vector 1 2 3 4 5))
+
+>>> (vector-copy! vov1 1 vov1 0 4)
+
+>>> vov1
+
+==> #(1 1 2 3 4)
+
+; === vector-copy! — overlapping, source AFTER destination (move left) ===
+
+>>> (define vov2 (vector 1 2 3 4 5))
+
+>>> (vector-copy! vov2 0 vov2 1 5)
+
+>>> vov2
+
+==> #(2 3 4 5 5)
+
+; === vector-copy! — spec example ===
+
+>>> (define vcb-a (vector 1 2 3 4 5))
+
+>>> (define vcb-b (vector 10 20 30 40 50))
+
+>>> (vector-copy! vcb-b 1 vcb-a 0 2)
+
+>>> vcb-b
+
+==> #(10 1 2 40 50)
+
+; === vector-copy! — copying entire source, no start/end ===
+
+>>> (define vce (vector 0 0 0 0 0))
+
+>>> (vector-copy! vce 0 #(7 8 9 10 11))
+
+>>> vce
+
+==> #(7 8 9 10 11)
+
+; === vector-copy! — error: at out of range ===
+
+>>> (vector-copy! (make-vector 3 0) 4 #(1))
+
+%%% %any-error%
+
+>>> (vector-copy! (make-vector 3 0) -1 #(1))
+
+%%% %any-error%
+
+; === vector-copy! — error: source too large for destination space ===
+
+>>> (vector-copy! (make-vector 3 0) 1 #(1 2 3))
+
+%%% %any-error%
+
+; === vector-map / vector-for-each — type error on non-vector ===
+
+>>> (vector-map (lambda (x) x) '(1 2 3))
+
+%%% %any-error%
+
+>>> (vector-for-each (lambda (x) x) "abc")
+
+%%% %any-error%
+
+; === vector-append — type error on non-vector ===
+
+>>> (vector-append #(1 2) '(3 4))
+
+%%% %any-error%
+
+; === make-vector — non-integer length ===
+
+>>> (make-vector 'a)
+
+%%% %any-error%
+
+; === vector->string — error: non-character element ===
+
+>>> (vector->string #(#\a 42 #\c))
+
+%%% %any-error%
+
+; === vector-copy — error: invalid range ===
+
+>>> (vector-copy #(1 2 3) 2 1)
+
+%%% %any-error%
+
+>>> (vector-copy #(1 2 3) 0 4)
+
+%%% %any-error%
+

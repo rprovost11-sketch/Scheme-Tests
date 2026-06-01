@@ -261,3 +261,111 @@
 
 ==> ok
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === begin: value of single non-definition expression in body context ===
+
+>>> (define (only-begin) (begin 7))
+
+>>> (only-begin)
+
+==> 7
+
+; === begin: deeply nested expression begins return last ===
+
+>>> (begin (begin (begin (begin 1 2 3))))
+
+==> 3
+
+; === begin: evaluation order across nested begins (side effects) ===
+
+>>> (define seq-log (quote ()))
+
+>>> (begin
+...   (begin (set! seq-log (cons 1 seq-log)))
+...   (begin
+...     (set! seq-log (cons 2 seq-log))
+...     (set! seq-log (cons 3 seq-log)))
+...   seq-log)
+
+==> (3 2 1)
+
+; === begin: returns value usable directly as procedure argument ===
+
+>>> (* (begin 2 3) (begin 4 5))
+
+==> 15
+
+; === begin: splicing define then immediate use in same top-level begin ===
+
+>>> (begin
+...   (define spliced-p 6)
+...   (define spliced-q (* spliced-p spliced-p)))
+
+>>> spliced-q
+
+==> 36
+
+; === begin: nested splicing begins inside a body ===
+
+>>> (define (nested-splice)
+...   (begin
+...     (begin
+...       (define ns-a 3))
+...     (define ns-b 4))
+...   (* ns-a ns-b))
+
+>>> (nested-splice)
+
+==> 12
+
+; === begin: empty begin in body context, value comes from following expr ===
+
+>>> (define (empty-then-val)
+...   (begin)
+...   99)
+
+>>> (empty-then-val)
+
+==> 99
+
+; === begin: literal R7RS example — (and (= x 0) (begin (set! x 5) (+ x 1))) => 6 ===
+
+>>> (define and-begin-x 0)
+
+>>> (and (= and-begin-x 0)
+...      (begin (set! and-begin-x 5) (+ and-begin-x 1)))
+
+==> 6
+
+; === begin: the set! side effect from the prior example took place ===
+
+>>> and-begin-x
+
+==> 5
+
+; === begin: top-level begin with a definition followed by an expression ===
+; The begin splices the define and returns the value of the final expression.
+
+>>> (begin (define mix-tl 1) (+ mix-tl 4))
+
+==> 5
+
+>>> mix-tl
+
+==> 1
+
+; === begin: body context mixing define, set!, then a value expression ===
+
+>>> (define (body-mix)
+...   (begin
+...     (define bm 1)
+...     (set! bm (+ bm 9))
+...     bm))
+
+>>> (body-mix)
+
+==> 10

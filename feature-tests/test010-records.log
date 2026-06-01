@@ -211,31 +211,31 @@
 ==> 777
 
 >>> (scheme-report-environment 7)
-==> #<environment>
+%%% %any-error%
 
 >>> (scheme-report-environment 5)
 ... ; standard procedures are accessible
 ==> #<environment>
 
 >>> (eval '(+ 1 2) (scheme-report-environment 7))
-==> 3
+%%% %any-error%
 
 >>> (eval '(car '(a b c)) (scheme-report-environment 7))
-... ; version errors
-==> a
+... ; unsupported version signals an error (R7RS 6.12)
+%%% %any-error%
 
 >>> (scheme-report-environment 99)
-==> #<environment>
+%%% %any-error%
 
 >>> (scheme-report-environment 0)
-==> #<environment>
+%%% %any-error%
 
 >>> (null-environment 5)
 ==> #<environment>
 
 >>> (null-environment 7)
-... ; null-environment has no procedure bindings — + is unbound
-==> #<environment>
+... ; unsupported version signals an error (R7RS 6.12)
+%%% %any-error%
 
 >>> (eval '+ (null-environment 5))
 %%% line 1, col 8: unbound variable: +
@@ -263,10 +263,10 @@
 %%% (eval '(let ((x 1) (y 2)) (+ x y)) (null-environment 5))
 %%%                            ^
 >>> (null-environment 99)
-==> #<environment>
+%%% %any-error%
 
 >>> (null-environment 0)
-==> #<environment>
+%%% %any-error%
 
 >>> (interaction-environment)
 ... ; eq? identity — same object every call
@@ -285,7 +285,8 @@
 ... ; 7. Process context: command-line, features
 ... ; ============================================================
 ... ; command-line returns a non-empty list of strings (exe path at minimum)
-==> 5
+... ; (scheme-report-environment 7) signals an error before eval runs (R7RS 6.12)
+%%% %any-error%
 
 >>> (pair? (command-line))
 ==> #t

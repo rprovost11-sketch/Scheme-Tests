@@ -1049,3 +1049,216 @@
 
 ; Note: #x#iff parses as radix-16 + inexact-prefix + hex digits "ff" = 255.0
 
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; String line-continuation trims leading intraline whitespace on the next
+; line (R7RS 6.7 / 7.1.1): \ <intraline ws>* <line ending> <intraline ws>*
+; expands to nothing.  The indentation after the newline is removed.
+; ===
+
+>>> (string-length "abc\
+...                  def")
+
+==> 6
+
+>>> (string=? "abc\
+...      def" "abcdef")
+
+==> #t
+
+>>> (string=? "abc   \
+... def" "abc   def")
+... ; Intraline whitespace BEFORE the backslash is PRESERVED (ordinary string
+... ; content); only whitespace after the backslash, the line ending, and
+... ; leading whitespace on the next line are removed (R7RS 6.7).
+
+==> #t
+
+; ===
+; The empty vector and empty bytevector are self-evaluating and equal? to
+; their quoted forms (R7RS 2.3 / 4.1.2).
+; ===
+
+>>> (equal? '#() #())
+
+==> #t
+
+>>> (equal? '#u8() #u8())
+
+==> #t
+
+; ===
+; Quote of a quote prints with the long form quote (R7RS 4.1.2 example
+; '(quote a) = (quote a)).
+; ===
+
+>>> '(quote a)
+
+==> (quote a)
+
+; ===
+; Vector quasiquote: unquote inside a #( ) template evaluates (R7RS 4.2.8).
+; ===
+
+>>> `#(1 ,(+ 1 1) 3)
+
+==> #(1 2 3)
+
+>>> `#(1 ,@(list 2 3) 4)
+
+==> #(1 2 3 4)
+
+; ===
+; Nested quasiquote: an inner unquote at depth 2 is not evaluated by the
+; outer quasiquote (R7RS 4.2.8).
+; ===
+
+>>> `(1 `(2 ,(+ 1 2)))
+
+==> (1 (quasiquote (2 (unquote (+ 1 2)))))
+
+; A double unquote at depth 2 IS evaluated by the outer quasiquote
+
+>>> (let ((x 5)) `(1 `(2 ,(foo ,x))))
+
+==> (1 (quasiquote (2 (unquote (foo 5)))))
+
+; ===
+; #\ followed by a delimiter character is that character literal
+; (R7RS 6.6): #\( #\) #\" are valid single-character constants.
+; ===
+
+>>> (char=? #\( (string-ref "(" 0))
+
+==> #t
+
+>>> (char=? #\) (string-ref ")" 0))
+
+==> #t
+
+; ===
+; Radix prefix with explicit exactness on a decimal point literal
+; (R7RS 6.2.5): #x and #o digits never include a decimal point, but #d
+; with a fraction stays exact under #e.
+; ===
+
+>>> #e#d2.5
+
+==> 5/2
+
+; ===
+; Hex string escape spelling a non-ASCII scalar value (R7RS 6.7):
+; "\x3bb;" is a one-character string holding U+03BB.
+; ===
+
+>>> (string-length "\x3bb;")
+
+==> 1
+
+>>> (char=? (string-ref "\x3bb;" 0) #\x3bb)
+
+==> #t
+
+; ===
+; A delimited + or - sign by itself is an identifier, not a number
+; (R7RS 2.3: "A delimited plus or minus sign by itself is also an
+; identifier").
+; ===
+
+>>> (symbol? '+)
+
+==> #t
+
+>>> (symbol? '-)
+
+==> #t
+
+>>> '+
+
+==> +
+
+>>> '-
+
+==> -
+
+; The reader produces the very same symbol as string->symbol
+
+>>> (eq? '+ (string->symbol "+"))
+
+==> #t
+
+>>> (eq? '- (string->symbol "-"))
+
+==> #t
+
+; The bare + and - identifiers are still bound to the arithmetic procedures
+
+>>> (procedure? +)
+
+==> #t
+
+>>> (procedure? -)
+
+==> #t
+
+; ===
+; A sequence of two or more periods is an identifier (R7RS 2.3:
+; "Note that a sequence of two or more periods is an identifier").
+; This distinguishes it from the single delimited period (dot notation).
+; ===
+
+>>> (symbol? '...)
+
+==> #t
+
+>>> (symbol? '..)
+
+==> #t
+
+>>> '...
+
+==> ...
+
+>>> '..
+
+==> ..
+
+>>> (eq? '... (string->symbol "..."))
+
+==> #t
+
+>>> (eq? '.. (string->symbol ".."))
+
+==> #t
+
+; ===
+; A delimited period (not within a number or identifier) indicates a
+; rest-parameter in a formal parameter list (R7RS 2.3 referencing 4.1.4).
+; The same dot token used for pairs binds the remaining arguments as a list.
+; ===
+
+>>> ((lambda (a . b) b) 1 2 3)
+
+==> (2 3)
+
+>>> ((lambda (a . b) a) 1 2 3)
+
+==> 1
+
+>>> ((lambda args args) 1 2 3)
+
+==> (1 2 3)
+
+>>> ((lambda (a b . rest) rest) 1 2 3 4 5)
+
+==> (3 4 5)
+
+; With exactly the required arguments the rest parameter is the empty list
+
+>>> ((lambda (a . b) b) 1)
+
+==> ()

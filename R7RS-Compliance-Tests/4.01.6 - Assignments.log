@@ -294,4 +294,147 @@
 >>> (define not-yet-defined 0)
 
 >>> (bad-set!)
+... ; bad-set! returns unspecified; the next form observes its effect, so a
+... ; pass here proves the deferred set! ran with no error and stored the 1.
 
+>>> not-yet-defined
+
+==> 1
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Spec example (R7RS §4.1.6): set! stores into an already-bound location
+;   (define x 2) ... (set! x 4) ... (+ x 1) ==> 5
+; ===
+
+>>> (define sx 2)
+
+>>> (+ sx 1)
+
+==> 3
+
+>>> (set! sx 4)
+
+>>> (+ sx 1)
+
+==> 5
+
+; ===
+; set! targets the nearest enclosing binding of the name; an inner let
+; that rebinds the name shields the outer binding from the assignment
+; ===
+
+>>> (define shielded 'outer)
+
+>>> (let ((shielded 'inner))
+...   (set! shielded 'changed)
+...   shielded)
+
+==> changed
+
+>>> shielded
+
+==> outer
+
+; ===
+; The value of set! is unspecified, but it may appear as a non-final
+; expression in a begin; the begin returns its last expression's value
+; ===
+
+>>> (define bv 0)
+
+>>> (begin (set! bv 7) bv)
+
+==> 7
+
+; ===
+; set! evaluates its expression in the current environment before storing;
+; the expression may reference the variable being assigned
+; ===
+
+>>> (define counter 5)
+
+>>> (begin (set! counter (* counter counter)) counter)
+
+==> 25
+
+; ===
+; set! on a binding shared by sibling closures is visible to all of them
+; ===
+
+>>> (define (make-toggle)
+...   (define state #f)
+...   (cons (lambda () (set! state (not state)))
+...         (lambda () state)))
+
+>>> (define tg (make-toggle))
+
+>>> ((cdr tg))
+
+==> #f
+
+>>> ((car tg))
+
+>>> ((cdr tg))
+
+==> #t
+
+; ===
+; set! within a deeply nested let assigns the binding introduced by the
+; innermost let that binds the name
+; ===
+
+>>> (let ((m 1))
+...   (let ((m 2))
+...     (set! m 20)
+...     (set! m (+ m 5)))
+...   (let ((m 2))
+...     (set! m 99))
+...   m)
+
+==> 1
+
+; ===
+; set! stores into the location to which the variable is bound; a named-let
+; loop variable is an ordinary binding and may be assigned within the body
+; ===
+
+>>> (let loop ((i 0))
+...   (if (= i 3)
+...       i
+...       (begin (set! i (+ i 1)) (loop i))))
+
+==> 3
+
+; ===
+; A rest (variadic) parameter is a bound variable in the procedure's region,
+; so set! may store a new value into it
+; ===
+
+>>> (define (collect . rest)
+...   (set! rest (cons 0 rest))
+...   rest)
+
+>>> (collect 1 2 3)
+
+==> (0 1 2 3)
+
+; ===
+; set! on a binding closed over by a closure created via let mutates the
+; shared location, so successive calls observe the updated value
+; ===
+
+>>> (define stepper
+...   (let ((c 0))
+...     (lambda () (set! c (+ c 1)) c)))
+
+>>> (stepper)
+
+==> 1
+
+>>> (stepper)
+
+==> 2

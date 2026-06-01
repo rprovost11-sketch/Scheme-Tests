@@ -177,11 +177,15 @@
 ==> 9801
 
 >>> (force (delay (delay 42)))
-==> 42
+... ; force of a plain delay returns the inner value as-is and does NOT chase
+... ; into it (unlike delay-force), so a nested (delay 42) is returned unforced
+... ; (R7RS 4.2.5)
+==> #<promise>
 
 >>> (force (delay (make-promise 'inner)))
-... ;;; delay-force - same observable semantics as delay in our implementation.
-==> inner
+... ; likewise: plain delay's force returns the inner promise rather than
+... ; collapsing it; here that inner promise is already forced
+==> #<promise forced>
 
 >>> (force (delay-force 42))
 ==> 42
@@ -275,8 +279,9 @@ Primitive  |  args: pre-evaluated
 ==> yes
 
 >>> (values 1 2 3)
-... ;;; call-with-values unpacks multi-values into the consumer's args.
-==> #<values 1 2 3>
+... ;;; a top-level expression yielding multiple values displays them in
+... ;;; write form separated by spaces (not as a #<values ...> object).
+==> 1 2 3
 
 >>> (call-with-values (lambda () (values 10 20 30)) +)
 ==> 60
@@ -614,9 +619,9 @@ Primitive  |  args: pre-evaluated
 ==>
 
 >>> (define cc #f) (call/cc (lambda (k) (set! cc k) 'first)) (cc 1 2 3)
-... ;;; Multi-values flowing into a single-value position (here the + call that
-... ;;; contains the original call/cc) errors as designed.
-==> #<values 1 2 3>
+... ;;; invoking the captured continuation with three values yields a top-level
+... ;;; multiple-values result, displayed as the values separated by spaces.
+==> 1 2 3
 
 >>> (define cc #f) (+ 0 (call/cc (lambda (k) (set! cc k) 0))) (cc 1 2)
 %%% SchemeTypeError: multiple values delivered to a single-value context
