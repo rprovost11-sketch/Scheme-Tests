@@ -52,7 +52,7 @@
 ==> #t
 
 >>> (char=?)
-%%% SchemeArityError: line 1, col 1: char=?: 0 arguments provided; at least 2 expected
+%%% SchemeArityError: line 1, col 1: char=?: 0 arguments provided; at least 1 expected
 %%% (char=?)
 %%% ^
 >>> (char<? #\a #\b)
@@ -102,7 +102,7 @@
 ==> #t
 
 >>> (char-ci=?)
-%%% SchemeArityError: line 1, col 1: char-ci=?: 0 arguments provided; at least 2 expected
+%%% SchemeArityError: line 1, col 1: char-ci=?: 0 arguments provided; at least 1 expected
 %%% (char-ci=?)
 %%% ^
 >>> (char-ci<? #\a #\B)
