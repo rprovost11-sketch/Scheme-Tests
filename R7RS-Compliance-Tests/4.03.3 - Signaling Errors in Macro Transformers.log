@@ -240,3 +240,11 @@
 ; (the case asserted here), while a run-time signaller might let guard return
 ; 'caught.  The essential fact is that it is an error and does not hang.
 
+; ==========================================================================
+; R7RS section 4.3.3 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (let ((=> #f)) (cond (#t => 'ok)))
+
+==> ok
+

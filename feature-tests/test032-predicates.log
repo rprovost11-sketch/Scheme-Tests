@@ -258,7 +258,7 @@
 
 >>> (real? (make-rectangular 3.0 0.0))
 ... ; --- complex arithmetic (+, -, *, /, negation) ---
-==> #t
+==> #f
 
 >>> (let ((x (list 1 2 3))) (set-cdr! (cddr x) x) (list? x))
 ==> #f

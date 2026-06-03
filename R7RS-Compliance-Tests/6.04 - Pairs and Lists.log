@@ -1069,3 +1069,139 @@
 
 ==> mutated
 
+; ==========================================================================
+; R7RS section 6.4 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (pair? '(a . b))
+
+==> #t
+
+>>> (pair? '(a b c))
+
+==> #t
+
+>>> (pair? '#(a b))
+
+==> #f
+
+>>> (cons '(a) '(b c d))
+
+==> ((a) b c d)
+
+>>> (cons "a" '(b c))
+
+==> ("a" b c)
+
+>>> (cons 'a 3)
+
+==> (a . 3)
+
+>>> (cons '(a b) 'c)
+
+==> ((a b) . c)
+
+>>> (car '(1 . 2))
+
+==> 1
+
+>>> (car '((a) b c d))
+
+==> (a)
+
+>>> (cdr '((a) b c d))
+
+==> (b c d)
+
+>>> (cdr '(1 . 2))
+
+==> 2
+
+>>> (list 'a (+ 3 4) 'c)
+
+==> (a 7 c)
+
+>>> (length '(a b c))
+
+==> 3
+
+>>> (length '(a (b) (c d e)))
+
+==> 3
+
+>>> (append '(x) '(y))
+
+==> (x y)
+
+>>> (append '(a (b)) '((c)))
+
+==> (a (b) (c))
+
+>>> (append '(a b) '(c . d))
+
+==> (a b c . d)
+
+>>> (append '() 'a)
+
+==> a
+
+>>> (list? '(a b c))
+
+==> #t
+
+>>> (list? '(a . b))
+
+==> #f
+
+>>> (let ((x (list 'a))) (set-cdr! x x) (list? x))
+
+==> #f
+
+>>> (make-list 2 3)
+
+==> (3 3)
+
+>>> (reverse '(a b c))
+
+==> (c b a)
+
+>>> (reverse '(a (b c) d (e (f))))
+
+==> ((e (f)) d (b c) a)
+
+>>> (list-ref '(a b c d) 2)
+
+==> c
+
+>>> (list-ref '(a b c d) (exact (round 1.8)))
+
+==> c
+
+>>> (let ((ls (list 'one 'two 'five!))) (list-set! ls 2 'three) ls)
+
+==> (one two three)
+
+>>> (assq (list 'a) '(((a)) ((b)) ((c))))
+
+==> #f
+
+>>> (assoc (list 'a) '(((a)) ((b)) ((c))))
+
+==> ((a))
+
+>>> (assv 5 '((2 3) (5 7) (11 13)))
+
+==> (5 7)
+
+>>> (memq (list 'a) '(b (a) c))
+
+==> #f
+
+>>> (member (list 'a) '(b (a) c))
+
+==> ((a) c)
+
+>>> (memv 101 '(100 101 102))
+
+==> (101 102)
+

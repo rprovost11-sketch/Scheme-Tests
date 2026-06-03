@@ -925,3 +925,15 @@
 
 %%% %optional-error%
 
+; ==========================================================================
+; R7RS section 6.7 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (let () (define a "12345") (define b (string-copy "abcde")) (string-copy! b 1 a 0 2) b)
+
+==> "a12de"
+
+>>> (let () (define (g) "***") (string-set! (g) 0 #\?))
+
+%%% %optional-error%
+

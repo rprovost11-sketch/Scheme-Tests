@@ -201,6 +201,60 @@
 ==> #f
 
 ; ==========================================================================
+; R7RS 6.2.6 -- worked examples (numerical type predicates)
+; An exact zero imaginary part is real (-2.5+0i => #t), but an inexact 0.0
+; imaginary part is NOT (-2.5+0.0i => #f); likewise 3+0i is an integer.
+; ==========================================================================
+
+>>> (complex? 3+4i)
+
+==> #t
+
+>>> (complex? 3)
+
+==> #t
+
+>>> (real? 3)
+
+==> #t
+
+>>> (real? -2.5+0i)
+
+==> #t
+
+>>> (real? -2.5+0.0i)
+
+==> #f
+
+>>> (real? #e1e10)
+
+==> #t
+
+>>> (rational? 3.5)
+
+==> #t
+
+>>> (rational? 6/10)
+
+==> #t
+
+>>> (rational? 6/3)
+
+==> #t
+
+>>> (integer? 3+0i)
+
+==> #t
+
+>>> (integer? 3.0)
+
+==> #t
+
+>>> (integer? 8/4)
+
+==> #t
+
+; ==========================================================================
 ; Tower relationships: integer ⊆ rational ⊆ real ⊆ complex ⊆ number
 ; ==========================================================================
 
@@ -1096,3 +1150,107 @@
 >>> (rational? -2.5)
 
 ==> #t
+; ==========================================================================
+; R7RS section 6.2 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (complex? 3+4i)
+
+==> #t
+
+>>> (complex? 3)
+
+==> #t
+
+>>> (real? 3)
+
+==> #t
+
+>>> (real? -2.5+0i)
+
+==> #t
+
+>>> (real? #e1e10)
+
+==> #t
+
+>>> (rational? 3.5)
+
+==> #t
+
+>>> (rational? 6/10)
+
+==> #t
+
+>>> (rational? 6/3)
+
+==> #t
+
+>>> (integer? 3+0i)
+
+==> #t
+
+>>> (integer? 3.0)
+
+==> #t
+
+>>> (integer? 8/4)
+
+==> #t
+
+>>> (exact? 3.0)
+
+==> #f
+
+>>> (exact? #e3.0)
+
+==> #t
+
+>>> (inexact? 3.)
+
+==> #t
+
+>>> (exact-integer? 32)
+
+==> #t
+
+>>> (exact-integer? 32.0)
+
+==> #f
+
+>>> (exact-integer? 32/5)
+
+==> #f
+
+>>> (finite? 3)
+
+==> #t
+
+>>> (finite? 3.0+inf.0i)
+
+==> #f
+
+>>> (infinite? 3)
+
+==> #f
+
+>>> (infinite? 3.0+inf.0i)
+
+==> #t
+
+>>> (nan? 32)
+
+==> #f
+
+>>> (nan? 1+2i)
+
+==> #f
+
+>>> (max 3 4)
+
+==> 4
+
+>>> (max 3.9 4)
+
+==> 4.0
+

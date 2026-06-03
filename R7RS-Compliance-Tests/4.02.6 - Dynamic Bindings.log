@@ -476,3 +476,31 @@
 ...   (list (m1) (m2)))
 
 ==> (x b)
+; ==========================================================================
+; R7RS section 4.2.6 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (define radix (make-parameter 10 (lambda (x) (if (and (exact-integer? x) (<= 2 x 16)) x (error "invalid radix")))))
+
+==> 
+
+>>> (define (f n) (number->string n (radix)))
+
+==> 
+
+>>> (f 12)
+
+==> "12"
+
+>>> (parameterize ((radix 2)) (f 12))
+
+==> "1100"
+
+>>> (f 12)
+
+==> "12"
+
+>>> (parameterize ((radix 0)) (f 12))
+
+%%% %any-error%
+

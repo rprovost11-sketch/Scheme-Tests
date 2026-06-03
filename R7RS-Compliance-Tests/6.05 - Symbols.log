@@ -551,3 +551,59 @@
 
 ==> #t
 
+; ==========================================================================
+; R7RS section 6.5 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (symbol? 'foo)
+
+==> #t
+
+>>> (symbol? (car '(a b)))
+
+==> #t
+
+>>> (symbol? "bar")
+
+==> #f
+
+>>> (symbol? 'nil)
+
+==> #t
+
+>>> (symbol? '())
+
+==> #f
+
+>>> (symbol? #f)
+
+==> #f
+
+>>> (symbol->string 'flying-fish)
+
+==> "flying-fish"
+
+>>> (symbol->string 'Martin)
+
+==> "Martin"
+
+>>> (symbol->string (string->symbol "Malvina"))
+
+==> "Malvina"
+
+>>> (string->symbol "mISSISSIppi")
+
+==> mISSISSIppi
+
+>>> (eqv? 'bitBlt (string->symbol "bitBlt"))
+
+==> #t
+
+>>> (eqv? 'LollyPop (string->symbol (symbol->string 'LollyPop)))
+
+==> #t
+
+>>> (string=? "K. Harper, M.D." (symbol->string (string->symbol "K. Harper, M.D.")))
+
+==> #t
+

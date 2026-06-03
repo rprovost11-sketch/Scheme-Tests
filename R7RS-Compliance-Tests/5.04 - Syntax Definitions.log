@@ -540,3 +540,11 @@
 
 ==> ()
 
+; ==========================================================================
+; R7RS section 5.4 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (let ((x 1) (y 2)) (define-syntax swap! (syntax-rules () ((swap! a b) (let ((tmp a)) (set! a b) (set! b tmp))))) (swap! x y) (list x y))
+
+==> (2 1)
+

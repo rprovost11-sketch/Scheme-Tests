@@ -714,3 +714,55 @@
 >>> (eqv? #\0 #\1)
 
 ==> #f
+; ==========================================================================
+; R7RS section 6.1 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (eqv? 2 2)
+
+==> #t
+
+>>> (eqv? 100000000 100000000)
+
+==> #t
+
+>>> (eqv? 0.0 +nan.0)
+
+==> #f
+
+>>> (eqv? (cons 1 2) (cons 1 2))
+
+==> #f
+
+>>> (eqv? (lambda () 1) (lambda () 2))
+
+==> #f
+
+>>> (let ((p (lambda (x) x))) (eqv? p p))
+
+==> #t
+
+>>> (eqv? #f 'nil)
+
+==> #f
+
+>>> (eq? (list 'a) (list 'a))
+
+==> #f
+
+>>> (equal? '(a (b) c) '(a (b) c))
+
+==> #t
+
+>>> (equal? "abc" "abc")
+
+==> #t
+
+>>> (equal? 2 2)
+
+==> #t
+
+>>> (equal? (make-vector 5 'a) (make-vector 5 'a))
+
+==> #t
+

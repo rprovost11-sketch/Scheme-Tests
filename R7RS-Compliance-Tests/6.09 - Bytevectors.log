@@ -680,3 +680,39 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; R7RS section 6.9 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (make-bytevector 2 12)
+
+==> #u8(12 12)
+
+>>> (bytevector 1 3 5 1 3 5)
+
+==> #u8(1 3 5 1 3 5)
+
+>>> (bytevector-u8-ref '#u8(1 1 2 3 5 8 13 21) 5)
+
+==> 8
+
+>>> (let ((bv (bytevector 1 2 3 4))) (bytevector-u8-set! bv 1 3) bv)
+
+==> #u8(1 3 3 4)
+
+>>> (bytevector-copy #u8(1 2 3 4 5) 2 4)
+
+==> #u8(3 4)
+
+>>> (bytevector-append #u8(0 1 2) #u8(3 4 5))
+
+==> #u8(0 1 2 3 4 5)
+
+>>> (utf8->string #u8(#x41))
+
+==> "A"
+
+>>> (string->utf8 "λ")
+
+==> #u8(206 187)
+

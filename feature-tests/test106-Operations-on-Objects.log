@@ -672,16 +672,17 @@
 >>> (number? -2.345)
 ==> #t
 
-;;; pyscheme: 7.0+0.0i has zero imaginary part, treated as real/rational/integer
+;;; 7.0+0.0i has an inexact (0.0) imaginary part, so it is NOT real/rational/integer
+;;; (R7RS 6.2.6); only complex? and number? are #t.
 
 >>> (integer? 7.0+0.0i)
-==> #t
+==> #f
 
 >>> (rational? 7.0+0.0i)
-==> #t
+==> #f
 
 >>> (real? 7.0+0.0i)
-==> #t
+==> #f
 
 >>> (complex? 7.0+0.0i)
 ==> #t

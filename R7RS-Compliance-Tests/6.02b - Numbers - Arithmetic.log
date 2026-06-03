@@ -963,3 +963,87 @@
 >>> (* 0.0 5)
 
 ==> 0.0
+; ==========================================================================
+; R7RS section 6.2 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (+ 3 4)
+
+==> 7
+
+>>> (+ 3)
+
+==> 3
+
+>>> (* 4)
+
+==> 4
+
+>>> (- 3 4)
+
+==> -1
+
+>>> (- 3 4 5)
+
+==> -6
+
+>>> (/ 3 4 5)
+
+==> 3/20
+
+>>> (abs -7)
+
+==> 7
+
+>>> (call-with-values (lambda () (floor/ 5 2)) list)
+
+==> (2 1)
+
+>>> (call-with-values (lambda () (floor/ -5 2)) list)
+
+==> (-3 1)
+
+>>> (call-with-values (lambda () (floor/ 5 -2)) list)
+
+==> (-3 -1)
+
+>>> (call-with-values (lambda () (floor/ -5 -2)) list)
+
+==> (2 -1)
+
+>>> (call-with-values (lambda () (truncate/ 5 2)) list)
+
+==> (2 1)
+
+>>> (call-with-values (lambda () (truncate/ -5 2)) list)
+
+==> (-2 -1)
+
+>>> (call-with-values (lambda () (truncate/ 5 -2)) list)
+
+==> (-2 1)
+
+>>> (call-with-values (lambda () (truncate/ -5 -2)) list)
+
+==> (2 -1)
+
+>>> (call-with-values (lambda () (truncate/ -5.0 -2)) list)
+
+==> (2.0 -1.0)
+
+>>> (lcm 32.0 -36)
+
+==> 288.0
+
+>>> (numerator (/ 6 4))
+
+==> 3
+
+>>> (denominator (/ 6 4))
+
+==> 2
+
+>>> (denominator (inexact (/ 6 4)))
+
+==> 2.0
+

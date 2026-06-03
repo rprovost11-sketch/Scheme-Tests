@@ -753,3 +753,48 @@
 
 %%% %any-error%
 
+; ==========================================================================
+; R7RS section 6.8 -- worked examples transcribed from the standard,
+; verified against Chibi-Scheme (the R7RS reference implementation).
+; ==========================================================================
+
+>>> (vector-ref '#(1 1 2 3 5 8 13 21) 5)
+
+==> 8
+
+>>> (vector-ref '#(1 1 2 3 5 8 13 21) (exact (round (* 2 (acos -1)))))
+
+==> 13
+
+>>> (let ((vec (vector 0 '(2 2 2 2) "Anna"))) (vector-set! vec 1 '("Sue" "Sue")) vec)
+
+==> #(0 ("Sue" "Sue") "Anna")
+
+>>> (vector->list '#(dah dah didah))
+
+==> (dah dah didah)
+
+>>> (vector->list '#(dah dah didah) 1 2)
+
+==> (dah)
+
+>>> (list->vector '(dididit dah))
+
+==> #(dididit dah)
+
+>>> (string->vector "ABC")
+
+==> #(#\A #\B #\C)
+
+>>> (vector->string (vector #\1 #\2 #\3))
+
+==> "123"
+
+>>> (vector-append #(a b c) #(d e f))
+
+==> #(a b c d e f)
+
+>>> (let ((a (vector 1 2 3 4 5))) (vector-fill! a 'smash 2 4) a)
+
+==> #(1 2 smash smash 5)
+

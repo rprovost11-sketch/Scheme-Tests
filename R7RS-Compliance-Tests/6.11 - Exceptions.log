@@ -838,3 +838,34 @@
 
 ==> #f
 
+; ==========================================================================
+; R7RS section 6.11 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (call-with-current-continuation
+...   (lambda (k)
+...     (with-exception-handler
+...       (lambda (x)
+...         (display "condition: ")
+...         (write x)
+...         (newline)
+...         (k 'exception))
+...       (lambda ()
+...         (+ 1 (raise 'an-error))))))
+condition: an-error
+==> exception
+
+>>> (with-exception-handler
+...   (lambda (con)
+...     (cond
+...       ((string? con)
+...        (display con))
+...       (else
+...        (display "a warning has been issued")))
+...     42)
+...   (lambda ()
+...     (+ (raise-continuable "should be a number")
+...        23)))
+should be a number
+==> 65
+

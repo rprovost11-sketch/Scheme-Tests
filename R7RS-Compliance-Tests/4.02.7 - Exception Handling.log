@@ -437,3 +437,15 @@
 ...   (raise (quote plain-symbol)))
 
 ==> #f
+; ==========================================================================
+; R7RS section 4.2.7 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (guard (condition ((assq 'a condition) => cdr) ((assq 'b condition))) (raise (list (cons 'a 42))))
+
+==> 42
+
+>>> (guard (condition ((assq 'a condition) => cdr) ((assq 'b condition))) (raise (list (cons 'b 23))))
+
+==> (b . 23)
+
