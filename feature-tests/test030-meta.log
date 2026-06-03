@@ -142,9 +142,13 @@
 ==> 3
 
 >>> (eval '(define z 1) (environment '(scheme base)))
-%%% SchemeTypeError: cannot define 'z' in a frozen environment
+%%% SchemeTypeError: line 1, col 16: cannot define 'z' in a frozen environment
+%%% (eval '(define z 1) (environment '(scheme base)))
+%%%                ^
 >>> (eval '(set! cons 1) (environment '(scheme base)))
-%%% SchemeTypeError: set! on 'cons' in a frozen environment
+%%% SchemeTypeError: line 1, col 14: set! on 'cons' in a frozen environment
+%%% (eval '(set! cons 1) (environment '(scheme base)))
+%%%              ^
 >>> (eval '(+ 1 2) 'not-an-env)
 %%% SchemeTypeError: line 1, col 1: eval: second argument must be an environment
 %%% (eval '(+ 1 2) 'not-an-env)

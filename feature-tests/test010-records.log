@@ -257,7 +257,9 @@
 
 >>> (eval '(define x 99) (null-environment 5))
 ... ; let works (it desugars to lambda)
-%%% SchemeTypeError: cannot define 'x' in a frozen environment
+%%% SchemeTypeError: line 1, col 16: cannot define 'x' in a frozen environment
+%%% (eval '(define x 99) (null-environment 5))
+%%%                ^
 >>> (eval '(let ((x 1) (y 2)) (+ x y)) (null-environment 5))
 %%% line 1, col 28: unbound variable: +
 %%% (eval '(let ((x 1) (y 2)) (+ x y)) (null-environment 5))
