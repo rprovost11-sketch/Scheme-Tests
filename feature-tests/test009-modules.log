@@ -654,6 +654,53 @@
 %%% line 1, col 9: import: library not found: (no such library)
 %%% (import (no such library))
 %%%         ^
+
+>>> (define-library)
+... ; define-library with no name is an error
+%%% line 1, col 1: define-library: missing library name
+%%% (define-library)
+%%% ^
+
+>>> (define-library (foo) 5)
+... ; a library declaration must be a list starting with a symbol
+%%% line 1, col 23: define-library: declaration must be a list starting with a symbol
+%%% (define-library (foo) 5)
+%%%                       ^
+
+>>> (define-library (foo) (import bad))
+... ; a non-list import set inside define-library is an error
+%%% line 1, col 31: define-library: import: import set must be a list
+%%% (define-library (foo) (import bad))
+%%%                               ^
+
+>>> (define-library (foo) (export 5))
+... ; an export spec must be a symbol or a (rename ...) form
+%%% line 1, col 31: define-library: malformed export spec
+%%% (define-library (foo) (export 5))
+%%%                               ^
+
+>>> (define-library (foo) (export (rename a)))
+... ; a (rename ...) export needs two symbols
+%%% line 1, col 31: define-library: malformed export rename
+%%% (define-library (foo) (export (rename a)))
+%%%                               ^
+
+>>> (define-library (foo) (cond-expand 5))
+... ; a cond-expand clause must be a list
+%%% line 1, col 36: cond-expand: clause must be a list
+%%% (define-library (foo) (cond-expand 5))
+%%%                                    ^
+
+>>> (define-library (foo) (include-library-declarations 5))
+... ; include-library-declarations filename must be a string
+%%% line 1, col 53: include-library-declarations: filename must be a string
+%%% (define-library (foo) (include-library-declarations 5))
+%%%                                                     ^
+
+>>> (define-library (foo) (include-library-declarations "no-such-file-7f3a2.sld"))
+... ; including a missing declarations file is an error
+%%% %any-error%
+
 >>> (define-library (base-a) (import (scheme base)) (export a) (begin (define a 'from-base-a))) (define-library (pass) (import (base-a)) (export a)) (import (pass)) a
 ... ;;; Definitions inside (begin ...) inside define-library are expanded:
 ... ;;; (define (f x) ...) sugar works.
@@ -667,6 +714,37 @@
 %%% line 1, col 86: import: 'only' references name not in library: nonexistent
 %%% (define-library (t9) (import (scheme base)) (export a) (begin (define a 1))) (import (only (t9) nonexistent))
 %%%                                                                                      ^
+
+>>> (map 5 (list 1 2))
+... ; applying a non-procedure (here via map) is an error
+%%% SchemeTypeError: line 1, col 1: expected a procedure
+%%% (map 5 (list 1 2))
+%%% ^
+
+>>> (define-record-type point (make-point x y) point? (x px set-px!) (y py)) (set-px! 5 9)
+... ; a record mutator rejects a non-record first argument
+%%% SchemeTypeError: line 1, col 74: set-px!: first argument is not a point
+%%% (define-record-type point (make-point x y) point? (x px set-px!) (y py)) (set-px! 5 9)
+%%%                                                                          ^
+
+>>> (%with-parameters (cons (make-parameter 1) 2) '() (lambda () 1))
+... ; %with-parameters: parameter list must be a proper list
+%%% SchemeTypeError: line 1, col 1: %with-parameters: parameter list must be proper
+%%% (%with-parameters (cons (make-parameter 1) 2) '() (lambda () 1))
+%%% ^
+
+>>> (%with-parameters (list (make-parameter 1)) (cons 2 3) (lambda () 1))
+... ; %with-parameters: value list must be a proper list
+%%% SchemeTypeError: line 1, col 1: %with-parameters: value list must be proper
+%%% (%with-parameters (list (make-parameter 1)) (cons 2 3) (lambda () 1))
+%%% ^
+
+>>> (%with-parameters (list (make-parameter 1)) (list 2 3) (lambda () 1))
+... ; %with-parameters: parameter and value counts must match
+%%% SchemeTypeError: line 1, col 1: %with-parameters: parameter / value count mismatch
+%%% (%with-parameters (list (make-parameter 1)) (list 2 3) (lambda () 1))
+%%% ^
+
 >>> (define-library (mw1) (import (scheme base)) (export my-when) (begin (define-syntax my-when (syntax-rules () ((_ test body ...) (if test (begin body ...) #f)))))) (import (mw1)) (my-when #t 'yes 'still-yes)
 ==> still-yes
 

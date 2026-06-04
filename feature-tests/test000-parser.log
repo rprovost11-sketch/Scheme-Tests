@@ -522,6 +522,12 @@
 >>> (eq? (read (open-input-string "#!fold-case Foo")) 'foo)
 ==> #t
 
+>>> #!bogusdirective1
+... ; unknown #!-directive is a syntax error
+%%% line 1, col 1: unknown #!-directive
+%%% #!bogusdirective1
+%%% ^
+
 ... ; --- | as delimiter after numbers ---
 >>> (car (read (open-input-string "(3 |foo| 4)")))
 ==> 3
@@ -529,14 +535,158 @@
 >>> (symbol? (cadr (read (open-input-string "(3 |foo| 4)"))))
 ==> #t
 
+>>> (read (open-input-string "|abc"))
+... ; unterminated |...| symbol (no closing bar)
+%%% "<input-string>" line 1, col 5: unterminated |...| symbol
+%%% |abc
+%%%     ^
+
+>>> (read (open-input-string (list->string (list (integer->char 124) #\a (integer->char 92) #\x (integer->char 124)))))
+... ; |...| symbol: malformed \x escape with no hex digits
+%%% "<input-string>" line 1, col 1: malformed \x escape: no hex digits
+%%% |a\x|
+%%% ^
+
+>>> (read (open-input-string (list->string (list (integer->char 124) #\a (integer->char 92) #\x #\4 #\1 (integer->char 124)))))
+... ; |...| symbol: \x escape missing terminating semicolon
+%%% "<input-string>" line 1, col 1: malformed \x escape: missing semicolon
+%%% |a\x41|
+%%% ^
+
+>>> (read (open-input-string (list->string (list (integer->char 124) #\a (integer->char 92) #\q (integer->char 124)))))
+... ; |...| symbol: unknown escape \q
+%%% "<input-string>" line 1, col 1: unknown symbol escape \q
+%%% |a\q|
+%%% ^
+
 ... ; --- @ invalid as identifier initial ---
 >>> (read (open-input-string "@foo"))
 %%% "<input-string>" line 1, col 1: '@' is not a valid identifier initial: '@foo'
 %%% @foo
 %%% ^
 
+>>> (read (open-input-string (string (integer->char 92))))
+... ; a lone backslash is an unexpected character to the lexer
+%%% "<input-string>" line 1, col 1: unexpected character '\\'
+%%% \
+%%% ^
+
 ... ; --- Boolean delimiter lookahead ---
 >>> (read (open-input-string "#true2"))
 %%% "<input-string>" line 1, col 1: unknown #-syntax: '#true2'
 %%% #true2
+%%% ^
+
+... ; --- Number-prefix errors ---
+>>> #x
+... ; radix prefix with no digits following
+%%% line 1, col 1: number prefix with no digits: '#x'
+%%% #x
+%%% ^
+
+>>> #o9
+... ; digit out of range for the stated radix -> invalid prefixed number
+%%% line 1, col 1: invalid prefixed number: '#o9'
+%%% #o9
+%%% ^
+
+>>> #e-inf.0
+... ; #e cannot be applied to -inf.0
+%%% line 1, col 1: #e cannot be applied to -inf.0
+%%% #e-inf.0
+%%% ^
+
+>>> #e+nan.0
+... ; #e cannot be applied to +nan.0
+%%% line 1, col 1: #e cannot be applied to +nan.0
+%%% #e+nan.0
+%%% ^
+
+>>> #e-nan.0
+... ; #e cannot be applied to -nan.0
+%%% line 1, col 1: #e cannot be applied to -nan.0
+%%% #e-nan.0
+%%% ^
+
+>>> #e1e999
+... ; #e applied to a value that overflows to a non-finite real
+%%% line 1, col 1: #e applied to non-finite real '1e999'
+%%% #e1e999
+%%% ^
+
+... ; --- String-escape errors ---
+>>> "\q"
+... ; unknown string escape \q
+%%% line 1, col 1: unknown string escape \q
+%%% "\q"
+%%% ^
+
+>>> (read (open-input-string "\"\\x\""))
+... ; string \x escape with no hex digits
+%%% "<input-string>" line 1, col 1: malformed \x escape: no hex digits
+%%% "\x"
+%%% ^
+
+>>> (read (open-input-string "\"\\x41\""))
+... ; string \x escape missing terminating semicolon
+%%% "<input-string>" line 1, col 1: malformed \x escape: missing semicolon
+%%% "\x41"
+%%% ^
+
+... ; --- Datum-label errors ---
+>>> (read (open-input-string "(#0=(1) #0=(2))"))
+... ; the same datum label defined twice is an error
+%%% "<input-string>" line 1, col 9: duplicate datum label #0=
+%%% (#0=(1) #0=(2))
+%%%         ^
+
+... ; --- Reader structural errors ---
+>>> )
+... ; a stray closing paren is unexpected
+%%% line 1, col 1: unexpected ')'
+%%% )
+%%% ^
+
+>>> .
+... ; a bare dot outside of a list is unexpected
+%%% line 1, col 1: unexpected '.' outside of a list
+%%% .
+%%% ^
+
+>>> (read (open-input-string "'"))
+... ; quote with nothing to quote hits end of input
+%%% "<input-string>" line 1, col 2: unexpected end of input
+%%% '
+%%%  ^
+
+... ; --- Bytevector-literal errors ---
+>>> (read (open-input-string "#u8(1 2"))
+... ; unterminated bytevector literal (no closing paren)
+%%% "<input-string>" line 1, col 1: unterminated bytevector literal
+%%% #u8(1 2
+%%% ^
+
+>>> (read (open-input-string "#u8(1 a)"))
+... ; bytevector element must be an exact integer
+%%% "<input-string>" line 1, col 1: bytevector element must be an exact integer in 0-255
+%%% #u8(1 a)
+%%% ^
+
+>>> (read (open-input-string "#u8(300)"))
+... ; bytevector element out of the 0-255 range
+%%% "<input-string>" line 1, col 1: bytevector element out of range 0-255: 300
+%%% #u8(300)
+%%% ^
+
+... ; --- Vector- and list-literal errors ---
+>>> (read (open-input-string "#(1 2"))
+... ; unterminated vector literal (no closing paren)
+%%% "<input-string>" line 1, col 1: unterminated vector literal
+%%% #(1 2
+%%% ^
+
+>>> (read (open-input-string "(1 2"))
+... ; unterminated list (missing closing paren)
+%%% "<input-string>" line 1, col 1: unterminated list (missing ')')
+%%% (1 2
 %%% ^

@@ -30,6 +30,30 @@
 ... ; --- vector->string ---
 ==> #(#\e #\l)
 
+>>> (string->vector 5)
+... ; argument must be a string
+%%% SchemeTypeError: line 1, col 1: string->vector: argument must be a string
+%%% (string->vector 5)
+%%% ^
+
+>>> (string->vector "ab" 1.5)
+... ; start must be an integer
+%%% SchemeTypeError: line 1, col 1: string->vector: start must be an integer
+%%% (string->vector "ab" 1.5)
+%%% ^
+
+>>> (string->vector "ab" 0 1.5)
+... ; end must be an integer
+%%% SchemeTypeError: line 1, col 1: string->vector: end must be an integer
+%%% (string->vector "ab" 0 1.5)
+%%% ^
+
+>>> (string->vector "ab" 2 1)
+... ; range out of bounds
+%%% SchemeTypeError: line 1, col 1: string->vector: range out of bounds
+%%% (string->vector "ab" 2 1)
+%%% ^
+
 >>> (vector->string (vector #\h #\e #\l #\l #\o))
 ==> "hello"
 
@@ -52,6 +76,25 @@
 %%% SchemeTypeError: line 1, col 1: vector->string: vector elements must be characters
 %%% (vector->string (vector #\a 42))
 %%% ^
+
+>>> (vector->string (vector #\a #\b) 1.5)
+... ; start must be an integer
+%%% SchemeTypeError: line 1, col 1: vector->string: start must be an integer
+%%% (vector->string (vector #\a #\b) 1.5)
+%%% ^
+
+>>> (vector->string (vector #\a #\b) 0 1.5)
+... ; end must be an integer
+%%% SchemeTypeError: line 1, col 1: vector->string: end must be an integer
+%%% (vector->string (vector #\a #\b) 0 1.5)
+%%% ^
+
+>>> (vector->string (vector #\a #\b) 2 1)
+... ; range out of bounds
+%%% SchemeTypeError: line 1, col 1: vector->string: range out of bounds
+%%% (vector->string (vector #\a #\b) 2 1)
+%%% ^
+
 >>> (make-vector 0)
 ==> #()
 
@@ -68,6 +111,19 @@
 %%% SchemeArityError: line 1, col 1: make-vector: 0 arguments provided; 1 or 2 expected
 %%% (make-vector)
 %%% ^
+
+>>> (make-vector 1.5)
+... ; length must be an integer
+%%% SchemeTypeError: line 1, col 1: make-vector: length must be an integer
+%%% (make-vector 1.5)
+%%% ^
+
+>>> (make-vector -1)
+... ; length must be non-negative
+%%% SchemeTypeError: line 1, col 1: make-vector: length must be non-negative
+%%% (make-vector -1)
+%%% ^
+
 >>> (vector)
 ==> #()
 
@@ -128,6 +184,13 @@
 %%% SchemeArityError: line 1, col 1: vector-ref: 0 arguments provided; 2 expected
 %%% (vector-ref)
 %%% ^
+
+>>> (vector-ref (vector 1 2) 1.5)
+... ; index must be an integer
+%%% SchemeTypeError: line 1, col 1: vector-ref: index must be an integer
+%%% (vector-ref (vector 1 2) 1.5)
+%%% ^
+
 >>> (let ((v (vector 1 2 3)))
 ...   (vector-set! v 1 99)
 ...   v)
@@ -148,6 +211,13 @@
 %%% SchemeArityError: line 1, col 1: vector-set!: 0 arguments provided; 3 expected
 %%% (vector-set!)
 %%% ^
+
+>>> (vector-set! '#(1 2 3) 0 9)
+... ; argument is an immutable literal
+%%% SchemeTypeError: line 1, col 1: vector-set!: argument is an immutable literal
+%%% (vector-set! '#(1 2 3) 0 9)
+%%% ^
+
 >>> (vector->list '#())
 ==> ()
 
@@ -161,6 +231,25 @@
 %%% SchemeArityError: line 1, col 1: vector->list: 0 arguments provided; 1 to 3 expected
 %%% (vector->list)
 %%% ^
+
+>>> (vector->list (vector 1 2 3) 1.5)
+... ; start must be an integer
+%%% SchemeTypeError: line 1, col 1: vector->list: start must be an integer
+%%% (vector->list (vector 1 2 3) 1.5)
+%%% ^
+
+>>> (vector->list (vector 1 2 3) 0 1.5)
+... ; end must be an integer
+%%% SchemeTypeError: line 1, col 1: vector->list: end must be an integer
+%%% (vector->list (vector 1 2 3) 0 1.5)
+%%% ^
+
+>>> (vector->list (vector 1 2 3) 2 1)
+... ; range out of bounds
+%%% SchemeTypeError: line 1, col 1: vector->list: range out of bounds
+%%% (vector->list (vector 1 2 3) 2 1)
+%%% ^
+
 >>> (list->vector '())
 ==> #()
 
@@ -175,6 +264,13 @@
 %%% SchemeArityError: line 1, col 1: list->vector: 0 arguments provided; 1 expected
 %%% (list->vector)
 %%% ^
+
+>>> (list->vector '(1 2 . 3))
+... ; argument must be a proper list
+%%% SchemeTypeError: line 1, col 1: list->vector: argument must be a proper list
+%%% (list->vector '(1 2 . 3))
+%%% ^
+
 >>> (let ((v (vector 1 2 3)))
 ...   (vector-fill! v 0)
 ...   v)
@@ -200,6 +296,31 @@
 %%% SchemeArityError: line 1, col 1: vector-fill!: 0 arguments provided; 2 to 4 expected
 %%% (vector-fill!)
 %%% ^
+
+>>> (vector-fill! '#(1 2 3) 0)
+... ; argument is an immutable literal
+%%% SchemeTypeError: line 1, col 1: vector-fill!: argument is an immutable literal
+%%% (vector-fill! '#(1 2 3) 0)
+%%% ^
+
+>>> (vector-fill! (vector 1 2 3) 0 1.5)
+... ; start must be an integer
+%%% SchemeTypeError: line 1, col 1: vector-fill!: start must be an integer
+%%% (vector-fill! (vector 1 2 3) 0 1.5)
+%%% ^
+
+>>> (vector-fill! (vector 1 2 3) 0 0 1.5)
+... ; end must be an integer
+%%% SchemeTypeError: line 1, col 1: vector-fill!: end must be an integer
+%%% (vector-fill! (vector 1 2 3) 0 0 1.5)
+%%% ^
+
+>>> (vector-fill! (vector 1 2 3) 0 2 1)
+... ; range out of bounds
+%%% SchemeTypeError: line 1, col 1: vector-fill!: range out of bounds
+%%% (vector-fill! (vector 1 2 3) 0 2 1)
+%%% ^
+
 >>> (vector-copy '#(1 2 3))
 ... ; mutation of original doesn't affect copy
 ==> #(1 2 3)
@@ -230,6 +351,19 @@
 %%% SchemeArityError: line 1, col 1: vector-copy: 0 arguments provided; 1 to 3 expected
 %%% (vector-copy)
 %%% ^
+
+>>> (vector-copy (vector 1 2 3) 1.5)
+... ; start must be an integer
+%%% SchemeTypeError: line 1, col 1: vector-copy: start must be an integer
+%%% (vector-copy (vector 1 2 3) 1.5)
+%%% ^
+
+>>> (vector-copy (vector 1 2 3) 0 1.5)
+... ; end must be an integer
+%%% SchemeTypeError: line 1, col 1: vector-copy: end must be an integer
+%%% (vector-copy (vector 1 2 3) 0 1.5)
+%%% ^
+
 >>> (let ((v (make-vector 5 0)))
 ...   (vector-copy! v 2 '#(7 8 9))
 ...   v)
@@ -244,6 +378,31 @@
 %%% SchemeArityError: line 1, col 1: vector-copy!: 0 arguments provided; 3 to 5 expected
 %%% (vector-copy!)
 %%% ^
+
+>>> (vector-copy! '#(1 2 3) 0 (vector 4 5 6))
+... ; destination is an immutable literal
+%%% SchemeTypeError: line 1, col 1: vector-copy!: destination is an immutable literal
+%%% (vector-copy! '#(1 2 3) 0 (vector 4 5 6))
+%%% ^
+
+>>> (vector-copy! (vector 1 2 3) 1.5 (vector 4 5 6))
+... ; at must be an integer
+%%% SchemeTypeError: line 1, col 1: vector-copy!: at must be an integer
+%%% (vector-copy! (vector 1 2 3) 1.5 (vector 4 5 6))
+%%% ^
+
+>>> (vector-copy! (vector 1 2 3) 0 (vector 4 5 6) 1.5)
+... ; start must be an integer
+%%% SchemeTypeError: line 1, col 1: vector-copy!: start must be an integer
+%%% (vector-copy! (vector 1 2 3) 0 (vector 4 5 6) 1.5)
+%%% ^
+
+>>> (vector-copy! (vector 1 2 3) 0 (vector 4 5 6) 0 1.5)
+... ; end must be an integer
+%%% SchemeTypeError: line 1, col 1: vector-copy!: end must be an integer
+%%% (vector-copy! (vector 1 2 3) 0 (vector 4 5 6) 0 1.5)
+%%% ^
+
 >>> (vector-append '#(1 2) '#(3 4))
 ==> #(1 2 3 4)
 

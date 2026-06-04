@@ -235,6 +235,13 @@
 %%% SchemeArityError: line 1, col 1: call-with-values: 0 arguments provided; 2 expected
 %%% (call-with-values)
 %%% ^
+
+>>> (call-with-values (lambda () (values 1 2)) call-with-values)
+... ; call-with-values cannot be re-entered as a call-with-values consumer
+%%% SchemeTypeError: line 1, col 1: call-with-values: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 1 2)) call-with-values)
+%%% ^
+
 >>> (define (cwv-loop n acc)
 ...   (if (= n 0)
 ...       acc
@@ -294,6 +301,13 @@
 %%% SchemeArityError: line 1, col 1: force: 0 arguments provided; 1 expected
 %%% (force)
 %%% ^
+
+>>> (call-with-values (lambda () (values 1)) force)
+... ; force cannot be re-entered as a call-with-values consumer
+%%% SchemeTypeError: line 1, col 1: force: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 1)) force)
+%%% ^
+
 >>> (let ((p (make-parameter 10)))
 ...   (p))
 ==> 10
@@ -379,6 +393,13 @@
 %%% SchemeArityError: line 1, col 1: dynamic-wind: 0 arguments provided; 3 expected
 %%% (dynamic-wind)
 %%% ^
+
+>>> (call-with-values (lambda () (values 1 2 3)) dynamic-wind)
+... ; dynamic-wind cannot be re-entered as a call-with-values consumer
+%%% SchemeTypeError: line 1, col 1: dynamic-wind: cannot be applied through a re-entering primitive (apply / call-with-values / force) in this implementation
+%%% (call-with-values (lambda () (values 1 2 3)) dynamic-wind)
+%%% ^
+
 >>> (define (dw-loop n)
 ...   (if (= n 0)
 ...       'done
@@ -411,6 +432,13 @@
 %%% SchemeArityError: line 1, col 1: error: 0 arguments provided; at least 1 expected
 %%% (error)
 %%% ^
+
+>>> (call-with-values (lambda () (values "x")) error)
+... ; error cannot be re-entered as a call-with-values consumer
+%%% SchemeTypeError: line 1, col 1: error: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values "x")) error)
+%%% ^
+
 >>> (raise 42)
 %%% SchemeRaised: line 1, col 1: 42
 %%% (raise 42)
@@ -427,6 +455,19 @@
 %%% SchemeArityError: line 1, col 1: raise: 0 arguments provided; 1 expected
 %%% (raise)
 %%% ^
+
+>>> (call-with-values (lambda () (values 1)) raise)
+... ; raise cannot be re-entered as a call-with-values consumer
+%%% SchemeTypeError: line 1, col 1: raise: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 1)) raise)
+%%% ^
+
+>>> (call-with-values (lambda () (values 1)) raise-continuable)
+... ; raise-continuable cannot be re-entered as a call-with-values consumer
+%%% SchemeTypeError: line 1, col 1: raise-continuable: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 1)) raise-continuable)
+%%% ^
+
 >>> (with-exception-handler
 ...   (lambda (e) (* e 2))
 ...   (lambda () (+ 1 (raise-continuable 5))))
@@ -499,6 +540,13 @@
 %%% SchemeArityError: line 1, col 1: with-exception-handler: 0 arguments provided; 2 expected
 %%% (with-exception-handler)
 %%% ^
+
+>>> (call-with-values (lambda () (values 1 2)) with-exception-handler)
+... ; with-exception-handler cannot be re-entered as a call-with-values consumer
+%%% SchemeTypeError: line 1, col 1: with-exception-handler: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 1 2)) with-exception-handler)
+%%% ^
+
 >>> (define (weh-loop n)
 ...   (if (= n 0)
 ...       'done
@@ -518,6 +566,12 @@
 ...   (error "test"))
 ... ; guard with condition test
 ==> handled
+
+>>> (call-with-values (lambda () (values 1 2)) %guard-eval)
+... ; guard's internal evaluator cannot be re-entered as a call-with-values consumer
+%%% SchemeTypeError: line 1, col 1: %guard-eval: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 1 2)) %guard-eval)
+%%% ^
 
 >>> (guard (exn ((error-object? exn) (string-append "error: " (error-object-message exn))))
 ...   (error "bad input"))

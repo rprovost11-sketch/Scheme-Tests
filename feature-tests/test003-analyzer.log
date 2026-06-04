@@ -49,6 +49,19 @@
 %%% line 1, col 8: expected an identifier in let binding, got 1
 %%% (let ((1 2)) x)
 %%%        ^
+
+>>> (let 5 1)
+... ; let bindings must be a list (non-list bindings form)
+%%% line 1, col 6: let bindings must be a list, got 5
+%%% (let 5 1)
+%%%      ^
+
+>>> (let (a . b) 1)
+... ; let bindings must be a proper (not dotted) list
+%%% line 1, col 6: let bindings must be a proper list
+%%% (let (a . b) 1)
+%%%      ^
+
 >>> (cond)
 %%% line 1, col 1: cond must have at least one clause
 %%% (cond)
@@ -109,6 +122,61 @@
 %%% line 1, col 1: letrec requires a binding list and at least one body expression
 %%% (letrec)
 %%% ^
+
+>>> (let loop ())
+... ; named let shape error (missing body) reaches the analyzer
+%%% line 1, col 1: named let requires a name, a binding list, and at least one body expression
+%%% (let loop ())
+%%% ^
+
+>>> (case 1 (else =>))
+... ; case else => clause needs exactly one expression
+%%% line 1, col 9: case 'else =>' clause must have exactly one expression
+%%% (case 1 (else =>))
+%%%         ^
+
+>>> (case 1 ((1 . 2) 'a))
+... ; case datum list must be a proper (not dotted) list
+%%% line 1, col 10: case datum list must be a proper list
+%%% (case 1 ((1 . 2) 'a))
+%%%          ^
+
+>>> (case 1 ((1) =>))
+... ; case => clause needs exactly one expression
+%%% line 1, col 9: case '=>' clause must have exactly one expression
+%%% (case 1 ((1) =>))
+%%%         ^
+
+>>> (cond-expand ())
+... ; cond-expand clause must be a non-empty list
+%%% line 1, col 14: cond-expand clause must be a non-empty list
+%%% (cond-expand ())
+%%%              ^
+
+>>> (include)
+... ; include requires at least one filename string
+%%% line 1, col 1: include requires at least one filename string
+%%% (include)
+%%% ^
+
+>>> (include 5)
+... ; include arguments must be string literals
+%%% line 1, col 10: include arguments must be string literals, got 5
+%%% (include 5)
+%%%          ^
+
+>>> (do 5 (#t 1))
+... ; do bindings must be a proper list
+%%% line 1, col 5: do bindings must be a proper list, got 5
+%%% (do 5 (#t 1))
+%%%     ^
+
+>>> (do () (#t . 1))
+... ; do test clause must be a proper (not dotted) list
+%%% line 1, col 8: do test clause must be a proper list
+%%% (do () (#t . 1))
+%%%        ^
+
 >>> (define-record-type)
 %%% SchemeArityError: line 1, col 1: define-record-type: 0 arguments provided; at least 4 expected
 %%% (define-record-type)

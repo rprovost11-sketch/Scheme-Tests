@@ -67,6 +67,13 @@
 %%% SchemeArityError: line 1, col 1: 1 argument provided; 2 expected
 %%% (apply (lambda (x y) (+ x y)) '(1))
 %%% ^
+
+>>> (call-with-values (lambda () (values (lambda () 1) '())) apply)
+... ; apply reached through a re-entering (consumer) path is an error
+%%% SchemeTypeError: line 1, col 1: apply: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values (lambda () 1) '())) apply)
+%%% ^
+
 >>> (eval 42)
 ==> 42
 
@@ -157,10 +164,24 @@
 %%% SchemeTypeError: line 1, col 1: eval: second argument must be an environment
 %%% (eval '(+ 1 2) 42)
 %%% ^
+
+>>> (call-with-values (lambda () (values '(+ 1 2))) eval)
+... ; eval reached through a re-entering (consumer) path is an error
+%%% SchemeTypeError: line 1, col 1: eval: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values '(+ 1 2))) eval)
+%%% ^
+
 >>> (environment '(no such lib))
 %%% SchemeTypeError: line 1, col 1: environment: library not found: (no such lib)
 %%% (environment '(no such lib))
 %%% ^
+
+>>> (environment 5)
+... ; environment spec that is not a list is an error
+%%% SchemeTypeError: line 1, col 1: environment: argument must be a library-name list
+%%% (environment 5)
+%%% ^
+
 >>> (eval '(quote ok) (environment))
 ... ;;; Deep tail recursion through eval also works with an env-spec arg.
 ==> ok
@@ -192,6 +213,13 @@
 %%%   at line 1, col 77: sqrt-safe
 %%% (define (sqrt-safe x) (if (negative? x) (error "sqrt of negative:" x) 'ok)) (sqrt-safe -1)
 %%%                                                                             ^
+
+>>> (error-object-irritants 5)
+... ; error-object-irritants on a non-error-object is an error
+%%% SchemeTypeError: line 1, col 1: error-object-irritants: not an error object
+%%% (error-object-irritants 5)
+%%% ^
+
 ... ; ==========================================================
 ... ; runtime
 ... ; ==========================================================
@@ -272,4 +300,185 @@
 >>> (untrace 42)
 %%% SchemeTypeError: line 1, col 1: untrace: arguments must be symbols
 %%% (untrace 42)
+%%% ^
+
+;;; ==========================================================
+;;; record-system internal primitives (%-prefixed; emitted by
+;;; define-record-type but directly callable) — error paths
+;;; ==========================================================
+
+>>> (%make-record-type 5 '())
+... ; %make-record-type with a non-symbol name is an error
+%%% SchemeTypeError: line 1, col 1: %make-record-type: first argument must be a symbol
+%%% (%make-record-type 5 '())
+%%% ^
+
+>>> (%make-record-type 'p '(a 5 c))
+... ; %make-record-type with a non-symbol field name is an error
+%%% SchemeTypeError: line 1, col 1: %make-record-type: field names must be symbols
+%%% (%make-record-type 'p '(a 5 c))
+%%% ^
+
+>>> (%make-record-type 'p '(a . b))
+... ; %make-record-type field names must be a proper list
+%%% SchemeTypeError: line 1, col 1: %make-record-type: field names must be a proper list
+%%% (%make-record-type 'p '(a . b))
+%%% ^
+
+>>> (%make-record 5 '())
+... ; %make-record first argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %make-record: first argument must be a record type
+%%% (%make-record 5 '())
+%%% ^
+
+>>> (%make-record (%make-record-type 'p '(a)) '(1 . 2))
+... ; %make-record field values must be a proper list
+%%% SchemeTypeError: line 1, col 1: %make-record: field values must be a proper list
+%%% (%make-record (%make-record-type 'p '(a)) '(1 . 2))
+%%% ^
+
+>>> (%record-of-type? 5 5)
+... ; %record-of-type? second argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %record-of-type?: second argument must be a record type
+%%% (%record-of-type? 5 5)
+%%% ^
+
+>>> (%record-ref 5 5 0)
+... ; %record-ref second argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %record-ref: second argument must be a record type
+%%% (%record-ref 5 5 0)
+%%% ^
+
+>>> (%record-ref 5 (%make-record-type 'p '(a)) 0)
+... ; %record-ref record is not of the expected type
+%%% SchemeTypeError: line 1, col 1: %record-ref: record is not of the expected type p
+%%% (%record-ref 5 (%make-record-type 'p '(a)) 0)
+%%% ^
+
+>>> (let ((t (%make-record-type 'p '(a)))) (%record-ref (%make-record t '(1)) t 'x))
+... ; %record-ref index must be an integer
+%%% SchemeTypeError: line 1, col 40: %record-ref: index must be an integer
+%%% (let ((t (%make-record-type 'p '(a)))) (%record-ref (%make-record t '(1)) t 'x))
+%%%                                        ^
+
+>>> (%make-record-accessor 5 0 'a)
+... ; %make-record-accessor first argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %make-record-accessor: first argument must be a record type
+%%% (%make-record-accessor 5 0 'a)
+%%% ^
+
+>>> (%make-record-accessor (%make-record-type 'p '(a)) 'x 'a)
+... ; %make-record-accessor index must be an integer
+%%% SchemeTypeError: line 1, col 1: %make-record-accessor: index must be an integer
+%%% (%make-record-accessor (%make-record-type 'p '(a)) 'x 'a)
+%%% ^
+
+>>> (%make-record-accessor (%make-record-type 'p '(a)) 0 5)
+... ; %make-record-accessor name must be a symbol
+%%% SchemeTypeError: line 1, col 1: %make-record-accessor: name must be a symbol
+%%% (%make-record-accessor (%make-record-type 'p '(a)) 0 5)
+%%% ^
+
+>>> (%make-record-mutator 5 0 'a)
+... ; %make-record-mutator first argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %make-record-mutator: first argument must be a record type
+%%% (%make-record-mutator 5 0 'a)
+%%% ^
+
+>>> (%make-record-mutator (%make-record-type 'p '(a)) 'x 'a)
+... ; %make-record-mutator index must be an integer
+%%% SchemeTypeError: line 1, col 1: %make-record-mutator: index must be an integer
+%%% (%make-record-mutator (%make-record-type 'p '(a)) 'x 'a)
+%%% ^
+
+>>> (%make-record-mutator (%make-record-type 'p '(a)) 0 5)
+... ; %make-record-mutator name must be a symbol
+%%% SchemeTypeError: line 1, col 1: %make-record-mutator: name must be a symbol
+%%% (%make-record-mutator (%make-record-type 'p '(a)) 0 5)
+%%% ^
+
+>>> (%record-set! 5 5 0 9)
+... ; %record-set! second argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %record-set!: second argument must be a record type
+%%% (%record-set! 5 5 0 9)
+%%% ^
+
+>>> (%record-set! 5 (%make-record-type 'p '(a)) 0 9)
+... ; %record-set! record is not of the expected type
+%%% SchemeTypeError: line 1, col 1: %record-set!: record is not of the expected type p
+%%% (%record-set! 5 (%make-record-type 'p '(a)) 0 9)
+%%% ^
+
+>>> (let ((t (%make-record-type 'p '(a)))) (%record-set! (%make-record t '(1)) t 'x 9))
+... ; %record-set! index must be an integer
+%%% SchemeTypeError: line 1, col 40: %record-set!: index must be an integer
+%%% (let ((t (%make-record-type 'p '(a)))) (%record-set! (%make-record t '(1)) t 'x 9))
+%%%                                        ^
+
+>>> (apply (%make-record-mutator (%make-record-type 'p '(a)) 0 'set-a!) '(5 9))
+... ; applying a record mutator to a non-record of its type is an error
+%%% SchemeTypeError: line 1, col 1: set-a!: first argument is not a p
+%%% (apply (%make-record-mutator (%make-record-type 'p '(a)) 0 'set-a!) '(5 9))
+%%% ^
+
+>>> (call-with-values (lambda () (values 1 2)) 5)
+... ; a consumer that is not a procedure is an error
+%%% SchemeTypeError: line 1, col 1: expected a procedure
+%%% (call-with-values (lambda () (values 1 2)) 5)
+%%% ^
+
+;;; ==========================================================
+;;; parameters — re-entering-path error paths
+;;; ==========================================================
+
+>>> (call-with-values (lambda () (values 0)) make-parameter)
+... ; make-parameter reached through a re-entering (consumer) path is an error
+%%% SchemeTypeError: line 1, col 1: make-parameter: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 0)) make-parameter)
+%%% ^
+
+>>> (call-with-values (lambda () (values 0 0 0)) %with-parameters)
+... ; %with-parameters reached through a re-entering (consumer) path is an error
+%%% SchemeTypeError: line 1, col 1: %with-parameters: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 0 0 0)) %with-parameters)
+%%% ^
+
+;;; ==========================================================
+;;; null-environment / scheme-report-environment / load
+;;; ==========================================================
+
+>>> (null-environment 'x)
+... ; null-environment version must be an integer
+%%% SchemeTypeError: line 1, col 1: null-environment: version must be an integer
+%%% (null-environment 'x)
+%%% ^
+
+>>> (null-environment 99)
+... ; null-environment only supports version 5
+%%% SchemeTypeError: line 1, col 1: null-environment: unsupported version (only 5 is supported)
+%%% (null-environment 99)
+%%% ^
+
+>>> (scheme-report-environment 'x)
+... ; scheme-report-environment version must be an integer
+%%% SchemeTypeError: line 1, col 1: scheme-report-environment: version must be an integer
+%%% (scheme-report-environment 'x)
+%%% ^
+
+>>> (scheme-report-environment 99)
+... ; scheme-report-environment only supports version 5
+%%% SchemeTypeError: line 1, col 1: scheme-report-environment: unsupported version (only 5 is supported)
+%%% (scheme-report-environment 99)
+%%% ^
+
+>>> (load 5)
+... ; load filename must be a string
+%%% SchemeTypeError: line 1, col 1: load: filename must be a string
+%%% (load 5)
+%%% ^
+
+>>> (load "x" 5)
+... ; load second argument must be an environment specifier
+%%% SchemeTypeError: line 1, col 1: load: second argument must be an environment specifier
+%%% (load "x" 5)
 %%% ^

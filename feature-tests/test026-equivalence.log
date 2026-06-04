@@ -113,6 +113,19 @@
 %%% SchemeArityError: line 1, col 1: symbol=?: 0 arguments provided; at least 2 expected
 %%% (symbol=?)
 %%% ^
+
+>>> (symbol=? 'a 5)
+... ; symbol=? rejects a non-symbol first argument
+%%% SchemeTypeError: line 1, col 1: symbol=?: arguments must be symbols
+%%% (symbol=? 'a 5)
+%%% ^
+
+>>> (symbol=? 5 'a)
+... ; symbol=? rejects a non-symbol later argument
+%%% SchemeTypeError: line 1, col 1: symbol=?: arguments must be symbols
+%%% (symbol=? 5 'a)
+%%% ^
+
 >>> (eq? 'a 'b)
 ==> #f
 
@@ -244,6 +257,19 @@
 %%% SchemeArityError: line 1, col 1: boolean=?: 0 arguments provided; at least 2 expected
 %%% (boolean=?)
 %%% ^
+
+>>> (boolean=? #t 5)
+... ; boolean=? rejects a non-boolean first argument
+%%% SchemeTypeError: line 1, col 1: boolean=?: arguments must be booleans
+%%% (boolean=? #t 5)
+%%% ^
+
+>>> (boolean=? 5 #t)
+... ; boolean=? rejects a non-boolean later argument
+%%% SchemeTypeError: line 1, col 1: boolean=?: arguments must be booleans
+%%% (boolean=? 5 #t)
+%%% ^
+
 >>> (eq? #\a #\a)
 ==> #f
 

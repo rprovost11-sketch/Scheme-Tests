@@ -11,6 +11,25 @@
 %%% SchemeTypeError: line 1, col 1: read-bytevector!: range out of bounds
 %%% (read-bytevector! (make-bytevector 3) (open-input-bytevector #u8(1 2)) 2 5)
 %%% ^
+
+>>> (read-bytevector! 5 (open-input-bytevector '#u8(1 2)))
+... ; read-bytevector! first argument must be a bytevector
+%%% SchemeTypeError: line 1, col 1: read-bytevector!: first argument must be a bytevector
+%%% (read-bytevector! 5 (open-input-bytevector '#u8(1 2)))
+%%% ^
+
+>>> (read-bytevector! (make-bytevector 3) (open-input-bytevector '#u8(1 2)) 1.5)
+... ; read-bytevector! start must be an integer
+%%% SchemeTypeError: line 1, col 1: read-bytevector!: start must be an integer
+%%% (read-bytevector! (make-bytevector 3) (open-input-bytevector '#u8(1 2)) 1.5)
+%%% ^
+
+>>> (read-bytevector! (make-bytevector 3) (open-input-bytevector '#u8(1 2)) 0 1.5)
+... ; read-bytevector! end must be an integer
+%%% SchemeTypeError: line 1, col 1: read-bytevector!: end must be an integer
+%%% (read-bytevector! (make-bytevector 3) (open-input-bytevector '#u8(1 2)) 0 1.5)
+%%% ^
+
 >>> (display 42)
 42
 ==>
@@ -388,6 +407,18 @@ a
 ... ; ==========================================================
 ==> "hello file"
 
+>>> (call-with-input-file 5 (lambda (p) p))
+... ; call-with-input-file filename must be a string
+%%% SchemeTypeError: line 1, col 1: call-with-input-file: filename must be a string
+%%% (call-with-input-file 5 (lambda (p) p))
+%%% ^
+
+>>> (call-with-output-file 5 (lambda (p) p))
+... ; call-with-output-file filename must be a string
+%%% SchemeTypeError: line 1, col 1: call-with-output-file: filename must be a string
+%%% (call-with-output-file 5 (lambda (p) p))
+%%% ^
+
 >>> (let* ((fname "/tmp/scheme_test_io2.txt")
 ...        (dummy (with-output-to-file fname
 ...                  (lambda () (display "line1") (newline) (display "line2")))))
@@ -401,6 +432,24 @@ a
 ... ; ==========================================================
 ... ; call-with-port closes port after proc returns
 ==> ("line1" "line2")
+
+>>> (with-input-from-file 5 (lambda () 1))
+... ; with-input-from-file filename must be a string
+%%% SchemeTypeError: line 1, col 1: with-input-from-file: filename must be a string
+%%% (with-input-from-file 5 (lambda () 1))
+%%% ^
+
+>>> (with-output-to-file 5 (lambda () 1))
+... ; with-output-to-file filename must be a string
+%%% SchemeTypeError: line 1, col 1: with-output-to-file: filename must be a string
+%%% (with-output-to-file 5 (lambda () 1))
+%%% ^
+
+>>> (with-input-from-string 5 (lambda () 1))
+... ; with-input-from-string first argument must be a string
+%%% SchemeTypeError: line 1, col 1: with-input-from-string: first argument must be a string
+%%% (with-input-from-string 5 (lambda () 1))
+%%% ^
 
 >>> (let* ((p (open-input-string "42"))
 ...        (result (call-with-port p read)))
@@ -508,6 +557,18 @@ a
 ... ; sequential reads
 ==> #<eof>
 
+>>> (read-string 1.5 (open-input-string "abc"))
+... ; read-string count must be an integer
+%%% SchemeTypeError: line 1, col 1: read-string: count must be an integer
+%%% (read-string 1.5 (open-input-string "abc"))
+%%% ^
+
+>>> (read-string -1 (open-input-string "abc"))
+... ; read-string count must be non-negative
+%%% SchemeTypeError: line 1, col 1: read-string: count must be non-negative
+%%% (read-string -1 (open-input-string "abc"))
+%%% ^
+
 >>> (let ((p (open-input-string "abcde")))
 ...   (list (read-string 2 p) (read-string 2 p) (read-string 2 p)))
 ... ; ==========================================================
@@ -547,11 +608,90 @@ a
 ... ; read-bytevector returning eof on empty port
 ==> #u8(2 3 4)
 
+>>> (write-bytevector 5 (open-output-bytevector))
+... ; write-bytevector first argument must be a bytevector
+%%% SchemeTypeError: line 1, col 1: write-bytevector: first argument must be a bytevector
+%%% (write-bytevector 5 (open-output-bytevector))
+%%% ^
+
+>>> (write-bytevector '#u8(1 2) (open-output-bytevector) 1.5)
+... ; write-bytevector start must be an integer
+%%% SchemeTypeError: line 1, col 1: write-bytevector: start must be an integer
+%%% (write-bytevector '#u8(1 2) (open-output-bytevector) 1.5)
+%%% ^
+
+>>> (write-bytevector '#u8(1 2) (open-output-bytevector) 0 1.5)
+... ; write-bytevector end must be an integer
+%%% SchemeTypeError: line 1, col 1: write-bytevector: end must be an integer
+%%% (write-bytevector '#u8(1 2) (open-output-bytevector) 0 1.5)
+%%% ^
+
+>>> (write-bytevector '#u8(1 2) (open-output-bytevector) 0 9)
+... ; write-bytevector range out of bounds
+%%% SchemeTypeError: line 1, col 1: write-bytevector: range out of bounds
+%%% (write-bytevector '#u8(1 2) (open-output-bytevector) 0 9)
+%%% ^
+
+>>> (write-string 5)
+... ; write-string first argument must be a string
+%%% SchemeTypeError: line 1, col 1: write-string: first argument must be a string
+%%% (write-string 5)
+%%% ^
+
+>>> (write-string "abc" (open-output-string) 1.5)
+... ; write-string start must be an integer
+%%% SchemeTypeError: line 1, col 1: write-string: start must be an integer
+%%% (write-string "abc" (open-output-string) 1.5)
+%%% ^
+
+>>> (write-string "abc" (open-output-string) 0 1.5)
+... ; write-string end must be an integer
+%%% SchemeTypeError: line 1, col 1: write-string: end must be an integer
+%%% (write-string "abc" (open-output-string) 0 1.5)
+%%% ^
+
+>>> (write-string "abc" (open-output-string) 0 9)
+... ; write-string range out of bounds
+%%% SchemeTypeError: line 1, col 1: write-string: range out of bounds
+%%% (write-string "abc" (open-output-string) 0 9)
+%%% ^
+
+>>> (write-char 5)
+... ; write-char first argument must be a character
+%%% SchemeTypeError: line 1, col 1: write-char: first argument must be a character
+%%% (write-char 5)
+%%% ^
+
+>>> (write-u8 1.5 (open-output-bytevector))
+... ; write-u8 byte must be an integer
+%%% SchemeTypeError: line 1, col 1: write-u8: byte must be an integer
+%%% (write-u8 1.5 (open-output-bytevector))
+%%% ^
+
+>>> (write-u8 300 (open-output-bytevector))
+... ; write-u8 byte out of u8 range
+%%% SchemeTypeError: line 1, col 1: write-u8: byte out of u8 range
+%%% (write-u8 300 (open-output-bytevector))
+%%% ^
+
 >>> (read-bytevector 5 (open-input-bytevector #u8()))
 ... ; ==========================================================
 ... ; 26. flush-output-port
 ... ; ==========================================================
 ==> #<eof>
+
+>>> (read-bytevector 1.5 (open-input-bytevector '#u8(1 2)))
+... ; read-bytevector count must be an integer
+%%% SchemeTypeError: line 1, col 1: read-bytevector: count must be an integer
+%%% (read-bytevector 1.5 (open-input-bytevector '#u8(1 2)))
+%%% ^
+
+>>> (read-bytevector -1 (open-input-bytevector '#u8(1 2)))
+... ; read-bytevector count must be non-negative
+%%% SchemeTypeError: line 1, col 1: read-bytevector: count must be non-negative
+%%% (read-bytevector -1 (open-input-bytevector '#u8(1 2)))
+%%% ^
+
 >>> (let ((p (open-output-string)))
 ...   (display "x" p)
 ...   (flush-output-port p)
@@ -575,12 +715,29 @@ a
 %%% SchemeArityError: line 1, col 1: file-exists?: 0 arguments provided; 1 expected
 %%% (file-exists?)
 %%% ^
+
+>>> (file-exists? 5)
+... ; file-exists? argument must be a string
+%%% SchemeTypeError: line 1, col 1: file-exists?: argument must be a string
+%%% (file-exists? 5)
+%%% ^
+
 >>> (let* ((fname "/tmp/scheme_del_test.txt")
 ...        (dummy (call-with-output-file fname (lambda (p) (display "x" p)))))
 ...   (delete-file fname)
 ...   (file-exists? fname))
 ... ; delete-file on nonexistent file raises file-error
 ==> #f
+
+>>> (delete-file 5)
+... ; delete-file argument must be a string
+%%% SchemeTypeError: line 1, col 1: delete-file: argument must be a string
+%%% (delete-file 5)
+%%% ^
+
+>>> (delete-file "no-such-7f3a2.txt")
+... ; delete-file on a missing file (OS message varies)
+%%% %any-error%
 
 >>> (let* ((old "/tmp/scheme_rename_old.txt")
 ...        (new "/tmp/scheme_rename_new.txt")
@@ -607,6 +764,19 @@ a
 %%% SchemeArityError: line 1, col 1: rename-file: 1 argument provided; 2 expected
 %%% (rename-file "a")
 %%% ^
+
+>>> (rename-file 5 "b")
+... ; rename-file first argument must be a string
+%%% SchemeTypeError: line 1, col 1: rename-file: first argument must be a string
+%%% (rename-file 5 "b")
+%%% ^
+
+>>> (rename-file "a" 5)
+... ; rename-file second argument must be a string
+%%% SchemeTypeError: line 1, col 1: rename-file: second argument must be a string
+%%% (rename-file "a" 5)
+%%% ^
+
 ... ; ==========================================================
 ... ; open-input-file / open-output-file: text file round-trip
 ... ; ==========================================================
@@ -632,6 +802,58 @@ a
 ...     (open-output-file "no_such_dir_xyz/missing.txt")))
 ==> #t
 
+>>> (open-input-file 5)
+... ; open-input-file filename must be a string
+%%% SchemeTypeError: line 1, col 1: open-input-file: filename must be a string
+%%% (open-input-file 5)
+%%% ^
+
+>>> (open-input-file "no-such-7f3a2.txt")
+... ; open-input-file cannot open (OS message varies)
+%%% %any-error%
+
+>>> (open-output-file 5)
+... ; open-output-file filename must be a string
+%%% SchemeTypeError: line 1, col 1: open-output-file: filename must be a string
+%%% (open-output-file 5)
+%%% ^
+
+>>> (open-output-file "no-such-dir-7f3a2/x.txt")
+... ; open-output-file cannot open (OS message varies)
+%%% %any-error%
+
+>>> (open-binary-input-file 5)
+... ; open-binary-input-file filename must be a string
+%%% SchemeTypeError: line 1, col 1: open-binary-input-file: filename must be a string
+%%% (open-binary-input-file 5)
+%%% ^
+
+>>> (open-binary-input-file "no-such-7f3a2.txt")
+... ; open-binary-input-file cannot open (OS message varies)
+%%% %any-error%
+
+>>> (open-binary-output-file 5)
+... ; open-binary-output-file filename must be a string
+%%% SchemeTypeError: line 1, col 1: open-binary-output-file: filename must be a string
+%%% (open-binary-output-file 5)
+%%% ^
+
+>>> (open-binary-output-file "no-such-dir-7f3a2/x.txt")
+... ; open-binary-output-file cannot open (OS message varies)
+%%% %any-error%
+
+>>> (open-input-string 5)
+... ; open-input-string argument must be a string
+%%% SchemeTypeError: line 1, col 1: open-input-string: argument must be a string
+%%% (open-input-string 5)
+%%% ^
+
+>>> (open-input-bytevector 5)
+... ; open-input-bytevector argument must be a bytevector
+%%% SchemeTypeError: line 1, col 1: open-input-bytevector: argument must be a bytevector
+%%% (open-input-bytevector 5)
+%%% ^
+
 ... ; ==========================================================
 ... ; port direction and closed-port errors
 ... ; ==========================================================
@@ -639,6 +861,31 @@ a
 %%% SchemeTypeError: line 1, col 1: read-char: argument 1 must be an input port
 %%% (read-char (open-output-string))
 %%% ^
+
+>>> (read-char 5)
+... ; argument must be a port
+%%% SchemeTypeError: line 1, col 1: read-char: argument 1 must be a port
+%%% (read-char 5)
+%%% ^
+
+>>> (read-char (open-input-bytevector '#u8(1 2)))
+... ; argument must be a textual input port
+%%% SchemeTypeError: line 1, col 1: read-char: argument 1 must be a textual input port
+%%% (read-char (open-input-bytevector '#u8(1 2)))
+%%% ^
+
+>>> (read-u8 (open-input-string "x"))
+... ; argument must be a binary input port
+%%% SchemeTypeError: line 1, col 1: read-u8: argument 1 must be a binary input port
+%%% (read-u8 (open-input-string "x"))
+%%% ^
+
+>>> (write-u8 65 (open-output-string))
+... ; argument must be a binary output port
+%%% SchemeTypeError: line 1, col 1: write-u8: argument 2 must be a binary output port
+%%% (write-u8 65 (open-output-string))
+%%% ^
+
 >>> (write-char #\a (open-input-string ""))
 %%% SchemeTypeError: line 1, col 1: write-char: argument 2 must be an output port
 %%% (write-char #\a (open-input-string ""))
@@ -647,12 +894,56 @@ a
 %%% SchemeTypeError: line 1, col 1: get-output-string: argument 1 must be an output port
 %%% (get-output-string (open-input-string ""))
 %%% ^
+
+>>> (get-output-string (open-output-bytevector))
+... ; port is not a string output port
+%%% SchemeTypeError: line 1, col 1: get-output-string: argument 1 must be a textual output port
+%%% (get-output-string (open-output-bytevector))
+%%% ^
+
+>>> (get-output-bytevector (open-output-string))
+... ; port is not a bytevector output port
+%%% SchemeTypeError: line 1, col 1: get-output-bytevector: argument 1 must be a binary output port
+%%% (get-output-bytevector (open-output-string))
+%%% ^
+
 >>> (let ((p (open-input-string "")))
 ...   (close-port p)
 ...   (read-char p))
 %%% SchemeTypeError: line 3, col 3: read-char: port is closed
 %%%   (read-char p))
 %%%   ^
+
+>>> (close-port 5)
+... ; close-port argument must be a port
+%%% SchemeTypeError: line 1, col 1: close-port: argument must be a port
+%%% (close-port 5)
+%%% ^
+
+>>> (close-input-port 5)
+... ; close-input-port argument must be a port
+%%% SchemeTypeError: line 1, col 1: close-input-port: argument must be a port
+%%% (close-input-port 5)
+%%% ^
+
+>>> (close-input-port (open-output-string))
+... ; close-input-port argument must be an input port
+%%% SchemeTypeError: line 1, col 1: close-input-port: argument must be an input port
+%%% (close-input-port (open-output-string))
+%%% ^
+
+>>> (close-output-port 5)
+... ; close-output-port argument must be a port
+%%% SchemeTypeError: line 1, col 1: close-output-port: argument must be a port
+%%% (close-output-port 5)
+%%% ^
+
+>>> (close-output-port (open-input-string "x"))
+... ; close-output-port argument must be an output port
+%%% SchemeTypeError: line 1, col 1: close-output-port: argument must be an output port
+%%% (close-output-port (open-input-string "x"))
+%%% ^
+
 >>> (display "hi" (open-output-bytevector))
 ... ; display on a binary port must raise SchemeTypeError
 %%% SchemeTypeError: line 1, col 1: display: argument 2 must be a textual output port

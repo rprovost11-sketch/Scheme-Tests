@@ -233,14 +233,35 @@
 %%% SchemeArityError: line 1, col 1: finite?: 0 arguments provided; 1 expected
 %%% (finite?)
 %%% ^
+
+>>> (finite? "x")
+... ; finite? on a non-number is an error
+%%% SchemeTypeError: line 1, col 1: finite?: argument must be a number
+%%% (finite? "x")
+%%% ^
+
 >>> (infinite?)
 %%% SchemeArityError: line 1, col 1: infinite?: 0 arguments provided; 1 expected
 %%% (infinite?)
 %%% ^
+
+>>> (infinite? "x")
+... ; infinite? on a non-number is an error
+%%% SchemeTypeError: line 1, col 1: infinite?: argument must be a number
+%%% (infinite? "x")
+%%% ^
+
 >>> (nan?)
 %%% SchemeArityError: line 1, col 1: nan?: 0 arguments provided; 1 expected
 %%% (nan?)
 %%% ^
+
+>>> (nan? "x")
+... ; nan? on a non-number is an error
+%%% SchemeTypeError: line 1, col 1: nan?: argument must be a number
+%%% (nan? "x")
+%%% ^
+
 >>> (complex? 3)
 ==> #t
 

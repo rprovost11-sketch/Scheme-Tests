@@ -44,3 +44,109 @@
 %%% line 1, col 1: cond-expand: no clause matched
 %%% (cond-expand (nosuch 1))
 %%% ^
+
+;;; ============================================================
+;;; define-syntax shape errors
+;;; ============================================================
+
+>>> (define-syntax)
+... ; define-syntax with no name/transformer
+%%% line 1, col 1: define-syntax: expected (define-syntax <name> <transformer>)
+%%% (define-syntax)
+%%% ^
+
+>>> (define-syntax foo)
+... ; define-syntax with a name but no transformer
+%%% line 1, col 1: define-syntax: missing transformer
+%%% (define-syntax foo)
+%%% ^
+
+;;; ============================================================
+;;; let-syntax shape errors
+;;; ============================================================
+
+>>> (let-syntax)
+... ; let-syntax with no bindings list or body
+%%% line 1, col 1: let-syntax: malformed
+%%% (let-syntax)
+%%% ^
+
+>>> (let-syntax ())
+... ; let-syntax with an empty body
+%%% line 1, col 1: let-syntax: empty body
+%%% (let-syntax ())
+%%% ^
+
+>>> (let-syntax ((m)) 1)
+... ; let-syntax binding missing its transformer
+%%% line 1, col 14: let-syntax: malformed binding
+%%% (let-syntax ((m)) 1)
+%%%              ^
+
+>>> (let-syntax ((m 5)) 1)
+... ; let-syntax transformer is not (syntax-rules ...)
+%%% line 1, col 17: let-syntax: transformer must be (syntax-rules ...)
+%%% (let-syntax ((m 5)) 1)
+%%%                 ^
+
+;;; ============================================================
+;;; macro expansion runaway guards
+;;; ============================================================
+
+>>> (letrec-syntax ((lp (syntax-rules () ((lp) (lp))))) (lp))
+... ; recursive macro use trips the expansion-iteration limit
+%%% line 1, col 53: macro expansion limit exceeded - possible infinite loop
+%%% (letrec-syntax ((lp (syntax-rules () ((lp) (lp))))) (lp))
+%%%                                                     ^
+
+>>> (letrec-syntax ((p (syntax-rules () ((p) (q)))) (q (syntax-rules () ((q) (begin (p)))))) (p))
+... ; mutually-recursive macros nest until the expansion-depth guard fires
+%%% line 1, col 75: macro expansion depth exceeded - possible mutually-recursive macro loop
+%%% (letrec-syntax ((p (syntax-rules () ((p) (q)))) (q (syntax-rules () ((q) (begin (p)))))) (p))
+%%%                                                                           ^
+
+;;; ============================================================
+;;; body structure error
+;;; ============================================================
+
+>>> (let () 1 (define x 2) x)
+... ; a definition may not follow an expression in a body
+%%% line 1, col 11: definition not allowed after an expression in a body
+%%% (let () 1 (define x 2) x)
+%%%           ^
+
+;;; ============================================================
+;;; include: missing file
+;;; ============================================================
+
+>>> (include "no-such-file-xyz.scm")
+... ; including a nonexistent file is an error (message embeds an absolute path)
+%%% %any-error%
+
+;;; ============================================================
+;;; quasiquote / unquote arity errors
+;;; ============================================================
+
+>>> (quasiquote (unquote 1 2))
+... ; unquote must take exactly one argument
+%%% line 1, col 13: unquote requires exactly one argument
+%%% (quasiquote (unquote 1 2))
+%%%             ^
+
+>>> (quasiquote (quasiquote 1 2))
+... ; nested quasiquote must take exactly one argument
+%%% line 1, col 13: quasiquote requires exactly one argument
+%%% (quasiquote (quasiquote 1 2))
+%%%             ^
+
+>>> (quasiquote (unquote-splicing 1 2))
+... ; top-level unquote-splicing must take exactly one argument
+%%% line 1, col 13: unquote-splicing requires exactly one argument
+%%% (quasiquote (unquote-splicing 1 2))
+%%%             ^
+
+>>> (quasiquote ((unquote-splicing 1 2)))
+... ; element-position unquote-splicing must take exactly one argument
+%%% line 1, col 14: unquote-splicing requires exactly one argument
+%%% (quasiquote ((unquote-splicing 1 2)))
+%%%              ^

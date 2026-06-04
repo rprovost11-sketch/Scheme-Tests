@@ -259,6 +259,13 @@
 %%% SchemeArityError: line 1, col 1: integer->char: 0 arguments provided; 1 expected
 %%% (integer->char)
 %%% ^
+
+>>> (integer->char 1.5)
+... ; non-integer argument is an error
+%%% SchemeTypeError: line 1, col 1: integer->char: argument must be an integer
+%%% (integer->char 1.5)
+%%% ^
+
 >>> (integer->char (char->integer #\z))
 ==> #\z
 

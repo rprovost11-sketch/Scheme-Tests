@@ -180,14 +180,44 @@
 >>> (let ((p (list 1 2 3))) (set-car! p 0) p)
 ==> (0 2 3)
 
+>>> (set-car! 5 1)
+... ; set-car! on a non-pair is an error
+%%% SchemeTypeError: line 1, col 1: set-car!: argument must be a pair
+%%% (set-car! 5 1)
+%%% ^
+
+>>> (set-car! '(1 2) 9)
+... ; set-car! on an immutable literal is an error
+%%% SchemeTypeError: line 1, col 1: set-car!: argument is an immutable literal
+%%% (set-car! '(1 2) 9)
+%%% ^
+
 >>> (let ((p (list 1 2 3))) (set-cdr! p '(9)) p)
 ... ; ==========================================================
 ... ; 3. c[ad]+r compositions (2-level: caar, cadr, cdar, cddr)
 ... ; ==========================================================
 ==> (1 9)
 
+>>> (set-cdr! 5 1)
+... ; set-cdr! on a non-pair is an error
+%%% SchemeTypeError: line 1, col 1: set-cdr!: argument must be a pair
+%%% (set-cdr! 5 1)
+%%% ^
+
+>>> (set-cdr! '(1 2) 9)
+... ; set-cdr! on an immutable literal is an error
+%%% SchemeTypeError: line 1, col 1: set-cdr!: argument is an immutable literal
+%%% (set-cdr! '(1 2) 9)
+%%% ^
+
 >>> (caar '((1 2) 3))
 ==> 1
+
+>>> (caar 5)
+... ; cxr chain reaching a non-pair is an error
+%%% SchemeTypeError: line 1, col 1: caar: chain hit a non-pair
+%%% (caar 5)
+%%% ^
 
 >>> (cadr '(1 2 3))
 ==> 2
@@ -298,6 +328,18 @@
 >>> (make-list 2)
 ==> (#<void> #<void>)
 
+>>> (make-list 1.5)
+... ; make-list length must be an integer
+%%% SchemeTypeError: line 1, col 1: make-list: length must be an integer
+%%% (make-list 1.5)
+%%% ^
+
+>>> (make-list -1)
+... ; make-list length must be non-negative
+%%% SchemeTypeError: line 1, col 1: make-list: length must be non-negative
+%%% (make-list -1)
+%%% ^
+
 >>> (make-list)
 %%% SchemeArityError: line 1, col 1: make-list: 0 arguments provided; 1 or 2 expected
 %%% (make-list)
@@ -346,6 +388,12 @@
 ... ; --- reverse ---
 ==> (1 2 . 3)
 
+>>> (append '(1 . 2) '(3))
+... ; append non-last argument must be a proper list
+%%% SchemeTypeError: line 1, col 1: append: non-last argument must be a proper list
+%%% (append '(1 . 2) '(3))
+%%% ^
+
 >>> (reverse '())
 ==> ()
 
@@ -375,6 +423,16 @@
 %%% SchemeTypeError: line 1, col 1: list-tail: index out of range
 %%% (list-tail '(a b c) 5)
 %%% ^
+>>> (list-tail '(1 2 3) 1.5)
+... ; list-tail index must be an integer
+%%% SchemeTypeError: line 1, col 1: list-tail: index must be an integer
+%%% (list-tail '(1 2 3) 1.5)
+%%% ^
+>>> (list-tail '(1 2 3) -1)
+... ; list-tail index must be non-negative
+%%% SchemeTypeError: line 1, col 1: list-tail: index must be non-negative
+%%% (list-tail '(1 2 3) -1)
+%%% ^
 >>> (list-tail)
 %%% SchemeArityError: line 1, col 1: list-tail: 0 arguments provided; 2 expected
 %%% (list-tail)
@@ -391,6 +449,16 @@
 >>> (list-ref '(a b c) 5)
 %%% SchemeTypeError: line 1, col 1: list-ref: index out of range
 %%% (list-ref '(a b c) 5)
+%%% ^
+>>> (list-ref '(1 2 3) 1.5)
+... ; list-ref index must be an integer
+%%% SchemeTypeError: line 1, col 1: list-ref: index must be an integer
+%%% (list-ref '(1 2 3) 1.5)
+%%% ^
+>>> (list-ref '(1 2 3) -1)
+... ; list-ref index must be non-negative
+%%% SchemeTypeError: line 1, col 1: list-ref: index must be non-negative
+%%% (list-ref '(1 2 3) -1)
 %%% ^
 >>> (list-ref)
 %%% SchemeArityError: line 1, col 1: list-ref: 0 arguments provided; 2 expected
@@ -414,6 +482,30 @@
 
 >>> (list-set! (list 1 2 3) 0 9)
 ==>
+
+>>> (list-set! (list 1 2) 1.5 9)
+... ; list-set! index must be an integer
+%%% SchemeTypeError: line 1, col 1: list-set!: index must be an integer
+%%% (list-set! (list 1 2) 1.5 9)
+%%% ^
+
+>>> (list-set! (list 1 2) -1 9)
+... ; list-set! index must be non-negative
+%%% SchemeTypeError: line 1, col 1: list-set!: index must be non-negative
+%%% (list-set! (list 1 2) -1 9)
+%%% ^
+
+>>> (list-set! (list 1 2) 5 9)
+... ; list-set! index past the end is out of range (loop branch)
+%%% SchemeTypeError: line 1, col 1: list-set!: index out of range
+%%% (list-set! (list 1 2) 5 9)
+%%% ^
+
+>>> (list-set! (list 1 2) 2 9)
+... ; list-set! index equal to length is out of range (final-cell branch)
+%%% SchemeTypeError: line 1, col 1: list-set!: index out of range
+%%% (list-set! (list 1 2) 2 9)
+%%% ^
 
 >>> (list-set!)
 %%% SchemeArityError: line 1, col 1: list-set!: 0 arguments provided; 3 expected
@@ -455,6 +547,24 @@
 
 >>> (assq 'z '((a 1) (b 2) (c 3)))
 ==> #f
+
+>>> (assq 'a '(1 2))
+... ; assq alist entries must be pairs (2-arg branch)
+%%% SchemeTypeError: line 1, col 1: assq: alist entries must be pairs
+%%% (assq 'a '(1 2))
+%%% ^
+
+>>> (assoc 'a '(1 2) eq?)
+... ; assoc alist entries must be pairs (3-arg compare branch)
+%%% SchemeTypeError: line 1, col 1: assoc: alist entries must be pairs
+%%% (assoc 'a '(1 2) eq?)
+%%% ^
+
+>>> (assq 'x '((a 1) (b 2) . 3))
+... ; assq second argument must be a proper list
+%%% SchemeTypeError: line 1, col 1: assq: second argument must be a proper list
+%%% (assq 'x '((a 1) (b 2) . 3))
+%%% ^
 
 >>> (assq 'a '())
 ... ; assoc with = comparator (matches inexact key to exact alist)
@@ -500,6 +610,12 @@
 ... ; member with = comparator (matches inexact key to exact list)
 ==> #f
 
+>>> (memq 'a '(1 2 . 3))
+... ; memq second argument must be a proper list
+%%% SchemeTypeError: line 1, col 1: memq: second argument must be a proper list
+%%% (memq 'a '(1 2 . 3))
+%%% ^
+
 >>> (member 2.0 '(1 2 3 4) =)
 ... ; member with custom predicate
 ==> (2 3 4)
@@ -521,6 +637,18 @@
 >>> (let ((result '())) (for-each (lambda (x y) (set! result (cons (+ x y) result))) '(1 2 3) '(4 5 6)) result)
 ==> (9 7 5)
 
+>>> (map (lambda (x) x) '(1 . 2))
+... ; map list arguments must be proper lists
+%%% SchemeTypeError: line 1, col 1: map: list arguments must be proper lists
+%%% (map (lambda (x) x) '(1 . 2))
+%%% ^
+
+>>> (for-each (lambda (x) x) '(1 . 2))
+... ; for-each list arguments must be proper lists
+%%% SchemeTypeError: line 1, col 1: for-each: list arguments must be proper lists
+%%% (for-each (lambda (x) x) '(1 . 2))
+%%% ^
+
 >>> (length (iota 10))
 ... ; arity errors
 %%% line 1, col 10: unbound variable: iota
@@ -532,6 +660,13 @@
 %%%          ^
 >>> (length (filter even? '(1 2 3 4 5 6 7 8)))
 ==> 4
+
+>>> (filter odd? '(1 . 2))
+... ; filter list argument must be a proper list
+%%% SchemeTypeError: line 1, col 1: filter: list argument must be a proper list
+%%% (filter odd? '(1 . 2))
+%%% ^
+
 ... ; reverse: improper list raises type error
 >>> (reverse (cons 1 2))
 %%% SchemeTypeError: line 1, col 1: reverse: argument must be a proper list

@@ -460,6 +460,13 @@
 %%% line 1, col 49: syntax-rules: '~~' cannot appear in literals list
 %%% (define-syntax bad-custom-ell (syntax-rules ~~ (~~ ((_ x) x))))
 %%%                                                 ^
+
+>>> (define-syntax m (syntax-rules (5) ((m) 1)))
+... ; literals list entry must be a symbol, not a number
+%%% line 1, col 33: syntax-rules: literal must be a symbol
+%%% (define-syntax m (syntax-rules (5) ((m) 1)))
+%%%                                 ^
+
 >>> (define-syntax esc-sym
 ...   (syntax-rules ()
 ...     ((_) '(... ...))))
@@ -1014,6 +1021,17 @@
 %%% line 1, col 20: define-syntax: transformer must be (syntax-rules ...)
 %%% (define-syntax bad 42)
 %%%                    ^
+
+>>> (define-syntax m (syntax-rules))
+... ; syntax-rules with an empty body is malformed
+%%% syntax-rules: malformed
+
+>>> (define-syntax m (syntax-rules () (foo)))
+... ; each rule must be a (pattern template) pair, not a bare symbol
+%%% line 1, col 35: syntax-rules: each rule must be (pattern template)
+%%% (define-syntax m (syntax-rules () (foo)))
+%%%                                   ^
+
 >>> (define-syntax bad-let (syntax-rules () ((bad-let) (let)))) (bad-let)
 %%% line 1, col 61: let requires a binding list and at least one body expression
 %%% (define-syntax bad-let (syntax-rules () ((bad-let) (let)))) (bad-let)
