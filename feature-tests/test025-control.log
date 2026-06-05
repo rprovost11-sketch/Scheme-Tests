@@ -926,3 +926,41 @@ caught
 
 >>> (always-unbound!)
 %%% %any-error%
+
+; ==========================================================================
+; Proper tail recursion via bounded continuation space (R7RS 3.5)
+; %continuation-depth is an internal probe returning the live continuation-
+; stack (K) length.  A properly tail-recursive implementation runs a tail
+; loop in CONSTANT continuation space, so the depth measured at the base
+; case is independent of the iteration count.  A non-tail loop accumulates
+; frames, so its depth grows with the count.  This catches a TCO regression
+; at small N -- without relying on a multi-million-iteration overflow (which,
+; on a CEK machine, is heap/memory exhaustion rather than a clean signal).
+; The tests assert the INVARIANTS (constant vs. growing), not absolute
+; depths, which differ by framing across implementations.
+; ==========================================================================
+
+>>> (define (kdepth-tail n)
+...   (if (= n 0) (%continuation-depth) (kdepth-tail (- n 1))))
+==>
+
+>>> (define (kdepth-nontail n)
+...   (if (= n 0) (%continuation-depth) (+ 0 (kdepth-nontail (- n 1)))))
+==>
+
+>>> (integer? (%continuation-depth))
+... ; the probe returns an integer K-stack length
+==> #t
+
+>>> (= (kdepth-tail 1) (kdepth-tail 10000))
+... ; tail recursion is constant-space: base-case depth is independent of N
+==> #t
+
+>>> (= (kdepth-tail 1) (kdepth-tail 1000) (kdepth-tail 10000))
+... ; ... and stable across several iteration counts
+==> #t
+
+>>> (> (kdepth-nontail 1000) (kdepth-nontail 1))
+... ; sensitivity: a non-tail loop's depth grows with N, so a real TCO
+...   ; regression would be detected here rather than silently passing
+==> #t

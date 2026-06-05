@@ -1024,7 +1024,9 @@
 
 >>> (define-syntax m (syntax-rules))
 ... ; syntax-rules with an empty body is malformed
-%%% syntax-rules: malformed
+%%% line 1, col 18: syntax-rules: malformed
+%%% (define-syntax m (syntax-rules))
+%%%                  ^
 
 >>> (define-syntax m (syntax-rules () (foo)))
 ... ; each rule must be a (pattern template) pair, not a bare symbol
