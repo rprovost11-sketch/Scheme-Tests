@@ -110,3 +110,80 @@
 >>> (begin (sfe-depth 5000) sfe-acc)
 ... ; deep string-for-each: callback runs once per level
 ==> 5000
+
+; REG 2026-06-09 -- member/assoc custom-comparator CEK-frame conversion.
+; Symptom: the 3-arg member/assoc forms re-entered the evaluator once per
+;   element via the comparator, so a comparator that itself recursed through
+;   member/assoc overflowed the host stack at ~600 levels ("recursion depth
+;   exceeded").  Now driven on the CEK K-stack via FRAME_SEARCH_STEP, so depth
+;   is heap-bounded like ordinary recursion.  The 2-arg forms (and memv/memq/
+;   assv/assq) use built-in equality, never re-enter the evaluator -- unaffected.
+
+>>> (member 5 (list 1 2 5 7) (lambda (a b) (= a b)))
+... ; 3-arg member returns the matching sublist
+==> (5 7)
+
+>>> (assoc 2 (list (cons 1 'a) (cons 2 'b)) (lambda (a b) (= a b)))
+... ; 3-arg assoc returns the matching pair
+==> (2 . b)
+
+>>> (define mem-deep #f)
+==>
+
+>>> (define (mem-depth n)
+...   (if (= n 0) (set! mem-deep 'done)
+...       (member 'x (list 'x) (lambda (t e) (mem-depth (- n 1)) #t))))
+==>
+
+>>> (begin (mem-depth 5000) mem-deep)
+... ; the comparator recurses through member each level; pre-fix overflowed ~600 deep
+==> done
+
+>>> (define assoc-deep #f)
+==>
+
+>>> (define (assoc-depth n)
+...   (if (= n 0) (set! assoc-deep 'done)
+...       (assoc 'x (list (cons 'x 1)) (lambda (t e) (assoc-depth (- n 1)) #t))))
+==>
+
+>>> (begin (assoc-depth 5000) assoc-deep)
+... ; same for assoc's comparator, driven through FRAME_SEARCH_STEP
+==> done
+
+; REG 2026-06-09 -- equal? iterative (explicit heap worklist).
+; Symptom: equal? recursed on BOTH car and cdr, so it overflowed the host stack
+;   on a long FLAT list (the cdr-spine) or a deeply NESTED structure (the car
+;   chain) -- ~1000 deep in pyScheme (RecursionError), a hard C-stack crash in
+;   cppscheme2.  Now driven by an explicit worklist: the cdr-spine is iterated
+;   in a loop and cars / vector items / exact-complex parts are pushed, so depth
+;   is heap-bounded.  The 'seen' set still bounds cyclic structure.
+
+>>> (define (eq-build n acc) (if (= n 0) acc (eq-build (- n 1) (cons n acc))))
+==>
+
+>>> (equal? (eq-build 100000 '()) (eq-build 100000 '()))
+... ; long flat list: pre-fix overflowed the cdr-spine recursion
+==> #t
+
+>>> (define (eq-nest n) (if (= n 0) 'x (list (eq-nest (- n 1)))))
+==>
+
+>>> (equal? (eq-nest 50000) (eq-nest 50000))
+... ; deeply nested: pre-fix overflowed the car recursion
+==> #t
+
+>>> (equal? (vector 1 (vector 2 3) "s") (vector 1 (vector 2 3) "s"))
+... ; nested-vector structural equality still correct after the rewrite
+==> #t
+
+>>> (equal? (eq-build 100 '()) (eq-build 101 '()))
+... ; differing lengths -> not equal (short-circuits)
+==> #f
+
+>>> (define cyc (list 1 2 3))
+==>
+
+>>> (begin (set-cdr! (cddr cyc) cyc) (equal? cyc cyc))
+... ; cyclic structure: the seen-set bounds the walk; terminates as #t
+==> #t
