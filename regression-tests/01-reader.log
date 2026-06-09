@@ -28,3 +28,18 @@
 %%% line 1, col 1: unknown #!-directive
 %%% #!bogus
 %%% ^
+
+; REG 2026-06-09 -- reader nesting depth guard.  The recursive-descent reader
+;   overflowed the host stack on deeply-nested input (hard C-stack crash in
+;   cppscheme2, RecursionError in pyScheme).  parse_expr now caps nesting at 500
+;   and raises a graceful "expression nesting too deep" syntax error.  Caps
+;   NESTING only -- flat lists of any length still read.  The deep input is built
+;   as a runtime string and fed through read, so it is not in this file literally.
+
+>>> (pair? (read (open-input-string (string-append (make-string 100 #\() "1" (make-string 100 #\))))))
+... ; 100-deep nesting is below the 500 cap -> reads fine
+==> #t
+
+>>> (read (open-input-string (string-append (make-string 600 #\() "1" (make-string 600 #\)))))
+... ; 600-deep nesting exceeds the cap -> graceful error, not a crash
+%%% %any-error%

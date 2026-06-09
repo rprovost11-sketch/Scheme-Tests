@@ -228,6 +228,21 @@
 ... ; long-flat write-shared: the datum-label scan recursed on the cdr-spine
 ==> #t
 
+; REG 2026-06-09 -- mark_literal_immutable iterative.  Evaluating (quote <datum>)
+;   marks the literal immutable by walking it; that walk recursed on car AND cdr
+;   and overflowed on deeply-nested or long literal data (hard C-stack crash in
+;   cppscheme2 ~50k, RecursionError in pyScheme ~1k).  Now an explicit worklist
+;   (the immutable flag doubles as the visited marker), so depth is heap-bounded.
+;   The datum is built at runtime and eval'd, so the deep nesting is not in this
+;   file literally (the reader itself caps source nesting at 500 -- see 01-reader).
+
+>>> (define (mil-nest k) (let loop ((i k) (a 1)) (if (= i 0) a (loop (- i 1) (list (quote +) 1 a)))))
+==>
+
+>>> (pair? (eval (list (quote quote) (mil-nest 20000)) (interaction-environment)))
+... ; eval marks the 20000-deep literal immutable; pre-fix overflowed the host stack
+==> #t
+
 >>> (ws (let ((s (list 1 2))) (list s s)))
 ... ; shared substructure still labeled correctly after the iterative rewrite
 ==> "(#0=(1 2) #0#)"
