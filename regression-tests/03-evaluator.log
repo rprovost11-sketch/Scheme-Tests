@@ -187,3 +187,51 @@
 >>> (begin (set-cdr! (cddr cyc) cyc) (equal? cyc cyc))
 ... ; cyclic structure: the seen-set bounds the walk; terminates as #t
 ==> #t
+
+; REG 2026-06-09 -- pretty-printer iterative (write / display / write-shared).
+; Symptom: the renderers recursed on the car-chain (write/display/write-shared)
+;   and write-shared's datum-label scan recursed on the cdr-spine too, so a
+;   deeply-nested structure (~1000 deep crashed cppscheme2) or a long flat list
+;   (write-shared) overflowed the host stack -- a hard crash in cppscheme2, a
+;   RecursionError in pyScheme.  Reachable via (write x file-port), the R7RS datum
+;   serialization path.  Now rendered via an explicit task stack and an iterative
+;   scan, so depth is heap-bounded; datum-label numbering/placement is preserved.
+
+>>> (define (ws v) (let ((p (open-output-string))) (write-shared v p) (get-output-string p)))
+==>
+
+>>> (define (wr v) (let ((p (open-output-string))) (write v p) (get-output-string p)))
+==>
+
+>>> (define (dp v) (let ((p (open-output-string))) (display v p) (get-output-string p)))
+==>
+
+>>> (define (mknest n) (if (= n 0) 'x (list (mknest (- n 1)))))
+==>
+
+>>> (define (mkflat n) (let loop ((i n) (a '())) (if (= i 0) a (loop (- i 1) (cons i a)))))
+==>
+
+>>> (string-length (wr (mknest 50000)))
+... ; deep-nested write: pre-fix crashed cppscheme2 ~1000 deep, pyScheme ~900
+==> 100001
+
+>>> (string-length (dp (mknest 50000)))
+... ; deep-nested display: same car-recursion overflow class
+==> 100001
+
+>>> (string-length (ws (mknest 50000)))
+... ; deep-nested write-shared: scan and render both recursed on car
+==> 100001
+
+>>> (> (string-length (ws (mkflat 50000))) 100000)
+... ; long-flat write-shared: the datum-label scan recursed on the cdr-spine
+==> #t
+
+>>> (ws (let ((s (list 1 2))) (list s s)))
+... ; shared substructure still labeled correctly after the iterative rewrite
+==> "(#0=(1 2) #0#)"
+
+>>> (ws (let ((c (list 1 2 3))) (set-cdr! (cddr c) c) c))
+... ; cyclic structure still rendered with datum labels
+==> "#0=(1 2 3 . #0#)"
