@@ -20,4 +20,11 @@
 ;;;        >>> (expression)
 ;;;        ==> expected             ; or:  %%% %any-error%
 ;;;
-;;; (No regressions recorded yet.)
+
+>>> #!bogus
+... ; REG 2026-06-08 -- short #!-directive crashed the reader; _substring read past
+... ; end of string.  Symptom: "internal error: string index out of range" instead
+... ; of "unknown #!-directive".  (cppscheme2 unaffected; guards length before substr.)
+%%% line 1, col 1: unknown #!-directive
+%%% #!bogus
+%%% ^

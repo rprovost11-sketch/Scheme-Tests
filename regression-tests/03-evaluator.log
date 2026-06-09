@@ -20,4 +20,93 @@
 ;;;        >>> (expression)
 ;;;        ==> expected             ; or:  %%% %any-error%
 ;;;
-;;; (No regressions recorded yet.)
+; REG 2026-06-07 -- map/for-each/filter CEK-frame conversion -- nested
+;   higher-order calls overflowed the host stack.
+; Symptom: a recursive map / for-each / filter whose callback re-enters
+;   map / for-each / filter (a for-each tree walk, a singleton-map driven
+;   recursion, a predicate that recurses) raised "recursion depth exceeded"
+;   at ~600 levels, because each primitive re-entered the evaluator (cek_eval)
+;   once per element.  These are now driven on the CEK K-stack via
+;   FRAME_HOF_STEP, so nesting depth is heap-bounded like ordinary recursion.
+
+>>> (define (map-depth n)
+...   (if (= n 0) 'done (car (map (lambda (ignore) (map-depth (- n 1))) '(x)))))
+==>
+
+>>> (map-depth 5000)
+... ; pre-fix: aborted ~600 deep with "recursion depth exceeded"
+==> done
+
+>>> (define fe-acc 0)
+==>
+
+>>> (define (fe-depth n)
+...   (if (= n 0) #t
+...       (for-each (lambda (ignore) (set! fe-acc (+ fe-acc 1)) (fe-depth (- n 1))) '(x))))
+==>
+
+>>> (begin (fe-depth 5000) fe-acc)
+... ; deep for-each nesting through the callback; runs once per level, no overflow.
+...   ; (Uses a 1-element list each level rather than one deep structure, so this
+...   ; exercises for-each's own recursion without depending on GC traversal of
+...   ; deeply car-nested data.)
+==> 5000
+
+>>> (define (filter-depth n)
+...   (if (= n 0) #t (filter (lambda (ignore) (filter-depth (- n 1))) '(x))))
+==>
+
+>>> (length (filter-depth 5000))
+... ; the predicate recurses, nesting filter through its callback each level
+==> 1
+
+; REG 2026-06-07 -- HOF stack-safety, part 2 -- vector/string variants.
+; Symptom: same as above (host-stack overflow ~600 deep on nested callbacks),
+;   for vector-map / vector-for-each / string-map / string-for-each.  Now driven
+;   on the K stack via FRAME_HOF_STEP_IDX (index-based cursors).
+
+>>> (define (vmap-depth n)
+...   (if (= n 0) 'done
+...       (vector-ref (vector-map (lambda (ignore) (vmap-depth (- n 1))) #(x)) 0)))
+==>
+
+>>> (vmap-depth 5000)
+... ; deep vector-map nesting through the callback, no overflow
+==> done
+
+>>> (define vfe-acc 0)
+==>
+
+>>> (define (vfe-depth n)
+...   (if (= n 0) #t
+...       (vector-for-each
+...         (lambda (ignore) (set! vfe-acc (+ vfe-acc 1)) (vfe-depth (- n 1)))
+...         #(x))))
+==>
+
+>>> (begin (vfe-depth 5000) vfe-acc)
+... ; deep vector-for-each: callback runs once per level
+==> 5000
+
+>>> (define (smap-depth n)
+...   (if (= n 0) #\z
+...       (string-ref (string-map (lambda (ignore) (smap-depth (- n 1))) "x") 0)))
+==>
+
+>>> (char=? (smap-depth 5000) #\z)
+... ; deep string-map nesting through the callback
+==> #t
+
+>>> (define sfe-acc 0)
+==>
+
+>>> (define (sfe-depth n)
+...   (if (= n 0) #t
+...       (string-for-each
+...         (lambda (ignore) (set! sfe-acc (+ sfe-acc 1)) (sfe-depth (- n 1)))
+...         "x")))
+==>
+
+>>> (begin (sfe-depth 5000) sfe-acc)
+... ; deep string-for-each: callback runs once per level
+==> 5000

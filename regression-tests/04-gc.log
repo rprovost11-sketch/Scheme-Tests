@@ -20,4 +20,24 @@
 ;;;        >>> (expression)
 ;;;        ==> expected             ; or:  %%% %any-error%
 ;;;
-;;; (No regressions recorded yet.)
+; REG 2026-06-07 -- iterative GC mark -- deep car-nested structures overflowed
+;   the C stack during collection (cppscheme2 only).
+; Symptom: traversing a deeply car-nested structure (e.g. a chain of one-element
+;   lists) crashed with a C stack overflow at ~8k-16k depth, non-deterministically
+;   (it depended on when a GC happened to fire), because the mark phase recursed
+;   on each cons's car.  mark is now driven by an explicit worklist, so mark depth
+;   lives on the heap.  pyScheme never had this (no moving GC tracing the data).
+
+>>> (define (build n) (if (= n 0) '() (list (build (- n 1)))))
+==>
+
+>>> (define leaves 0)
+==>
+
+>>> (define (walk n)
+...   (if (pair? n) (for-each walk n) (set! leaves (+ leaves 1))))
+==>
+
+>>> (begin (walk (build 30000)) leaves)
+... ; a 30000-deep car-nested walk completes; pre-fix this overflowed the C stack
+==> 1
