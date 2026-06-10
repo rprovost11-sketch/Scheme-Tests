@@ -29,17 +29,19 @@
 %%% #!bogus
 %%% ^
 
-; REG 2026-06-09 -- reader nesting depth guard.  The recursive-descent reader
-;   overflowed the host stack on deeply-nested input (hard C-stack crash in
-;   cppscheme2, RecursionError in pyScheme).  parse_expr now caps nesting at 500
-;   and raises a graceful "expression nesting too deep" syntax error.  Caps
-;   NESTING only -- flat lists of any length still read.  The deep input is built
-;   as a runtime string and fed through read, so it is not in this file literally.
+; REG 2026-06-09 -- reader nesting is unbounded (iterative reader, v0.5.13).
+;   The recursive-descent reader used to overflow the host stack on deeply-nested
+;   input (hard C-stack crash in cppscheme2, RecursionError in pyScheme); v0.5.12
+;   capped nesting at 500 with a graceful "expression nesting too deep" error.
+;   v0.5.13 rewrote the reader with an explicit frame stack, so nesting of any
+;   depth now reads (memory-bound, not depth-capped) -- matching equal? and the
+;   pretty-printer.  Flat lists of any length always read.  The deep input is
+;   built as a runtime string and fed through read, so it is not literally here.
 
 >>> (pair? (read (open-input-string (string-append (make-string 100 #\() "1" (make-string 100 #\))))))
-... ; 100-deep nesting is below the 500 cap -> reads fine
+... ; 100-deep nesting reads fine
 ==> #t
 
->>> (read (open-input-string (string-append (make-string 600 #\() "1" (make-string 600 #\)))))
-... ; 600-deep nesting exceeds the cap -> graceful error, not a crash
-%%% %any-error%
+>>> (let loop ((x (read (open-input-string (string-append (make-string 30000 #\() "1" (make-string 30000 #\)))))) (n 0)) (if (pair? x) (loop (car x) (+ n 1)) n))
+... ; 30000-deep nesting reads with no cap and fully descends (was a graceful "too deep" error at 500)
+==> 30000

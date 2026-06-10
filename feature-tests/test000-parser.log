@@ -690,3 +690,12 @@
 %%% "<input-string>" line 1, col 1: unterminated list (missing ')')
 %%% (1 2
 %%% ^
+
+... ; --- Deep nesting (the reader is iterative — no recursion-depth limit) ---
+>>> (let walk ((x (read (open-input-string (string-append (make-string 10000 (integer->char 40)) "1" (make-string 10000 (integer->char 41)))))) (n 0)) (if (pair? x) (walk (car x) (+ n 1)) (list x n)))
+... ; a 10000-deep nested list reads without overflowing the host stack
+==> (1 10000)
+
+>>> (let ((p (open-input-string (string-append (make-string 10000 (integer->char 40)) "1" (make-string 10000 (integer->char 41)) " next")))) (read p) (read p))
+... ; after one deeply-nested datum the port advances to read the datum after it
+==> next
