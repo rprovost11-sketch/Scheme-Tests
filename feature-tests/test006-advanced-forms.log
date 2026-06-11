@@ -693,14 +693,18 @@ Primitive  |  args: pre-evaluated
 %%% ^
 >>> (define captured-k #f) (with-exception-handler (lambda (e) (list 'handled e)) (lambda () (call/cc (lambda (k) (set! captured-k k) 0)))) (captured-k 99)
 ... ;;; If an after-thunk itself raises during error unwinding, the new
-... ;;; exception is silently swallowed so the original error continues to
-... ;;; propagate.  R7RS does not specify which wins; the C++ reference
-... ;;; impl makes this same choice (see evaluator.cpp's exception dispatch).
+... ;;; exception propagates and becomes the condition the handler sees
+... ;;; (demonstrated by the next form).  R7RS leaves this unspecified;
+... ;;; this matches Chez Scheme (Chibi infinite-loops on it), so there is
+... ;;; no shared oracle -- propagate is the simpler, frame-driven choice.
 ==> 99
 
 >>> (guard (e (#t (list 'caught e))) (dynamic-wind (lambda () 0) (lambda () (raise 'body-bad)) (lambda () (raise 'cleanup-bad))))
+... ;;; The body raises body-bad; the after-thunk raises cleanup-bad while
+... ;;; unwinding, which propagates and is what the guard catches (Chez
+... ;;; semantics; see the note above).
 ... ;;; -------- define-library / import / export (R7RS 5.6) --------
 ... ;;; Top-level import of the standard library is a no-op since primitives
 ... ;;; are already bound globally.
-==> (caught body-bad)
+==> (caught cleanup-bad)
 
