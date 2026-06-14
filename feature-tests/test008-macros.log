@@ -443,23 +443,38 @@
 >>> (lb-if #t then 10 else 20)
 ... ;;; Shadowed 'then': pattern no longer matches; produces no-match error.
 ... ;;; (We just confirm the non-shadowed case matches correctly above.)
-... ;;; -------- _ and ... in literals list (R7RS §4.3.2 error) --------
-... ;;; R7RS says it is an error for _ or ... to appear in the literals list.
-... ;;; parse_syntax_rules must reject them.
+... ;;; -------- _ and ... in literals list (R7RS §4.3.2 literal priority) --------
+... ;;; R7RS 4.3.2: when _ or the ellipsis appears in the literals list its special
+... ;;; meaning is overridden and it matches/instantiates as an ordinary literal
+... ;;; ("If an underscore appears in the <pattern literal>s list, then that takes
+... ;;; precedence..."; same for the ellipsis).  R6RS forbade this; chibi agrees
+... ;;; with R7RS, Chez still rejects it as R6RS-strict.
 ==> 10
 
->>> (define-syntax bad-underscore (syntax-rules (_) ((_ x) x)))
-%%% line 1, col 46: syntax-rules: '_' cannot appear in literals list
-%%% (define-syntax bad-underscore (syntax-rules (_) ((_ x) x)))
-%%%                                              ^
->>> (define-syntax bad-ellipsis (syntax-rules (...) ((_ x) x)))
-%%% line 1, col 44: syntax-rules: '...' cannot appear in literals list
-%%% (define-syntax bad-ellipsis (syntax-rules (...) ((_ x) x)))
-%%%                                            ^
->>> (define-syntax bad-custom-ell (syntax-rules ~~ (~~ ((_ x) x))))
-%%% line 1, col 49: syntax-rules: '~~' cannot appear in literals list
-%%% (define-syntax bad-custom-ell (syntax-rules ~~ (~~ ((_ x) x))))
-%%%                                                 ^
+>>> (define-syntax lit-underscore (syntax-rules (_)
+...     ((_ _) 'matched-underscore)
+...     ((_ x) x)))
+==>
+
+>>> (lit-underscore _)
+==> matched-underscore
+
+>>> (lit-underscore 42)
+==> 42
+
+>>> (define-syntax lit-ellipsis (syntax-rules ... (...)
+...     ((_ x) '(x ...))))
+==>
+
+>>> (lit-ellipsis 7)
+==> (7 ...)
+
+>>> (define-syntax lit-custom-ell (syntax-rules ~~ (~~)
+...     ((_ x) '(x ~~))))
+==>
+
+>>> (lit-custom-ell 7)
+==> (7 ~~)
 
 >>> (define-syntax m (syntax-rules (5) ((m) 1)))
 ... ; literals list entry must be a symbol, not a number
