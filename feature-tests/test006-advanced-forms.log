@@ -581,15 +581,14 @@ Primitive  |  args: pre-evaluated
 ==> (caught #<error-object "3 arguments provided; 1 expected">)
 
 >>> (with-exception-handler (lambda (v) (list 'handled v)) (lambda () (car 99)))
-... ;;; Static arity errors (immediate-lambda or known top-level callable) fire
-... ;;; during analysis, before guard's handler is installed; they escape to the
-... ;;; top level just as a parse error would.
+... ;;; (car 99) has correct arity but the wrong argument TYPE -- a runtime
+... ;;; error the handler catches and returns from.
 ==> (handled #<error-object "car: expected pair, got non-pair value">)
 
 >>> (guard (e (else 'caught)) (car))
-%%% SchemeArityError: line 1, col 27: car: 0 arguments provided; 1 expected
-%%% (guard (e (else 'caught)) (car))
-%%%                           ^
+... ;;; A wrong-arity call is a catchable RUNTIME condition (R7RS 6.10), so guard
+... ;;; intercepts it -- procedure arity errors no longer escape during analysis.
+==> caught
 >>> (call/cc (lambda (k) (+ 1 2 3)))
 ... ;;; Invoking the continuation escapes past the surrounding context.
 ==> 6

@@ -255,11 +255,11 @@
 ==>
 
 >>> (sq)
-%%% SchemeArityError: line 1, col 1: sq: 0 arguments provided; 1 expected
+%%% SchemeArityError: line 1, col 1: 0 arguments provided; 1 expected
 %%% (sq)
 %%% ^
 >>> (sq 4 5)
-%%% SchemeArityError: line 1, col 1: sq: 2 arguments provided; 1 expected
+%%% SchemeArityError: line 1, col 1: 2 arguments provided; 1 expected
 %%% (sq 4 5)
 %%% ^
 >>> (sq 5)
