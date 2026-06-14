@@ -1014,7 +1014,14 @@
 (test 3.0 (inexact (sqrt 9)))
 (test 1.4142135623731 (sqrt 2))
 (test 0.0+1.0i (inexact (sqrt -1)))
-(test 0.0+1.0i (sqrt -1.0-0.0i))
+;; LOCAL EDIT (CEKScheme): expected value changed from chibi's 0.0+1.0i to
+;; 0.0-1.0i.  The imaginary part of the argument is NEGATIVE zero (-0.0), and
+;; the principal sqrt branch cut along the negative real axis is continuous from
+;; above (IEEE-754 / C99 csqrt / CLtL2, which R7RS 6.2.6 defers to): approaching
+;; from -0.0i yields -i, not +i.  Both interpreters return 0.0-1.0i (pyScheme via
+;; Python cmath, cppScheme2 mirrored); chibi's 0.0+1.0i drops the -0.0 sign.  We
+;; keep the standards-correct result rather than reproduce chibi's quirk.
+(test 0.0-1.0i (sqrt -1.0-0.0i))
 
 (test '(2 0) (call-with-values (lambda () (exact-integer-sqrt 4)) list))
 (test '(2 1) (call-with-values (lambda () (exact-integer-sqrt 5)) list))
