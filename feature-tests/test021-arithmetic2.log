@@ -182,7 +182,7 @@
 ==> +inf.0+0.0i
 
 >>> 0.0+inf.0i
-==> 0.0++inf.0i
+==> 0.0+inf.0i
 
 >>> +nan.0+0.0i
 ... ;;; -------- type predicates on complex --------
