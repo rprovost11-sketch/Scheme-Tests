@@ -47,6 +47,12 @@ results.Chez:
 results.Chibi:
 	./bench chibi all
 
+results.PyScheme:
+	./bench pyscheme all
+
+results.CPPScheme2:
+	./bench cppscheme2 all
+
 results.Chicken:
 	./bench chicken all
 
@@ -126,6 +132,10 @@ bones: results.Bones
 chez: results.Chez
 
 chibi: results.Chibi
+
+pyscheme: results.PyScheme
+
+cppscheme2: results.CPPScheme2
 
 chicken: results.Chicken
 

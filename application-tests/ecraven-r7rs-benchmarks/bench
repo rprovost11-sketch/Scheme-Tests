@@ -42,6 +42,10 @@ HOME="$(pwd)"
 SRC="${HOME}/src"
 INPUTS="${HOME}/inputs"
 
+# pyScheme and cppScheme2 live as sibling projects three levels up from this
+# benchmark directory (Lisp/scheme-tests/application-tests/ecraven-r7rs-benchmarks).
+LISP_ROOT="$(cd "${HOME}/../../.." 2>/dev/null && pwd)"
+
 ################################################################
 
 # These are Larceny's R6RS benchmarks revised for R7RS, with
@@ -79,7 +83,7 @@ SYNTH_BENCHMARKS="equal bv2string"
 
 ALL_BENCHMARKS="$GABRIEL_BENCHMARKS $NUM_BENCHMARKS $KVW_BENCHMARKS $IO_BENCHMARKS $OTHER_BENCHMARKS $GC_BENCHMARKS $SYNTH_BENCHMARKS"
 
-ALL_SYSTEMS="bigloo bones chez chibi chicken cyclone femtolisp gambitc gauche gerbil guile ironscheme kawa larceny loko mit mosh picrin racket s7 s9fes sagittarius stklos tr7 ypsilon" # tinyscheme seems to run out of memory or time on *every* benchmark :-/
+ALL_SYSTEMS="bigloo bones chez chibi chicken cyclone femtolisp gambitc gauche gerbil guile ironscheme kawa larceny loko mit mosh picrin pyscheme cppscheme2 racket s7 s9fes sagittarius stklos tr7 ypsilon" # tinyscheme seems to run out of memory or time on *every* benchmark :-/
 # petite-chez  chickencsi
 # foment owllisp rhizome rscheme scheme48 vicare
 ################################################################
@@ -151,6 +155,12 @@ setup ()
     TR7I=${TR7I:-"tr7i"}
     VICARE=${VICARE:-"vicare"}
     YPSILON=${YPSILON:-"ypsilon"}
+
+    # pyScheme is run as a Python module; PYSCHEME_DIR is put on PYTHONPATH so
+    # `python -m pyscheme` resolves regardless of the current directory.
+    PYSCHEME_DIR=${PYSCHEME_DIR:-"${LISP_ROOT}/3PyScheme"}
+    PYSCHEME=${PYSCHEME:-"python -m pyscheme"}
+    CPPSCHEME2=${CPPSCHEME2:-"${LISP_ROOT}/4CPPScheme2/build/Release/cppscheme2.exe"}
 }
 
 setup
@@ -188,6 +198,8 @@ Usage: bench [-r runs] <system> <benchmark>
   petit            for Petit Larceny
   petite-chez      for Petite Chez
   picrin           for Picrin
+  pyscheme         for pyScheme (Provost/Longo)
+  cppscheme2       for cppScheme2 (Provost/Longo)
   racket           for Racket
   rhizome          for Rhizome
   rscheme          for RScheme
@@ -356,6 +368,33 @@ chibi_comp ()
 chibi_exec ()
 {
     time "${CHIBI}" -m scheme.load -e "(load \"$1\")" < "$2"
+}
+
+# -----------------------------------------------------------------------------
+# Definitions specific to pyScheme
+
+pyscheme_comp ()
+{
+    :
+}
+
+pyscheme_exec ()
+{
+    # File mode runs the program; benchmark data is read from stdin via (read).
+    time ( PYTHONPATH="${PYSCHEME_DIR}" ${PYSCHEME} "$1" < "$2" )
+}
+
+# -----------------------------------------------------------------------------
+# Definitions specific to cppScheme2
+
+cppscheme2_comp ()
+{
+    :
+}
+
+cppscheme2_exec ()
+{
+    time ( "${CPPSCHEME2}" "$1" < "$2" )
 }
 
 # -----------------------------------------------------------------------------
@@ -977,6 +1016,20 @@ for system in $systems ; do
                EXTENSION="scm"
                EXTENSIONCOMP="scm"
                ;;
+
+        pyscheme) NAME='PyScheme'
+                  COMP=pyscheme_comp
+                  EXEC=pyscheme_exec
+                  EXTENSION="scm"
+                  EXTENSIONCOMP="scm"
+                  ;;
+
+        cppscheme2) NAME='CPPScheme2'
+                    COMP=cppscheme2_comp
+                    EXEC=cppscheme2_exec
+                    EXTENSION="scm"
+                    EXTENSIONCOMP="scm"
+                    ;;
 
         chicken) NAME='Chicken'
                  COMP=chicken_comp
