@@ -1,0 +1,1048 @@
+; Section 4.2.1 - Conditionals
+;
+; (cond <clause1> <clause2> ...)
+;   Each clause is (<test> <expr> ...) or (<test> => <proc>) or (else <expr> ...)
+;   The first clause whose <test> yields true has its body evaluated.
+;   => form: <test> value is passed to <proc>, result is the cond value.
+;   else clause: matches when no prior clause matched.
+;
+; (case <key> <clause1> ...)
+;   Each clause is ((<datum> ...) <expr> ...) or (else <expr> ...)
+;   <key> is evaluated once; each <datum> is compared with eqv?.
+;   => form in else or datum clause: key value passed to <proc>.
+;
+; (when <test> <expr1> ...)
+;   If <test> is true, evaluates all exprs and returns last; else unspecified.
+;
+; (unless <test> <expr1> ...)
+;   If <test> is false, evaluates all exprs and returns last; else unspecified.
+
+; ==========================================================================
+; cond — basic true clause
+; ==========================================================================
+
+>>> (cond (#t 'yes))
+
+==> yes
+
+>>> (cond (#f 'no) (#t 'yes))
+
+==> yes
+
+>>> (cond (#f 'a) (#f 'b) (#t 'c))
+
+==> c
+
+; ==========================================================================
+; cond — else clause
+; ==========================================================================
+
+>>> (cond (#f 'a) (else 'default))
+
+==> default
+
+>>> (cond (#f 'a) (#f 'b) (else 'fallback))
+
+==> fallback
+
+; else without any prior true clause
+>>> (cond (else 'only))
+
+==> only
+
+; ==========================================================================
+; cond — test value returned when no body expressions
+; ==========================================================================
+
+; R7RS: if a clause has no body expressions after the test, the test's
+; value is returned (when it's true).
+
+>>> (cond (42))
+
+==> 42
+
+>>> (cond (#f) (99))
+
+==> 99
+
+>>> (cond (#f) (0))
+
+==> 0
+
+>>> (cond (#f) ('hello))
+
+==> hello
+
+; ==========================================================================
+; cond — multiple body expressions in a clause (begin semantics)
+; ==========================================================================
+
+>>> (define log '())
+
+>>> (cond (#t
+...        (set! log (cons 1 log))
+...        (set! log (cons 2 log))
+...        'done))
+
+==> done
+
+>>> log
+
+==> (2 1)
+
+; ==========================================================================
+; cond — only the first true clause is evaluated
+; ==========================================================================
+
+>>> (define count 0)
+
+>>> (cond (#t (set! count (+ count 1)) 'first)
+...       (#t (set! count (+ count 10)) 'second))
+
+==> first
+
+>>> count
+
+==> 1
+
+; ==========================================================================
+; cond — test expressions are evaluated in order
+; ==========================================================================
+
+>>> (cond ((= 1 2) 'no)
+...       ((= 2 2) 'yes)
+...       (else 'never))
+
+==> yes
+
+>>> (cond ((null? '(1)) 'empty)
+...       ((pair? '(1)) 'pair)
+...       (else 'other))
+
+==> pair
+
+; ==========================================================================
+; cond => clause (arrow form)
+; ==========================================================================
+
+; The => form passes the test's true value to the procedure.
+
+>>> (cond (1 => (lambda (x) (* x 10))))
+
+==> 10
+
+>>> (cond (#f 'no) (42 => (lambda (x) (+ x 1))))
+
+==> 43
+
+>>> (cond ((assv 2 '((1 one) (2 two) (3 three)))
+...        => cadr))
+
+==> two
+
+>>> (cond ((assv 5 '((1 one) (2 two) (3 three)))
+...        => cadr)
+...       (else 'not-found))
+
+==> not-found
+
+; => with a multi-arg procedure is valid only if proc takes one argument
+; (the test value).
+
+>>> (cond ((+ 3 4) => (lambda (x) (* x x))))
+
+==> 49
+
+; ==========================================================================
+; cond => in else clause (R7RS 4.2.1 — else => proc)
+; ==========================================================================
+
+; else with => passes the key's value... but cond else has no natural
+; "value" to pass. R7RS only defines => for test clauses (not else).
+; The else => form is NOT part of standard cond.
+; We do not test it here.
+
+; ==========================================================================
+; cond — all false, no else: unspecified
+; ==========================================================================
+
+>>> (define result (cond (#f 1) (#f 2)))
+... 
+... ; No error; result is an unspecified value.
+
+>>> (if #t 'ok)
+
+==> ok
+
+; ==========================================================================
+; cond — truthiness: every value except #f triggers a clause
+; ==========================================================================
+
+>>> (cond (0 'zero-is-true))
+
+==> zero-is-true
+
+>>> (cond ('() 'empty-list-is-true))
+
+==> empty-list-is-true
+
+>>> (cond ("" 'empty-string-is-true))
+
+==> empty-string-is-true
+
+>>> (cond (#f 'never) ('anything 'caught))
+
+==> caught
+
+; ==========================================================================
+; cond — nested
+; ==========================================================================
+
+>>> (cond (#t
+...        (cond (#f 'inner-false)
+...              (else 'inner-else))))
+
+==> inner-else
+
+>>> (define (classify n)
+...   (cond ((< n 0) 'negative)
+...         ((= n 0) 'zero)
+...         ((< n 10) 'small)
+...         (else 'large)))
+
+>>> (classify -3)
+
+==> negative
+
+>>> (classify 0)
+
+==> zero
+
+>>> (classify 7)
+
+==> small
+
+>>> (classify 100)
+
+==> large
+
+; ==========================================================================
+; case — basic
+; ==========================================================================
+
+>>> (case 2
+...   ((1) 'one)
+...   ((2) 'two)
+...   ((3) 'three))
+
+==> two
+
+>>> (case 'b
+...   ((a) 'ay)
+...   ((b) 'bee)
+...   ((c) 'cee))
+
+==> bee
+
+; ==========================================================================
+; case — else clause
+; ==========================================================================
+
+>>> (case 99
+...   ((1) 'one)
+...   ((2) 'two)
+...   (else 'other))
+
+==> other
+
+>>> (case 'z
+...   ((a b c) 'abc)
+...   (else 'other))
+
+==> other
+
+; ==========================================================================
+; case — multiple datums in one clause
+; ==========================================================================
+
+>>> (case 2
+...   ((1 2 3) 'small)
+...   ((4 5 6) 'medium)
+...   (else 'large))
+
+==> small
+
+>>> (case 5
+...   ((1 2 3) 'small)
+...   ((4 5 6) 'medium)
+...   (else 'large))
+
+==> medium
+
+>>> (case 7
+...   ((1 2 3) 'small)
+...   ((4 5 6) 'medium)
+...   (else 'large))
+
+==> large
+
+; ==========================================================================
+; case — key is evaluated exactly once; datums are not evaluated
+; ==========================================================================
+
+>>> (define k-count 0)
+
+>>> (define (get-key)
+...   (set! k-count (+ k-count 1))
+...   2)
+
+>>> (case (get-key)
+...   ((1) 'one)
+...   ((2) 'two)
+...   ((3) 'three))
+
+==> two
+
+>>> k-count
+
+==> 1
+
+; ==========================================================================
+; case — datums compared with eqv?
+; ==========================================================================
+
+; Numbers compared with eqv?
+>>> (case 0
+...   ((0) 'zero)
+...   (else 'other))
+
+==> zero
+
+; Characters compared with eqv?
+>>> (case #\a
+...   ((#\a) 'lower-a)
+...   ((#\A) 'upper-a)
+...   (else 'other))
+
+==> lower-a
+
+; Booleans
+>>> (case #t
+...   ((#t) 'true)
+...   ((#f) 'false))
+
+==> true
+
+; Symbols
+>>> (case 'foo
+...   ((foo) 'matched)
+...   (else 'no))
+
+==> matched
+
+; Strings are compared with eqv? (identity), so string literals in
+; datums may or may not match a freshly constructed string.
+; We only test with symbols and numbers for reliable eqv? behavior.
+
+; ==========================================================================
+; case — multiple body expressions (begin semantics)
+; ==========================================================================
+
+>>> (define case-log '())
+
+>>> (case 1
+...   ((1) (set! case-log (cons 'a case-log))
+...        (set! case-log (cons 'b case-log))
+...        'done))
+
+==> done
+
+>>> case-log
+
+==> (b a)
+
+; ==========================================================================
+; case — no match and no else: unspecified
+; ==========================================================================
+
+>>> (define case-result (case 42
+...                       ((1) 'one)
+...                       ((2) 'two)))
+... 
+... ; No error; case-result is unspecified.
+
+>>> (if #t 'ok)
+
+==> ok
+
+; ==========================================================================
+; case => (arrow) form — R7RS 4.2.1
+; ==========================================================================
+
+; In a => clause the key's value is passed to the procedure.
+
+>>> (case (* 2 3)
+...   ((2 3 5 7) => (lambda (x) (list 'prime x)))
+...   ((1 4 6 8 9) => (lambda (x) (list 'composite x))))
+
+==> (composite 6)
+
+>>> (case 7
+...   ((2 3 5 7) => (lambda (x) (list 'prime x)))
+...   (else => (lambda (x) (list 'other x))))
+
+==> (prime 7)
+
+>>> (case 10
+...   ((2 3 5 7) => (lambda (x) (list 'prime x)))
+...   (else => (lambda (x) (list 'other x))))
+
+==> (other 10)
+
+; ==========================================================================
+; when — test true: body evaluated, last value returned
+; ==========================================================================
+
+>>> (when #t 'yes)
+
+==> yes
+
+>>> (when #t 1 2 3)
+
+==> 3
+
+>>> (when (= 1 1) (* 6 7))
+
+==> 42
+
+; when with side effects — all body expressions evaluated
+>>> (define when-log '())
+
+>>> (when #t
+...   (set! when-log (cons 'a when-log))
+...   (set! when-log (cons 'b when-log)))
+
+>>> when-log
+
+==> (b a)
+
+; ==========================================================================
+; when — test false: body not evaluated, returns unspecified
+; ==========================================================================
+
+>>> (define when-result (when #f 'never))
+... 
+... ; No error; when-result is unspecified.
+
+>>> (define side 0)
+
+>>> (when #f (set! side 99))
+
+>>> side
+
+==> 0
+
+; ==========================================================================
+; when — truthiness (non-#f is true)
+; ==========================================================================
+
+>>> (when 0 'zero-triggers-when)
+
+==> zero-triggers-when
+
+>>> (when '() 'empty-list-triggers-when)
+
+==> empty-list-triggers-when
+
+>>> (when "" 'empty-string-triggers-when)
+
+==> empty-string-triggers-when
+
+; ==========================================================================
+; unless — test false: body evaluated, last value returned
+; ==========================================================================
+
+>>> (unless #f 'yes)
+
+==> yes
+
+>>> (unless #f 1 2 3)
+
+==> 3
+
+>>> (unless (= 1 2) 'not-equal)
+
+==> not-equal
+
+; unless with side effects
+>>> (define unless-log '())
+
+>>> (unless #f
+...   (set! unless-log (cons 'x unless-log))
+...   (set! unless-log (cons 'y unless-log)))
+
+>>> unless-log
+
+==> (y x)
+
+; ==========================================================================
+; unless — test true: body not evaluated, returns unspecified
+; ==========================================================================
+
+>>> (define unless-result (unless #t 'never))
+... 
+... ; No error; unless-result is unspecified.
+
+>>> (define unless-side 0)
+
+>>> (unless #t (set! unless-side 99))
+
+>>> unless-side
+
+==> 0
+
+; ==========================================================================
+; unless — only #f triggers the body
+; ==========================================================================
+
+>>> (unless 0 'not-triggered)
+... 
+... ; 0 is true, so body is not evaluated — result is unspecified.
+
+>>> (unless '() 'not-triggered)
+... 
+... ; '() is true, so body is not evaluated.
+
+>>> (unless #f 'triggered)
+
+==> triggered
+
+; ==========================================================================
+; when / unless in tail position
+; ==========================================================================
+
+>>> (define (when-tail n)
+...   (define i 0)
+...   (define (loop)
+...     (when (< i n)
+...       (set! i (+ i 1))
+...       (loop)))
+...   (loop)
+...   i)
+
+>>> (when-tail 1000000)
+
+==> 1000000
+
+>>> (define (unless-tail n)
+...   (define i 0)
+...   (define (loop)
+...     (unless (= i n)
+...       (set! i (+ i 1))
+...       (loop)))
+...   (loop)
+...   i)
+
+>>> (unless-tail 1000000)
+
+==> 1000000
+
+; ==========================================================================
+; cond in tail position
+; ==========================================================================
+
+>>> (define (cond-loop n i)
+...   (cond ((= i n) i)
+...         (else (cond-loop n (+ i 1)))))
+
+>>> (cond-loop 1000000 0)
+
+==> 1000000
+
+; ==========================================================================
+; case in tail position
+; ==========================================================================
+
+>>> (define (case-loop n i)
+...   (case (= i n)
+...     ((#t) i)
+...     (else (case-loop n (+ i 1)))))
+
+>>> (case-loop 1000000 0)
+
+==> 1000000
+
+; ==========================================================================
+; and — short-circuit conjunction
+; ==========================================================================
+
+; and with no arguments returns #t (identity for conjunction)
+
+>>> (and)
+
+==> #t
+
+; and with one argument returns it
+
+>>> (and 1)
+
+==> 1
+
+>>> (and #f)
+
+==> #f
+
+; and returns the last value when all are true
+
+>>> (and 1 2 3)
+
+==> 3
+
+>>> (and 'a 'b 'c)
+
+==> c
+
+>>> (and #t #t #t)
+
+==> #t
+
+; and returns #f at the first false value
+
+>>> (and #f 2 3)
+
+==> #f
+
+>>> (and 1 #f 3)
+
+==> #f
+
+>>> (and 1 2 #f)
+
+==> #f
+
+; and short-circuits — later expressions not evaluated
+
+>>> (define and-side 0)
+
+>>> (and #f (set! and-side 99))
+
+==> #f
+
+>>> and-side
+
+==> 0
+
+>>> (and 1 2 (begin (set! and-side 1) 3))
+
+==> 3
+
+>>> and-side
+
+==> 1
+
+; and with zero-valued truthy expressions
+
+>>> (and 0 0 0)
+
+==> 0
+
+>>> (and '() '() '())
+
+==> ()
+
+>>> (and "" "" "")
+
+==> ""
+
+; and returns the first false value (always #f since only #f is false)
+
+>>> (and 1 #f 'never)
+
+==> #f
+
+; and in a condition
+
+>>> (if (and (> 5 3) (< 2 4)) 'yes 'no)
+
+==> yes
+
+>>> (if (and (> 5 3) (> 2 4)) 'yes 'no)
+
+==> no
+
+; and in tail position — must be tail-recursive
+
+>>> (define (all-positive? lst)
+...   (or (null? lst)
+...       (and (positive? (car lst))
+...            (all-positive? (cdr lst)))))
+
+>>> (all-positive? '(1 2 3 4 5))
+
+==> #t
+
+>>> (all-positive? '(1 2 -3 4 5))
+
+==> #f
+
+>>> (all-positive? (make-list 1000000 1))
+
+==> #t
+
+; ==========================================================================
+; or — short-circuit disjunction
+; ==========================================================================
+
+; or with no arguments returns #f (identity for disjunction)
+
+>>> (or)
+
+==> #f
+
+; or with one argument returns it
+
+>>> (or 1)
+
+==> 1
+
+>>> (or #f)
+
+==> #f
+
+; or returns the first true value
+
+>>> (or #f #f 3)
+
+==> 3
+
+>>> (or #f 2 3)
+
+==> 2
+
+>>> (or 1 2 3)
+
+==> 1
+
+; or returns #f when all are false
+
+>>> (or #f #f #f)
+
+==> #f
+
+; or short-circuits — later expressions not evaluated
+
+>>> (define or-side 0)
+
+>>> (or 1 (set! or-side 99))
+
+==> 1
+
+>>> or-side
+
+==> 0
+
+>>> (or #f #f (begin (set! or-side 1) 3))
+
+==> 3
+
+>>> or-side
+
+==> 1
+
+; or returns the actual true value (not just #t)
+
+>>> (or #f 42)
+
+==> 42
+
+>>> (or #f "hello")
+
+==> "hello"
+
+>>> (or #f '(1 2 3))
+
+==> (1 2 3)
+
+; or in a condition
+
+>>> (if (or (= 1 2) (= 2 2)) 'yes 'no)
+
+==> yes
+
+>>> (if (or (= 1 2) (= 3 4)) 'yes 'no)
+
+==> no
+
+; or in tail position
+
+>>> (define (any-negative? lst)
+...   (and (not (null? lst))
+...        (or (negative? (car lst))
+...            (any-negative? (cdr lst)))))
+
+>>> (any-negative? '(1 2 3 4 5))
+
+==> #f
+
+>>> (any-negative? '(1 2 -3 4 5))
+
+==> #t
+
+>>> (any-negative? (make-list 1000000 1))
+
+==> #f
+
+; and / or combined
+
+>>> (and (or #f 1) (or #f 2))
+
+==> 2
+
+>>> (or (and #f 1) (and 2 3))
+
+==> 3
+
+>>> (or (and #t 'a) (and #t 'b))
+
+==> a
+
+; ==========================================================================
+; cond-expand — conditional expansion based on feature identifiers
+; ==========================================================================
+
+; cond-expand is evaluated at macro-expansion time based on implementation
+; features.  The (else ...) clause matches unconditionally.
+
+; else clause always fires when no other matches
+
+>>> (cond-expand
+...   (else 'always))
+
+==> always
+
+; r7rs feature is required for all R7RS-conforming implementations
+
+>>> (cond-expand
+...   (r7rs 'is-r7rs)
+...   (else 'not-r7rs))
+
+==> is-r7rs
+
+; exact-rational feature (optional but common)
+
+>>> (cond-expand
+...   (exact-rational 'has-exact-rational)
+...   (else 'no-exact-rational))
+
+==> has-exact-rational or ==> no-exact-rational
+
+; ieee-float feature (optional)
+
+>>> (cond-expand
+...   (ieee-float 'has-ieee-float)
+...   (else 'no-ieee-float))
+
+==> has-ieee-float or ==> no-ieee-float
+
+; Multiple feature clauses — first matching wins
+
+>>> (cond-expand
+...   (r7rs 'first)
+...   (else 'second))
+
+==> first
+
+; and combinator — all features must be present
+
+>>> (cond-expand
+...   ((and r7rs r7rs) 'both)
+...   (else 'not-both))
+
+==> both
+
+; or combinator — at least one feature must be present
+
+>>> (cond-expand
+...   ((or r7rs no-such-feature-xyz) 'at-least-one)
+...   (else 'none))
+
+==> at-least-one
+
+; not combinator — feature must be absent
+
+>>> (cond-expand
+...   ((not no-such-feature-xyz-987) 'absent)
+...   (else 'present))
+
+==> absent
+
+; Unknown feature alone evaluates to #f (does not match)
+
+>>> (cond-expand
+...   (no-such-feature-xyz-987 'matched)
+...   (else 'not-matched))
+
+==> not-matched
+
+; cond-expand with multiple body expressions in a clause
+
+>>> (cond-expand
+...   (r7rs
+...    (define cond-expand-test-val 1)
+...    (set! cond-expand-test-val (+ cond-expand-test-val 1))
+...    cond-expand-test-val)
+...   (else 0))
+
+==> 2
+
+; cond-expand — library feature (library must be present to match)
+
+>>> (cond-expand
+...   ((library (scheme base)) 'has-scheme-base)
+...   (else 'no-scheme-base))
+
+==> has-scheme-base
+
+; cond-expand with and/or/not nesting
+
+>>> (cond-expand
+...   ((and r7rs (not no-such-feature-xyz)) 'matched)
+...   (else 'not-matched))
+
+==> matched
+
+>>> (cond-expand
+...   ((or no-such-feature-xyz r7rs) 'matched)
+...   (else 'not-matched))
+
+==> matched
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === cond: => clause does not evaluate proc when test is false ===
+
+>>> (cond (#f => (lambda (x) (* x 100)))
+...       (7 => (lambda (x) (+ x 1))))
+
+==> 8
+
+; === cond: multiple => clauses, first true test selected ===
+
+>>> (cond ((memv 2 (list 1 2 3)) => car)
+...       (else (quote none)))
+
+==> 2
+
+; === cond: => test value used exactly once ===
+
+>>> (define arrow-count 0)
+
+>>> (cond ((begin (set! arrow-count (+ arrow-count 1)) 5) => (lambda (x) x)))
+
+==> 5
+
+>>> arrow-count
+
+==> 1
+
+; === case: => after a matched datum clause ===
+
+>>> (case 3
+...   ((1 2) (quote low))
+...   ((3 4) => (lambda (k) (list (quote hit) k)))
+...   (else (quote none)))
+
+==> (hit 3)
+
+; === case: char datums, multiple per clause ===
+
+>>> (case (char-downcase #\X)
+...   ((#\a #\e #\i #\o #\u) (quote vowel))
+...   ((#\x #\y #\z) (quote late))
+...   (else (quote other)))
+
+==> late
+
+; === when/unless: return value is last expr, test truthy by non-#f ===
+
+>>> (when (memq (quote c) (quote (a b c))) (quote member))
+
+==> member
+
+>>> (unless (memq (quote z) (quote (a b c))) (quote not-member))
+
+==> not-member
+
+; === and: nested in cond test position ===
+
+>>> (cond ((and 1 2 3) => (lambda (x) (* x 2)))
+...       (else (quote no)))
+
+==> 6
+
+; === or: returns first non-#f preserving identity of compound value ===
+
+>>> (define or-lst (list 1 2))
+
+>>> (eq? or-lst (or #f or-lst))
+
+==> #t
+; ==========================================================================
+; R7RS section 4.2.1 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (cond ((> 3 2) 'greater) ((< 3 2) 'less))
+
+==> greater
+
+>>> (cond ((> 3 3) 'greater) ((< 3 3) 'less) (else 'equal))
+
+==> equal
+
+>>> (cond ((assv 'b '((a 1) (b 2))) => cadr) (else #f))
+
+==> 2
+
+>>> (case (* 2 3) ((2 3 5 7) 'prime) ((1 4 6 8 9) 'composite))
+
+==> composite
+
+>>> (case (car '(c d)) ((a e i o u) 'vowel) ((w y) 'semivowel) (else => (lambda (x) x)))
+
+==> c
+
+>>> (and (= 2 2) (> 2 1))
+
+==> #t
+
+>>> (and (= 2 2) (< 2 1))
+
+==> #f
+
+>>> (and 1 2 'c '(f g))
+
+==> (f g)
+
+>>> (and)
+
+==> #t
+
+>>> (or (= 2 2) (> 2 1))
+
+==> #t
+
+>>> (or (= 2 2) (< 2 1))
+
+==> #t
+
+>>> (or #f #f #f)
+
+==> #f
+
+>>> (or (memq 'b '(a b c)) (/ 3 0))
+
+==> (b c)
+

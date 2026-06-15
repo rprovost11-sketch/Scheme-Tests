@@ -1,0 +1,907 @@
+; Section 3.2 - Disjointness of Types
+;
+; Every object satisfies at most one of the following predicates:
+;   boolean?  bytevector?  char?  eof-object?  null?  number?
+;   pair?  port?  procedure?  string?  symbol?  vector?
+;
+; For each type: verify the self-predicate returns #t and every other
+; listed predicate returns #f.  12 types x 12 predicates = 144 tests,
+; plus supplementary tests for edge cases and multiple representatives.
+
+; Establish eof-object and port values used throughout
+
+>>> (define the-eof (read (open-input-string "")))
+
+>>> (define the-port (open-input-string ""))
+...
+... ; ==========================================================================
+... ; boolean  (#t and #f)
+... ; ==========================================================================
+
+>>> (boolean? #t)
+
+==> #t
+
+>>> (boolean? #f)
+
+==> #t
+
+>>> (bytevector? #t)
+
+==> #f
+
+>>> (char? #t)
+
+==> #f
+
+>>> (eof-object? #t)
+
+==> #f
+
+>>> (null? #t)
+
+==> #f
+
+>>> (number? #t)
+
+==> #f
+
+>>> (pair? #t)
+
+==> #f
+
+>>> (port? #t)
+
+==> #f
+
+>>> (procedure? #t)
+
+==> #f
+
+>>> (string? #t)
+
+==> #f
+
+>>> (symbol? #t)
+
+==> #f
+
+>>> (vector? #t)
+
+==> #f
+
+; ==========================================================================
+; bytevector
+; ==========================================================================
+
+>>> (bytevector? #u8(1 2 3))
+
+==> #t
+
+>>> (bytevector? #u8())
+
+==> #t
+
+>>> (boolean? #u8(1 2 3))
+
+==> #f
+
+>>> (char? #u8(1 2 3))
+
+==> #f
+
+>>> (eof-object? #u8(1 2 3))
+
+==> #f
+
+>>> (null? #u8(1 2 3))
+
+==> #f
+
+>>> (number? #u8(1 2 3))
+
+==> #f
+
+>>> (pair? #u8(1 2 3))
+
+==> #f
+
+>>> (port? #u8(1 2 3))
+
+==> #f
+
+>>> (procedure? #u8(1 2 3))
+
+==> #f
+
+>>> (string? #u8(1 2 3))
+
+==> #f
+
+>>> (symbol? #u8(1 2 3))
+
+==> #f
+
+>>> (vector? #u8(1 2 3))
+
+==> #f
+
+; ==========================================================================
+; char
+; ==========================================================================
+
+>>> (char? #\a)
+
+==> #t
+
+>>> (char? #\space)
+
+==> #t
+
+>>> (boolean? #\a)
+
+==> #f
+
+>>> (bytevector? #\a)
+
+==> #f
+
+>>> (eof-object? #\a)
+
+==> #f
+
+>>> (null? #\a)
+
+==> #f
+
+>>> (number? #\a)
+
+==> #f
+
+>>> (pair? #\a)
+
+==> #f
+
+>>> (port? #\a)
+
+==> #f
+
+>>> (procedure? #\a)
+
+==> #f
+
+>>> (string? #\a)
+
+==> #f
+
+>>> (symbol? #\a)
+
+==> #f
+
+>>> (vector? #\a)
+
+==> #f
+
+; ==========================================================================
+; eof-object
+; ==========================================================================
+
+>>> (eof-object? the-eof)
+
+==> #t
+
+>>> (boolean? the-eof)
+
+==> #f
+
+>>> (bytevector? the-eof)
+
+==> #f
+
+>>> (char? the-eof)
+
+==> #f
+
+>>> (null? the-eof)
+
+==> #f
+
+>>> (number? the-eof)
+
+==> #f
+
+>>> (pair? the-eof)
+
+==> #f
+
+>>> (port? the-eof)
+
+==> #f
+
+>>> (procedure? the-eof)
+
+==> #f
+
+>>> (string? the-eof)
+
+==> #f
+
+>>> (symbol? the-eof)
+
+==> #f
+
+>>> (vector? the-eof)
+
+==> #f
+
+; ==========================================================================
+; null  —  the empty list
+;
+; Critical: null? and pair? are disjoint.  The empty list is NOT a pair.
+; ==========================================================================
+
+>>> (null? '())
+
+==> #t
+
+>>> (boolean? '())
+
+==> #f
+
+>>> (bytevector? '())
+
+==> #f
+
+>>> (char? '())
+
+==> #f
+
+>>> (eof-object? '())
+
+==> #f
+
+>>> (number? '())
+
+==> #f
+
+; The empty list is NOT a pair — this is a commonly violated invariant
+
+>>> (pair? '())
+
+==> #f
+
+>>> (port? '())
+
+==> #f
+
+>>> (procedure? '())
+
+==> #f
+
+>>> (string? '())
+
+==> #f
+
+>>> (symbol? '())
+
+==> #f
+
+>>> (vector? '())
+
+==> #f
+
+; The empty list is a proper list (list? checks for proper list structure)
+; but list? is not one of the disjoint type predicates
+
+>>> (list? '())
+
+==> #t
+
+>>> (pair? '())
+
+==> #f
+
+; ==========================================================================
+; number  (exact integer, inexact, rational)
+; ==========================================================================
+
+>>> (number? 42)
+
+==> #t
+
+>>> (number? -1)
+
+==> #t
+
+>>> (number? 0)
+
+==> #t
+
+>>> (number? 3.14)
+
+==> #t
+
+>>> (number? 1/3)
+
+==> #t
+
+>>> (boolean? 42)
+
+==> #f
+
+>>> (bytevector? 42)
+
+==> #f
+
+>>> (char? 42)
+
+==> #f
+
+>>> (eof-object? 42)
+
+==> #f
+
+>>> (null? 42)
+
+==> #f
+
+>>> (pair? 42)
+
+==> #f
+
+>>> (port? 42)
+
+==> #f
+
+>>> (procedure? 42)
+
+==> #f
+
+>>> (string? 42)
+
+==> #f
+
+>>> (symbol? 42)
+
+==> #f
+
+>>> (vector? 42)
+
+==> #f
+
+; ==========================================================================
+; pair
+; ==========================================================================
+
+>>> (pair? '(1 . 2))
+
+==> #t
+
+>>> (pair? '(1 2 3))
+
+==> #t
+
+>>> (boolean? '(1 . 2))
+
+==> #f
+
+>>> (bytevector? '(1 . 2))
+
+==> #f
+
+>>> (char? '(1 . 2))
+
+==> #f
+
+>>> (eof-object? '(1 . 2))
+
+==> #f
+
+>>> (null? '(1 . 2))
+
+==> #f
+
+>>> (number? '(1 . 2))
+
+==> #f
+
+>>> (port? '(1 . 2))
+
+==> #f
+
+>>> (procedure? '(1 . 2))
+
+==> #f
+
+>>> (string? '(1 . 2))
+
+==> #f
+
+>>> (symbol? '(1 . 2))
+
+==> #f
+
+>>> (vector? '(1 . 2))
+
+==> #f
+
+; ==========================================================================
+; port
+; ==========================================================================
+
+>>> (port? the-port)
+
+==> #t
+
+>>> (port? (current-input-port))
+
+==> #t
+
+>>> (port? (current-output-port))
+
+==> #t
+
+>>> (boolean? the-port)
+
+==> #f
+
+>>> (bytevector? the-port)
+
+==> #f
+
+>>> (char? the-port)
+
+==> #f
+
+>>> (eof-object? the-port)
+
+==> #f
+
+>>> (null? the-port)
+
+==> #f
+
+>>> (number? the-port)
+
+==> #f
+
+>>> (pair? the-port)
+
+==> #f
+
+>>> (procedure? the-port)
+
+==> #f
+
+>>> (string? the-port)
+
+==> #f
+
+>>> (symbol? the-port)
+
+==> #f
+
+>>> (vector? the-port)
+
+==> #f
+
+; ==========================================================================
+; procedure
+; ==========================================================================
+
+>>> (procedure? car)
+
+==> #t
+
+>>> (procedure? +)
+
+==> #t
+
+>>> (procedure? (lambda (x) x))
+
+==> #t
+
+>>> (boolean? car)
+
+==> #f
+
+>>> (bytevector? car)
+
+==> #f
+
+>>> (char? car)
+
+==> #f
+
+>>> (eof-object? car)
+
+==> #f
+
+>>> (null? car)
+
+==> #f
+
+>>> (number? car)
+
+==> #f
+
+>>> (pair? car)
+
+==> #f
+
+>>> (port? car)
+
+==> #f
+
+>>> (string? car)
+
+==> #f
+
+; The symbol that names a procedure is a symbol, not a procedure
+
+>>> (symbol? 'car)
+
+==> #t
+
+>>> (procedure? 'car)
+
+==> #f
+
+>>> (vector? car)
+
+==> #f
+
+; ==========================================================================
+; string
+; ==========================================================================
+
+>>> (string? "hello")
+
+==> #t
+
+>>> (string? "")
+
+==> #t
+
+>>> (boolean? "hello")
+
+==> #f
+
+>>> (bytevector? "hello")
+
+==> #f
+
+>>> (char? "hello")
+
+==> #f
+
+>>> (eof-object? "hello")
+
+==> #f
+
+>>> (null? "hello")
+
+==> #f
+
+>>> (number? "hello")
+
+==> #f
+
+>>> (pair? "hello")
+
+==> #f
+
+>>> (port? "hello")
+
+==> #f
+
+>>> (procedure? "hello")
+
+==> #f
+
+>>> (symbol? "hello")
+
+==> #f
+
+>>> (vector? "hello")
+
+==> #f
+
+; ==========================================================================
+; symbol
+; ==========================================================================
+
+>>> (symbol? 'foo)
+
+==> #t
+
+>>> (symbol? 'hello)
+
+==> #t
+
+>>> (boolean? 'foo)
+
+==> #f
+
+>>> (bytevector? 'foo)
+
+==> #f
+
+>>> (char? 'foo)
+
+==> #f
+
+>>> (eof-object? 'foo)
+
+==> #f
+
+>>> (null? 'foo)
+
+==> #f
+
+>>> (number? 'foo)
+
+==> #f
+
+>>> (pair? 'foo)
+
+==> #f
+
+>>> (port? 'foo)
+
+==> #f
+
+>>> (procedure? 'foo)
+
+==> #f
+
+>>> (string? 'foo)
+
+==> #f
+
+>>> (vector? 'foo)
+
+==> #f
+
+; ==========================================================================
+; vector
+; ==========================================================================
+
+>>> (vector? #(1 2 3))
+
+==> #t
+
+>>> (vector? #())
+
+==> #t
+
+>>> (boolean? #(1 2 3))
+
+==> #f
+
+>>> (bytevector? #(1 2 3))
+
+==> #f
+
+>>> (char? #(1 2 3))
+
+==> #f
+
+>>> (eof-object? #(1 2 3))
+
+==> #f
+
+>>> (null? #(1 2 3))
+
+==> #f
+
+>>> (number? #(1 2 3))
+
+==> #f
+
+>>> (pair? #(1 2 3))
+
+==> #f
+
+>>> (port? #(1 2 3))
+
+==> #f
+
+>>> (procedure? #(1 2 3))
+
+==> #f
+
+>>> (string? #(1 2 3))
+
+==> #f
+
+>>> (symbol? #(1 2 3))
+
+==> #f
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Record types are disjoint from all 12 standard type predicates (R7RS 3.2:
+; "and all predicates created by define-record-type").  A record instance
+; satisfies its own predicate and none of the standard ones.
+; ===
+
+>>> (define-record-type point
+...   (make-point x y)
+...   point?
+...   (x point-x)
+...   (y point-y))
+
+>>> (define the-point (make-point 1 2))
+
+>>> (point? the-point)
+
+==> #t
+
+>>> (boolean? the-point)
+
+==> #f
+
+>>> (bytevector? the-point)
+
+==> #f
+
+>>> (char? the-point)
+
+==> #f
+
+>>> (eof-object? the-point)
+
+==> #f
+
+>>> (null? the-point)
+
+==> #f
+
+>>> (number? the-point)
+
+==> #f
+
+>>> (pair? the-point)
+
+==> #f
+
+>>> (port? the-point)
+
+==> #f
+
+>>> (procedure? the-point)
+
+==> #f
+
+>>> (string? the-point)
+
+==> #f
+
+>>> (symbol? the-point)
+
+==> #f
+
+>>> (vector? the-point)
+
+==> #f
+
+; A record predicate is false for non-record values
+
+>>> (point? 42)
+
+==> #f
+
+>>> (point? '(1 . 2))
+
+==> #f
+
+; Two distinct record types have mutually-false predicates
+
+>>> (define-record-type box (make-box v) box? (v box-v))
+
+>>> (box? the-point)
+
+==> #f
+
+>>> (point? (make-box 9))
+
+==> #f
+
+; ===
+; Negative and large integers, and 0, are all numbers and nothing else
+; (R7RS 3.2): additional number representatives.
+; ===
+
+>>> (number? -1000000000000)
+
+==> #t
+
+>>> (pair? -1000000000000)
+
+==> #f
+
+; ===
+; A string and a symbol with the same spelling are disjoint (R7RS 3.2):
+; string? is true only for the string, symbol? only for the symbol.
+; ===
+
+>>> (string? (symbol->string 'abc))
+
+==> #t
+
+>>> (symbol? (symbol->string 'abc))
+
+==> #f
+
+>>> (symbol? (string->symbol "abc"))
+
+==> #t
+
+>>> (string? (string->symbol "abc"))
+
+==> #f
+
+; ===
+; Completes the procedure-type row of the disjointness matrix: a procedure
+; value must satisfy none of the other 11 predicates, including symbol?
+; (R7RS 3.2).  The existing block tested (symbol? 'car) on the *symbol*;
+; this tests symbol? on the *procedure* itself.
+; ===
+
+>>> (symbol? car)
+
+==> #f
+
+; ===
+; The predicate, constructor, and accessors created by define-record-type
+; are procedures, satisfying procedure? and (by disjointness) no other
+; type predicate (R7RS 3.2, 5.5).  The point record type is defined above.
+; ===
+
+>>> (procedure? point?)
+
+==> #t
+
+>>> (procedure? make-point)
+
+==> #t
+
+>>> (procedure? point-x)
+
+==> #t
+
+; A record predicate is itself a procedure, not a record nor a pair
+
+>>> (point? point?)
+
+==> #f
+
+>>> (pair? point?)
+
+==> #f
+
+; ===
+; The infinities and NaN are numbers (R7RS 3.2: number type), and by
+; disjointness satisfy no other standard predicate.
+; ===
+
+>>> (number? +inf.0)
+
+==> #t
+
+>>> (number? +nan.0)
+
+==> #t
+
+>>> (pair? +inf.0)
+
+==> #f
+
+>>> (procedure? +nan.0)
+
+==> #f

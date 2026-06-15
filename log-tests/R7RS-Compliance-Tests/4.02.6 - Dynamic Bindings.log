@@ -1,0 +1,506 @@
+; Section 4.2.6 - Dynamic Bindings
+;
+; (make-parameter <init>)
+; (make-parameter <init> <converter>)
+;   Returns a parameter object — a procedure that when called with no
+;   arguments returns the current value of the parameter.
+;   If <converter> is supplied, it is applied to <init> and to any new
+;   value supplied to parameterize before storing.
+;
+; (parameterize ((<param> <val>) ...) <body>)
+;   Evaluates body with each <param> temporarily set to <val> (passed
+;   through the converter if one was given).  The previous value is
+;   restored when body exits — normally or via escape continuation.
+;   parameterize is analogous to fluid-let but works with parameter objects.
+
+; ==========================================================================
+; make-parameter — creates a parameter object (callable as procedure)
+; ==========================================================================
+
+>>> (define p (make-parameter 10))
+
+>>> (procedure? p)
+
+==> #t
+
+>>> (p)
+
+==> 10
+
+; ==========================================================================
+; make-parameter — initial value is returned by calling the parameter
+; ==========================================================================
+
+>>> (define greeting (make-parameter "hello"))
+
+>>> (greeting)
+
+==> "hello"
+
+>>> (define threshold (make-parameter 0.5))
+
+>>> (threshold)
+
+==> 0.5
+
+>>> (define flag (make-parameter #f))
+
+>>> (flag)
+
+==> #f
+
+; ==========================================================================
+; parameterize — temporarily rebinds a parameter
+; ==========================================================================
+
+>>> (define q (make-parameter 1))
+
+>>> (parameterize ((q 2))
+...   (q))
+
+==> 2
+
+; Original value restored after parameterize exits
+
+>>> (q)
+
+==> 1
+
+; ==========================================================================
+; parameterize — multiple parameters at once
+; ==========================================================================
+
+>>> (define pa (make-parameter 'a))
+
+>>> (define pb (make-parameter 'b))
+
+>>> (parameterize ((pa 'x) (pb 'y))
+...   (list (pa) (pb)))
+
+==> (x y)
+
+>>> (list (pa) (pb))
+
+==> (a b)
+
+; ==========================================================================
+; parameterize — nested
+; ==========================================================================
+
+>>> (define depth (make-parameter 0))
+
+>>> (depth)
+
+==> 0
+
+>>> (parameterize ((depth 1))
+...   (parameterize ((depth 2))
+...     (parameterize ((depth 3))
+...       (depth)))  )
+
+==> 3
+
+>>> (parameterize ((depth 1))
+...   (list (depth)
+...         (parameterize ((depth 2))
+...           (depth))
+...         (depth)))
+
+==> (1 2 1)
+
+>>> (depth)
+
+==> 0
+
+; ==========================================================================
+; parameterize — restoration on normal exit
+; ==========================================================================
+
+>>> (define r (make-parameter 100))
+
+>>> (define (use-param)
+...   (parameterize ((r 200))
+...     (r)))
+
+>>> (use-param)
+
+==> 200
+
+>>> (r)
+
+==> 100
+
+>>> (use-param)
+
+==> 200
+
+>>> (r)
+
+==> 100
+
+; ==========================================================================
+; parameterize — body is a sequence; last value returned
+; ==========================================================================
+
+>>> (define s (make-parameter 0))
+
+>>> (parameterize ((s 42))
+...   (+ (s) 1)
+...   (* (s) 2)
+...   (s))
+
+==> 42
+
+; ==========================================================================
+; parameterize — side effects inside body
+; ==========================================================================
+
+>>> (define history '())
+
+>>> (define current (make-parameter 'base))
+
+>>> (parameterize ((current 'inner))
+...   (set! history (cons (current) history)))
+
+>>> (set! history (cons (current) history))
+
+>>> history
+
+==> (base inner)
+
+; ==========================================================================
+; parameterize — parameter visible to called procedures (dynamic scoping)
+; ==========================================================================
+
+>>> (define indent (make-parameter 0))
+
+>>> (define (show-indent)
+...   (indent))
+
+>>> (show-indent)
+
+==> 0
+
+>>> (parameterize ((indent 4))
+...   (show-indent))
+
+==> 4
+
+>>> (parameterize ((indent 8))
+...   (list (show-indent)
+...         (parameterize ((indent 12))
+...           (show-indent))
+...         (show-indent)))
+
+==> (8 12 8)
+
+; ==========================================================================
+; parameterize — restoration on escape via call/cc
+; ==========================================================================
+
+>>> (define escape-param (make-parameter 'outer))
+
+>>> (define saved-k #f)
+
+>>> (parameterize ((escape-param 'inner))
+...   (call/cc (lambda (k) (set! saved-k k)))
+...   (escape-param))
+
+==> inner
+
+>>> (escape-param)
+
+==> outer
+
+; ==========================================================================
+; make-parameter with converter
+; ==========================================================================
+
+; The converter is applied to the initial value and to each new value
+; set via parameterize.
+
+>>> (define positive-p
+...   (make-parameter 1 abs))
+
+>>> (positive-p)
+
+==> 1
+
+; Converter applied at make-parameter time to init
+
+>>> (define abs-p (make-parameter -5 abs))
+
+>>> (abs-p)
+
+==> 5
+
+; Converter applied to parameterize value
+
+>>> (parameterize ((abs-p -3))
+...   (abs-p))
+
+==> 3
+
+>>> (abs-p)
+
+==> 5
+
+; ==========================================================================
+; make-parameter with converter — type coercion example
+; ==========================================================================
+
+>>> (define num-p
+...   (make-parameter "0" string->number))
+
+>>> (num-p)
+
+==> 0
+
+>>> (parameterize ((num-p "42"))
+...   (+ (num-p) 1))
+
+==> 43
+
+>>> (num-p)
+
+==> 0
+
+; ==========================================================================
+; make-parameter with converter — converter called once per parameterize
+; ==========================================================================
+
+>>> (define conv-count 0)
+
+>>> (define (counting-conv x)
+...   (set! conv-count (+ conv-count 1))
+...   x)
+
+>>> (define counted-p (make-parameter 0 counting-conv))
+
+>>> conv-count
+
+==> 1
+
+>>> (parameterize ((counted-p 1))
+...   (counted-p))
+
+==> 1
+
+>>> conv-count
+
+==> 2
+
+>>> (parameterize ((counted-p 2))
+...   (parameterize ((counted-p 3))
+...     (counted-p)))
+
+==> 3
+
+>>> conv-count
+
+==> 4
+
+; ==========================================================================
+; parameterize — multiple parameters, independent restoration
+; ==========================================================================
+
+>>> (define p1 (make-parameter 1))
+
+>>> (define p2 (make-parameter 2))
+
+>>> (define p3 (make-parameter 3))
+
+>>> (parameterize ((p1 10) (p2 20) (p3 30))
+...   (list (p1) (p2) (p3)))
+
+==> (10 20 30)
+
+>>> (list (p1) (p2) (p3))
+
+==> (1 2 3)
+
+; ==========================================================================
+; parameterize — zero bindings (body executed with no change)
+; ==========================================================================
+
+>>> (define unchanged (make-parameter 'same))
+
+>>> (parameterize ()
+...   (unchanged))
+
+==> same
+
+; ==========================================================================
+; parameterize — in tail position
+; ==========================================================================
+
+>>> (define tail-p (make-parameter 0))
+
+>>> (define (param-tail n)
+...   (if (= n 0)
+...       (tail-p)
+...       (parameterize ((tail-p n))
+...         (param-tail (- n 1)))))
+
+>>> (param-tail 1000000)
+
+==> 1
+
+; ==========================================================================
+; Dynamic binding vs lexical binding contrast
+; ==========================================================================
+
+; A parameter's value is determined dynamically at call time,
+; not lexically at definition time.
+
+>>> (define dyn (make-parameter 'global))
+
+>>> (define (read-dyn) (dyn))
+
+>>> (read-dyn)
+
+==> global
+
+>>> (parameterize ((dyn 'local))
+...   (read-dyn))
+
+==> local
+
+>>> (read-dyn)
+
+==> global
+
+; Lexical closure captures the binding, not the dynamic value:
+; the lambda below closes over nothing dynamic — it always calls (dyn)
+; which looks up the current dynamic binding.
+
+>>> (define reader (lambda () (dyn)))
+
+>>> (reader)
+
+==> global
+
+>>> (parameterize ((dyn 'dynamic))
+...   (reader))
+
+==> dynamic
+
+>>> (reader)
+
+==> global
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === parameterize: new value is computed before any rebinding (eval in outer dyn env) ===
+
+>>> (define pv (make-parameter 1))
+
+>>> (parameterize ((pv (+ (pv) 10)))
+...   (pv))
+
+==> 11
+
+>>> (pv)
+
+==> 1
+
+; === parameterize: sequential nested rebind of same parameter restores stepwise ===
+
+>>> (define lvl (make-parameter 0))
+
+>>> (parameterize ((lvl 1))
+...   (let ((a (lvl)))
+...     (parameterize ((lvl 2))
+...       (let ((b (lvl)))
+...         (list a b (begin (quote x) (lvl)))))))
+
+==> (1 2 2)
+
+; === make-parameter converter applied to parameterize value, not the raw arg ===
+
+>>> (define cp (make-parameter 10 (lambda (x) (* x x))))
+
+>>> (cp)
+
+==> 100
+
+>>> (parameterize ((cp 3))
+...   (cp))
+
+==> 9
+
+>>> (cp)
+
+==> 100
+
+; === parameterize: body sees rebinding even through an intervening procedure call ===
+
+>>> (define depthp (make-parameter (quote top)))
+
+>>> (define (peek) (depthp))
+
+>>> (parameterize ((depthp (quote mid)))
+...   (parameterize ((depthp (quote bottom)))
+...     (peek)))
+
+==> bottom
+
+; === parameter object is itself a procedure callable with no args repeatedly ===
+
+>>> (define rep (make-parameter 42))
+
+>>> (list (rep) (rep) (rep))
+
+==> (42 42 42)
+
+; === parameterize: value restored after an exception escapes via guard ===
+
+>>> (define ep (make-parameter (quote safe)))
+
+>>> (guard (e (else (ep)))
+...   (parameterize ((ep (quote danger)))
+...     (raise (quote boom))))
+
+==> safe
+
+; === parameterize: multiple params, only listed ones change ===
+
+>>> (define m1 (make-parameter (quote a)))
+
+>>> (define m2 (make-parameter (quote b)))
+
+>>> (parameterize ((m1 (quote x)))
+...   (list (m1) (m2)))
+
+==> (x b)
+; ==========================================================================
+; R7RS section 4.2.6 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (define radix (make-parameter 10 (lambda (x) (if (and (exact-integer? x) (<= 2 x 16)) x (error "invalid radix")))))
+
+==> 
+
+>>> (define (f n) (number->string n (radix)))
+
+==> 
+
+>>> (f 12)
+
+==> "12"
+
+>>> (parameterize ((radix 2)) (f 12))
+
+==> "1100"
+
+>>> (f 12)
+
+==> "12"
+
+>>> (parameterize ((radix 0)) (f 12))
+
+%%% %any-error%
+

@@ -1,0 +1,1049 @@
+; Section 6.2 - Numbers (Part b: Arithmetic and Integer Division)
+;
+; Covers: +, -, *, /, abs, floor/, floor-quotient, floor-remainder,
+; truncate/, truncate-quotient, truncate-remainder, quotient, remainder,
+; modulo, gcd, lcm, numerator, denominator
+
+; ==========================================================================
+; + — addition
+; ==========================================================================
+
+>>> (+ 1 2)
+
+==> 3
+
+>>> (+ 1 2 3 4 5)
+
+==> 15
+
+>>> (+)
+
+==> 0
+
+>>> (+ 5)
+
+==> 5
+
+>>> (+ 1/2 1/3)
+
+==> 5/6
+
+>>> (+ 1 0.5)
+
+==> 1.5
+
+>>> (+ 1.0 2.0)
+
+==> 3.0
+
+>>> (+ -3 3)
+
+==> 0
+
+>>> (+ 1000000000 1000000000)
+
+==> 2000000000
+
+; Exact arithmetic preserves exactness
+
+>>> (exact? (+ 1 2))
+
+==> #t
+
+; Mixed exact/inexact produces inexact
+
+>>> (inexact? (+ 1 1.0))
+
+==> #t
+
+; ==========================================================================
+; * — multiplication
+; ==========================================================================
+
+>>> (* 2 3)
+
+==> 6
+
+>>> (* 2 3 4)
+
+==> 24
+
+>>> (*)
+
+==> 1
+
+>>> (* 5)
+
+==> 5
+
+>>> (* 1/2 1/3)
+
+==> 1/6
+
+>>> (* 2 1/2)
+
+==> 1
+
+>>> (* 1.0 2.0)
+
+==> 2.0
+
+>>> (* 0 +inf.0)
+
+==> +nan.0
+
+>>> (exact? (* 3 4))
+
+==> #t
+
+>>> (inexact? (* 1 1.0))
+
+==> #t
+
+; ==========================================================================
+; - — subtraction
+; ==========================================================================
+
+>>> (- 5 3)
+
+==> 2
+
+>>> (- 10 3 2 1)
+
+==> 4
+
+>>> (- 3)
+
+==> -3
+
+>>> (- 0)
+
+==> 0
+
+>>> (- 1/2 1/3)
+
+==> 1/6
+
+>>> (- 3.0 1.5)
+
+==> 1.5
+
+>>> (- 0 +inf.0)
+
+==> -inf.0
+
+; ==========================================================================
+; / — division
+; ==========================================================================
+
+>>> (/ 10 2)
+
+==> 5
+
+>>> (/ 1 3)
+
+==> 1/3
+
+>>> (/ 1 2 4)
+
+==> 1/8
+
+>>> (/ 3)
+
+==> 1/3
+
+>>> (/ 1.0 3.0)
+
+==> 0.3333333333333333 or ==> 0.3333333333333334
+
+>>> (/ 10 4)
+
+==> 5/2
+
+>>> (/ 6 2 3)
+
+==> 1
+
+>>> (exact? (/ 1 3))
+
+==> #t
+
+>>> (inexact? (/ 1.0 3.0))
+
+==> #t
+
+; Division by zero (exact) — error
+
+>>> (/ 1 0)
+
+%%% %any-error%
+
+; Division by zero (inexact) — produces infinity
+
+>>> (/ 1.0 0.0)
+
+==> +inf.0
+
+>>> (/ -1.0 0.0)
+
+==> -inf.0
+
+; ==========================================================================
+; abs
+; ==========================================================================
+
+>>> (abs 5)
+
+==> 5
+
+>>> (abs -5)
+
+==> 5
+
+>>> (abs 0)
+
+==> 0
+
+>>> (abs -3/4)
+
+==> 3/4
+
+>>> (abs 3/4)
+
+==> 3/4
+
+>>> (abs -1.5)
+
+==> 1.5
+
+>>> (abs 1.5)
+
+==> 1.5
+
+>>> (abs +inf.0)
+
+==> +inf.0
+
+>>> (abs -inf.0)
+
+==> +inf.0
+
+>>> (exact? (abs -3))
+
+==> #t
+
+>>> (inexact? (abs -1.5))
+
+==> #t
+
+; ==========================================================================
+; floor/ — returns two values: floor quotient and floor remainder
+; ==========================================================================
+
+; floor-quotient = floor(n/d)
+; floor-remainder = n - floor-quotient * d
+; Sign of remainder matches sign of divisor.
+
+>>> (call-with-values (lambda () (floor/ 10 3)) list)
+
+==> (3 1)
+
+>>> (call-with-values (lambda () (floor/ -10 3)) list)
+
+==> (-4 2)
+
+>>> (call-with-values (lambda () (floor/ 10 -3)) list)
+
+==> (-4 -2)
+
+>>> (call-with-values (lambda () (floor/ -10 -3)) list)
+
+==> (3 -1)
+
+>>> (call-with-values (lambda () (floor/ 5 5)) list)
+
+==> (1 0)
+
+>>> (call-with-values (lambda () (floor/ 0 5)) list)
+
+==> (0 0)
+
+; ==========================================================================
+; floor-quotient
+; ==========================================================================
+
+>>> (floor-quotient 10 3)
+
+==> 3
+
+>>> (floor-quotient -10 3)
+
+==> -4
+
+>>> (floor-quotient 10 -3)
+
+==> -4
+
+>>> (floor-quotient -10 -3)
+
+==> 3
+
+; ==========================================================================
+; floor-remainder
+; ==========================================================================
+
+>>> (floor-remainder 10 3)
+
+==> 1
+
+>>> (floor-remainder -10 3)
+
+==> 2
+
+>>> (floor-remainder 10 -3)
+
+==> -2
+
+>>> (floor-remainder -10 -3)
+
+==> -1
+
+; floor-remainder has the sign of the divisor
+
+>>> (positive? (floor-remainder 7 3))
+
+==> #t
+
+>>> (positive? (floor-remainder -7 3))
+
+==> #t
+
+>>> (negative? (floor-remainder 7 -3))
+
+==> #t
+
+>>> (negative? (floor-remainder -7 -3))
+
+==> #t
+
+; ==========================================================================
+; truncate/ — returns two values: truncation quotient and remainder
+; ==========================================================================
+
+; truncate-quotient = truncate(n/d) (towards zero)
+; Sign of remainder matches sign of dividend.
+
+>>> (call-with-values (lambda () (truncate/ 10 3)) list)
+
+==> (3 1)
+
+>>> (call-with-values (lambda () (truncate/ -10 3)) list)
+
+==> (-3 -1)
+
+>>> (call-with-values (lambda () (truncate/ 10 -3)) list)
+
+==> (-3 1)
+
+>>> (call-with-values (lambda () (truncate/ -10 -3)) list)
+
+==> (3 -1)
+
+>>> (call-with-values (lambda () (truncate/ 5 5)) list)
+
+==> (1 0)
+
+>>> (call-with-values (lambda () (truncate/ 0 5)) list)
+
+==> (0 0)
+
+; ==========================================================================
+; truncate-quotient
+; ==========================================================================
+
+>>> (truncate-quotient 10 3)
+
+==> 3
+
+>>> (truncate-quotient -10 3)
+
+==> -3
+
+>>> (truncate-quotient 10 -3)
+
+==> -3
+
+>>> (truncate-quotient -10 -3)
+
+==> 3
+
+; ==========================================================================
+; truncate-remainder
+; ==========================================================================
+
+>>> (truncate-remainder 10 3)
+
+==> 1
+
+>>> (truncate-remainder -10 3)
+
+==> -1
+
+>>> (truncate-remainder 10 -3)
+
+==> 1
+
+>>> (truncate-remainder -10 -3)
+
+==> -1
+
+; truncate-remainder has the sign of the dividend
+
+>>> (positive? (truncate-remainder 7 3))
+
+==> #t
+
+>>> (negative? (truncate-remainder -7 3))
+
+==> #t
+
+>>> (positive? (truncate-remainder 7 -3))
+
+==> #t
+
+>>> (negative? (truncate-remainder -7 -3))
+
+==> #t
+
+; ==========================================================================
+; quotient — same as truncate-quotient (R5RS compatibility)
+; ==========================================================================
+
+>>> (quotient 10 3)
+
+==> 3
+
+>>> (quotient -10 3)
+
+==> -3
+
+>>> (quotient 10 -3)
+
+==> -3
+
+>>> (quotient -10 -3)
+
+==> 3
+
+>>> (quotient 0 5)
+
+==> 0
+
+; ==========================================================================
+; remainder — same as truncate-remainder (R5RS compatibility)
+; ==========================================================================
+
+>>> (remainder 10 3)
+
+==> 1
+
+>>> (remainder -10 3)
+
+==> -1
+
+>>> (remainder 10 -3)
+
+==> 1
+
+>>> (remainder -10 -3)
+
+==> -1
+
+>>> (remainder 0 5)
+
+==> 0
+
+; The relationship: n = q*d + r, where q = quotient, r = remainder
+
+>>> (let ((n 13) (d 4))
+...   (= n (+ (* (quotient n d) d) (remainder n d))))
+
+==> #t
+
+>>> (let ((n -13) (d 4))
+...   (= n (+ (* (quotient n d) d) (remainder n d))))
+
+==> #t
+
+; ==========================================================================
+; modulo — same as floor-remainder (R5RS compatibility)
+; ==========================================================================
+
+>>> (modulo 10 3)
+
+==> 1
+
+>>> (modulo -10 3)
+
+==> 2
+
+>>> (modulo 10 -3)
+
+==> -2
+
+>>> (modulo -10 -3)
+
+==> -1
+
+>>> (modulo 0 5)
+
+==> 0
+
+; modulo and remainder differ when signs of dividend and divisor differ
+
+>>> (= (remainder -7 3) -1)
+
+==> #t
+
+>>> (= (modulo -7 3) 2)
+
+==> #t
+
+>>> (= (remainder 7 -3) 1)
+
+==> #t
+
+>>> (= (modulo 7 -3) -2)
+
+==> #t
+
+; ==========================================================================
+; gcd — greatest common divisor
+; ==========================================================================
+
+>>> (gcd 32 -36)
+
+==> 4
+
+>>> (gcd 32 36)
+
+==> 4
+
+>>> (gcd 0 5)
+
+==> 5
+
+>>> (gcd 5 0)
+
+==> 5
+
+>>> (gcd 0 0)
+
+==> 0
+
+>>> (gcd)
+
+==> 0
+
+>>> (gcd 12 8 6)
+
+==> 2
+
+; gcd result is always non-negative
+
+>>> (positive? (gcd 12 -8))
+
+==> #t
+
+>>> (gcd 1 1)
+
+==> 1
+
+>>> (gcd 100 75)
+
+==> 25
+
+; Inexact inputs — result is inexact
+
+>>> (inexact? (gcd 32.0 36.0))
+
+==> #t
+
+; ==========================================================================
+; lcm — least common multiple
+; ==========================================================================
+
+>>> (lcm 4 6)
+
+==> 12
+
+>>> (lcm 32 -36)
+
+==> 288
+
+>>> (lcm 0 5)
+
+==> 0
+
+>>> (lcm 5 0)
+
+==> 0
+
+>>> (lcm)
+
+==> 1
+
+>>> (lcm 4 6 10)
+
+==> 60
+
+; lcm result is always non-negative
+
+>>> (positive? (lcm 4 -6))
+
+==> #t
+
+>>> (lcm 1 1)
+
+==> 1
+
+>>> (lcm 3 4)
+
+==> 12
+
+; ==========================================================================
+; numerator and denominator
+; ==========================================================================
+
+>>> (numerator 1/2)
+
+==> 1
+
+>>> (denominator 1/2)
+
+==> 2
+
+>>> (numerator 3/4)
+
+==> 3
+
+>>> (denominator 3/4)
+
+==> 4
+
+>>> (numerator 2/6)
+
+==> 1
+
+>>> (denominator 2/6)
+
+==> 3
+
+>>> (numerator 5)
+
+==> 5
+
+>>> (denominator 5)
+
+==> 1
+
+>>> (numerator -3/4)
+
+==> -3
+
+>>> (denominator -3/4)
+
+==> 4
+
+; Inexact rationals
+
+>>> (numerator 0.5)
+
+==> 1.0
+
+>>> (denominator 0.5)
+
+==> 2.0
+
+>>> (numerator 1.0)
+
+==> 1.0
+
+>>> (denominator 1.0)
+
+==> 1.0
+
+; The relationship: (= x (/ (numerator x) (denominator x)))
+
+>>> (let ((x 3/7))
+...   (= x (/ (numerator x) (denominator x))))
+
+==> #t
+
+>>> (let ((x -5/6))
+...   (= x (/ (numerator x) (denominator x))))
+
+==> #t
+
+; ==========================================================================
+; Exact arithmetic — no precision loss
+; ==========================================================================
+
+>>> (+ 1/3 1/6)
+
+==> 1/2
+
+>>> (- 3/4 1/4)
+
+==> 1/2
+
+>>> (* 2/3 3/4)
+
+==> 1/2
+
+>>> (/ 2/3 4/3)
+
+==> 1/2
+
+>>> (expt 2 64)
+
+==> 18446744073709551616
+
+>>> (exact? (expt 2 64))
+
+==> #t
+
+; ==========================================================================
+; Mixed exact/inexact — result is inexact
+; ==========================================================================
+
+>>> (inexact? (+ 1 1.0))
+
+==> #t
+
+>>> (inexact? (* 2 0.5))
+
+==> #t
+
+>>> (inexact? (- 3 1.0))
+
+==> #t
+
+>>> (inexact? (/ 1 2.0))
+
+==> #t
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === square — (square z) is (* z z)
+; R7RS 6.2.6.
+
+>>> (square 0)
+
+==> 0
+
+>>> (square 4)
+
+==> 16
+
+>>> (square -4)
+
+==> 16
+
+>>> (square 42)
+
+==> 1764
+
+>>> (square 2.0)
+
+==> 4.0
+
+>>> (square 1/2)
+
+==> 1/4
+
+>>> (square -3/4)
+
+==> 9/16
+
+>>> (exact? (square 5))
+
+==> #t
+
+>>> (inexact? (square 2.0))
+
+==> #t
+
+; === unary / on exact fractions and inexact
+
+>>> (/ 1/2)
+
+==> 2
+
+>>> (/ 2/3)
+
+==> 3/2
+
+>>> (/ 4)
+
+==> 1/4
+
+>>> (/ 2.0)
+
+==> 0.5
+
+; === - with single inexact
+
+>>> (- 2.5)
+
+==> -2.5
+
+>>> (- 1/4)
+
+==> -1/4
+
+; === + and * with a single inexact argument keep exactness unchanged
+
+>>> (+ 2.5)
+
+==> 2.5
+
+>>> (* 2.5)
+
+==> 2.5
+
+; === Integer division by zero is an error
+; R7RS 6.2.6: "It is an error if n2 is zero."
+
+>>> (quotient 5 0)
+
+%%% %any-error%
+
+>>> (remainder 5 0)
+
+%%% %any-error%
+
+>>> (modulo 5 0)
+
+%%% %any-error%
+
+>>> (floor-quotient 5 0)
+
+%%% %any-error%
+
+>>> (floor-remainder 5 0)
+
+%%% %any-error%
+
+>>> (truncate-quotient 5 0)
+
+%%% %any-error%
+
+>>> (truncate-remainder 5 0)
+
+%%% %any-error%
+
+; === abs — exact zero and fractional/inexact edges
+
+>>> (abs -0.0)
+
+==> 0.0
+
+>>> (abs -7/8)
+
+==> 7/8
+
+>>> (abs +nan.0)
+
+==> +nan.0
+
+; === gcd / lcm — single argument returns its absolute value
+
+>>> (gcd 5)
+
+==> 5
+
+>>> (gcd -5)
+
+==> 5
+
+>>> (lcm 5)
+
+==> 5
+
+>>> (lcm -5)
+
+==> 5
+
+; === gcd / lcm — more multi-argument cases
+
+>>> (gcd 0)
+
+==> 0
+
+>>> (lcm 0)
+
+==> 0
+
+>>> (gcd 18 24 30)
+
+==> 6
+
+>>> (lcm 2 3 4)
+
+==> 12
+
+; === numerator / denominator on exact integers
+
+>>> (numerator 0)
+
+==> 0
+
+>>> (denominator 0)
+
+==> 1
+
+>>> (numerator -7)
+
+==> -7
+
+>>> (denominator -7)
+
+==> 1
+
+; === floor/ and truncate/ — same result when signs agree (both positive)
+
+>>> (call-with-values (lambda () (floor/ 17 5)) list)
+
+==> (3 2)
+
+>>> (call-with-values (lambda () (truncate/ 17 5)) list)
+
+==> (3 2)
+
+; === modulo / remainder — quotient*divisor + remainder identity (mixed signs)
+
+>>> (let ((n 13) (d -4))
+...   (= n (+ (* (quotient n d) d) (remainder n d))))
+
+==> #t
+
+>>> (let ((n -13) (d -4))
+...   (= n (+ (* (quotient n d) d) (remainder n d))))
+
+==> #t
+
+; === modulo identity: n = (floor-quotient n d)*d + (modulo n d)
+
+>>> (let ((n -13) (d 4))
+...   (= n (+ (* (floor-quotient n d) d) (modulo n d))))
+
+==> #t
+
+>>> (let ((n 13) (d -4))
+...   (= n (+ (* (floor-quotient n d) d) (modulo n d))))
+
+==> #t
+
+; === Exact/inexact contagion in subtraction and division
+
+>>> (- 5 2.0)
+
+==> 3.0
+
+; (* exact-0 inexact): R7RS does not mandate the exact-0 shortcut here, so
+; some implementations return exact 0 and others inexact 0.0 (contagion).
+>>> (* 0 2.5)
+
+==> 0 or ==> 0.0
+
+>>> (* 0.0 5)
+
+==> 0.0
+; ==========================================================================
+; R7RS section 6.2 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (+ 3 4)
+
+==> 7
+
+>>> (+ 3)
+
+==> 3
+
+>>> (* 4)
+
+==> 4
+
+>>> (- 3 4)
+
+==> -1
+
+>>> (- 3 4 5)
+
+==> -6
+
+>>> (/ 3 4 5)
+
+==> 3/20
+
+>>> (abs -7)
+
+==> 7
+
+>>> (call-with-values (lambda () (floor/ 5 2)) list)
+
+==> (2 1)
+
+>>> (call-with-values (lambda () (floor/ -5 2)) list)
+
+==> (-3 1)
+
+>>> (call-with-values (lambda () (floor/ 5 -2)) list)
+
+==> (-3 -1)
+
+>>> (call-with-values (lambda () (floor/ -5 -2)) list)
+
+==> (2 -1)
+
+>>> (call-with-values (lambda () (truncate/ 5 2)) list)
+
+==> (2 1)
+
+>>> (call-with-values (lambda () (truncate/ -5 2)) list)
+
+==> (-2 -1)
+
+>>> (call-with-values (lambda () (truncate/ 5 -2)) list)
+
+==> (-2 1)
+
+>>> (call-with-values (lambda () (truncate/ -5 -2)) list)
+
+==> (2 -1)
+
+>>> (call-with-values (lambda () (truncate/ -5.0 -2)) list)
+
+==> (2.0 -1.0)
+
+>>> (lcm 32.0 -36)
+
+==> 288.0
+
+>>> (numerator (/ 6 4))
+
+==> 3
+
+>>> (denominator (/ 6 4))
+
+==> 2
+
+>>> (denominator (inexact (/ 6 4)))
+
+==> 2.0
+

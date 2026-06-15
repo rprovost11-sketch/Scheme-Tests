@@ -1,0 +1,508 @@
+; Section 4.1.4 - Lambda Expressions
+;
+; Syntax: (lambda <formals> <body>)
+;
+; Creates a procedure.  <formals> may be:
+;   (x y z)     — fixed arity: exactly these parameters
+;   x           — variadic: all arguments collected into one list
+;   (x y . z)   — at least two args; extras collected into z
+; <body> is a sequence of definitions followed by expressions.
+; The last expression's value is returned.
+; Lambdas close over their definition environment.
+
+; ==========================================================================
+; lambda produces a procedure
+; ==========================================================================
+
+>>> (procedure? (lambda (x) x))
+
+==> #t
+
+>>> (procedure? (lambda () 42))
+
+==> #t
+
+>>> (procedure? (lambda x x))
+
+==> #t
+
+; ==========================================================================
+; Fixed-arity formals
+; ==========================================================================
+
+; Zero parameters
+
+>>> ((lambda () 42))
+
+==> 42
+
+>>> ((lambda () (+ 1 2)))
+
+==> 3
+
+; One parameter
+
+>>> ((lambda (x) x) 5)
+
+==> 5
+
+>>> ((lambda (x) (* x x)) 7)
+
+==> 49
+
+; Two parameters
+
+>>> ((lambda (x y) (+ x y)) 3 4)
+
+==> 7
+
+>>> ((lambda (x y) (* x y)) 6 7)
+
+==> 42
+
+; Three parameters
+
+>>> ((lambda (x y z) (+ x y z)) 1 2 3)
+
+==> 6
+
+>>> ((lambda (x y z) (list x y z)) 'a 'b 'c)
+
+==> (a b c)
+
+; Many parameters
+
+>>> ((lambda (a b c d e) (+ a b c d e)) 1 2 3 4 5)
+
+==> 15
+
+; Parameters shadow outer bindings
+
+>>> (define x 100)
+
+>>> ((lambda (x) x) 42)
+
+==> 42
+
+>>> x
+
+==> 100
+
+; ==========================================================================
+; Rest parameter — all arguments collected into a list
+; ==========================================================================
+
+; Sole rest parameter — all args become a list
+
+>>> ((lambda x x) 1 2 3)
+
+==> (1 2 3)
+
+>>> ((lambda x x))
+
+==> ()
+
+>>> ((lambda x (length x)) 'a 'b 'c 'd 'e)
+
+==> 5
+
+>>> ((lambda x (apply + x)) 1 2 3 4 5)
+
+==> 15
+
+; ==========================================================================
+; Dotted formals — fixed args plus a rest list
+; ==========================================================================
+
+; One required, rest collected
+
+>>> ((lambda (x . rest) x) 1 2 3)
+
+==> 1
+
+>>> ((lambda (x . rest) rest) 1 2 3)
+
+==> (2 3)
+
+>>> ((lambda (x . rest) rest) 1)
+
+==> ()
+
+; Two required, rest collected
+
+>>> ((lambda (x y . rest) (list x y rest)) 1 2 3 4 5)
+
+==> (1 2 (3 4 5))
+
+>>> ((lambda (x y . rest) (list x y rest)) 1 2)
+
+==> (1 2 ())
+
+; Three required, rest collected
+
+>>> ((lambda (a b c . rest) rest) 1 2 3 4 5 6)
+
+==> (4 5 6)
+
+>>> ((lambda (a b c . rest) rest) 1 2 3)
+
+==> ()
+
+; ==========================================================================
+; Body — multiple expressions, last value returned
+; ==========================================================================
+
+>>> ((lambda (x)
+...    (+ x 1)
+...    (+ x 2)
+...    (+ x 3))
+...  10)
+
+==> 13
+
+>>> ((lambda (x)
+...    (define y (* x 2))
+...    (+ x y))
+...  5)
+
+==> 15
+
+; ==========================================================================
+; Internal definitions in body (equivalent to letrec*)
+; ==========================================================================
+
+>>> ((lambda ()
+...    (define a 1)
+...    (define b 2)
+...    (+ a b)))
+
+==> 3
+
+; Internal defines may reference each other (letrec* semantics)
+
+>>> ((lambda ()
+...    (define (double x) (* x 2))
+...    (define (quad x) (double (double x)))
+...    (quad 5)))
+
+==> 20
+
+; Internal defines followed by expressions
+
+>>> ((lambda (x)
+...    (define a (* x 2))
+...    (define b (+ x 1))
+...    (list a b (+ a b)))
+...  3)
+
+==> (6 4 10)
+
+; ==========================================================================
+; Closures — lambda captures its definition environment
+; ==========================================================================
+
+; Basic closure over a variable
+
+>>> (define (make-adder n) (lambda (x) (+ x n)))
+
+>>> (define add5 (make-adder 5))
+
+>>> (define add10 (make-adder 10))
+
+>>> (add5 3)
+
+==> 8
+
+>>> (add10 3)
+
+==> 13
+
+>>> (add5 (add10 1))
+
+==> 16
+
+; Each call to make-adder produces a distinct closure
+
+>>> (eq? add5 add10)
+
+==> #f
+
+; Closure captures the binding (location), not the value at creation time
+
+>>> (define n 1)
+
+>>> (define get-n (lambda () n))
+
+>>> (get-n)
+
+==> 1
+
+>>> (set! n 99)
+
+>>> (get-n)
+
+==> 99
+
+; Multiple closures sharing the same mutable binding
+
+>>> (define (make-counter)
+...   (define count 0)
+...   (lambda ()
+...     (set! count (+ count 1))
+...     count))
+
+>>> (define c1 (make-counter))
+
+>>> (define c2 (make-counter))
+
+>>> (c1)
+
+==> 1
+
+>>> (c1)
+
+==> 2
+
+>>> (c1)
+
+==> 3
+
+>>> (c2)
+
+==> 1
+
+>>> (c2)
+
+==> 2
+
+; c1 and c2 have independent counts — distinct closures, distinct locations
+
+>>> (c1)
+
+==> 4
+
+>>> (c2)
+
+==> 3
+
+; Closures sharing one counter — a getter and a setter over the same binding
+
+>>> (define (make-cell init)
+...   (define val init)
+...   (list (lambda () val)
+...         (lambda (new) (set! val new))))
+
+>>> (define cell (make-cell 0))
+
+>>> (define cell-get (car cell))
+
+>>> (define cell-set! (cadr cell))
+
+>>> (cell-get)
+
+==> 0
+
+>>> (cell-set! 42)
+
+>>> (cell-get)
+
+==> 42
+
+>>> (cell-set! 99)
+
+>>> (cell-get)
+
+==> 99
+
+; ==========================================================================
+; Closures over lambda parameters
+; ==========================================================================
+
+>>> (define (make-pair-procs x y)
+...   (list (lambda () x) (lambda () y)))
+
+>>> (define procs (make-pair-procs 'left 'right))
+
+>>> ((car procs))
+
+==> left
+
+>>> ((cadr procs))
+
+==> right
+
+; ==========================================================================
+; Error: wrong number of arguments to a fixed-arity procedure
+; ==========================================================================
+
+; Too few arguments
+
+>>> ((lambda (x y) (+ x y)) 1)
+
+%%% %any-error%
+
+>>> ((lambda (x) x))
+
+%%% %any-error%
+
+; Too many arguments
+
+>>> ((lambda (x) x) 1 2)
+
+%%% %any-error%
+
+>>> ((lambda (x y) (+ x y)) 1 2 3)
+
+%%% %any-error%
+
+; Zero args to one-param lambda
+
+>>> ((lambda (x) x))
+
+%%% %any-error%
+
+; Zero-param lambda called with arguments
+
+>>> ((lambda () 42) 1)
+
+%%% %any-error%
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Spec examples (R7RS §4.1.4):
+;   ((lambda x x) 3 4 5 6)        ==> (3 4 5 6)
+;   ((lambda (x y . z) z) 3 4 5 6) ==> (5 6)
+; ===
+
+>>> ((lambda x x) 3 4 5 6)
+
+==> (3 4 5 6)
+
+>>> ((lambda (x y . z) z) 3 4 5 6)
+
+==> (5 6)
+
+; ===
+; Each lambda evaluation produces a procedure tagged with a distinct
+; storage location, so eqv?/eq? distinguish separately-created procedures
+; (R7RS §4.1.4 / §6.1)
+; ===
+
+>>> (define (gen) (lambda (x) x))
+
+>>> (eq? (gen) (gen))
+
+==> #f
+
+; A procedure is eqv? to itself
+
+>>> (define self-proc (lambda (x) x))
+
+>>> (eqv? self-proc self-proc)
+
+==> #t
+
+; ===
+; Body with zero definitions and a single expression is the minimal body
+; ===
+
+>>> ((lambda (x) x) 'only)
+
+==> only
+
+; ===
+; Body definitions form a letrec*: a later internal define may call an
+; earlier one, and forward textual reference is permitted within procedures
+; ===
+
+>>> ((lambda ()
+...    (define (even? n) (if (= n 0) #t (odd? (- n 1))))
+...    (define (odd? n) (if (= n 0) #f (even? (- n 1))))
+...    (even? 8)))
+
+==> #t
+
+; ===
+; Dotted formal with the rest list empty when exactly the required count
+; of arguments is supplied
+; ===
+
+>>> ((lambda (a b . rest) (list a b rest)) 1 2)
+
+==> (1 2 ())
+
+; ===
+; A lambda whose formals are a single rest variable accepts zero arguments,
+; binding the rest variable to the empty list
+; ===
+
+>>> ((lambda args (list? args)))
+
+==> #t
+
+; ===
+; Error: dotted-formal procedure called with fewer than the required
+; number of leading arguments
+; ===
+
+>>> ((lambda (a b . rest) rest) 1)
+
+%%% %any-error%
+
+; ===
+; Spec example (R7RS §4.1.4): ((lambda (x) (+ x x)) 4) = 8
+; ===
+
+>>> ((lambda (x) (+ x x)) 4)
+
+==> 8
+
+; ===
+; Spec example (R7RS §4.1.4): a two-argument procedure named via define
+;   (define reverse-subtract (lambda (x y) (- y x)))
+;   (reverse-subtract 7 10) = 3
+; ===
+
+>>> (define reverse-subtract (lambda (x y) (- y x)))
+
+>>> (reverse-subtract 7 10)
+
+==> 3
+
+; ===
+; Spec example (R7RS §4.1.4): a closure capturing a let-bound variable
+;   (define add4 (let ((x 4)) (lambda (y) (+ x y))))
+;   (add4 6) = 10
+; ===
+
+>>> (define add4 (let ((x 4)) (lambda (y) (+ x y))))
+
+>>> (add4 6)
+
+==> 10
+
+; ===
+; Error: "It is an error for a variable to appear more than once in
+; formals" (R7RS §4.1.4) — duplicate variable in a fixed-arity formals list
+; ===
+
+>>> ((lambda (x x) x) 1 2)
+
+%%% %any-error%
+
+; ===
+; Error: duplicate variable in formals also forbidden when the repeated
+; name is the rest variable of a dotted formals list (R7RS §4.1.4)
+; ===
+
+>>> ((lambda (x . x) x) 1 2 3)
+
+%%% %any-error%
+
+>>> ((lambda (x y . x) x) 1 2 3)
+
+%%% %any-error%

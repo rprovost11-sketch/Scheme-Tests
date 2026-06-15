@@ -1,0 +1,1264 @@
+; Section 2.3 - Other Notations
+;
+; Covers: ( )  #( )  #u8( )  '  `  ,  ,@  .  #t #f #true #false
+;         #\<character>  "<string>"  #b #o #d #x  #e #i
+;
+; Note: #N= and #N# datum labels are covered in 2.4.
+
+; ==========================================================================
+; ( )  —  Lists and the empty list
+; ==========================================================================
+
+; The empty list
+
+>>> '()
+
+==> ()
+
+>>> (null? '())
+
+==> #t
+
+>>> (list? '())
+
+==> #t
+
+; A simple proper list
+
+>>> '(1 2 3)
+
+==> (1 2 3)
+
+>>> (list? '(1 2 3))
+
+==> #t
+
+>>> (length '(1 2 3))
+
+==> 3
+
+; Nested lists
+
+>>> '((1 2) (3 4))
+
+==> ((1 2) (3 4))
+
+>>> '(1 (2 (3 (4))))
+
+==> (1 (2 (3 (4))))
+
+; A list whose elements are heterogeneous datums
+
+>>> '(1 "two" #t #\3)
+
+==> (1 "two" #t #\3)
+
+; ==========================================================================
+; .  —  Dotted pair notation
+; ==========================================================================
+
+; Basic improper pair
+
+>>> '(1 . 2)
+
+==> (1 . 2)
+
+>>> (pair? '(1 . 2))
+
+==> #t
+
+>>> (car '(1 . 2))
+
+==> 1
+
+>>> (cdr '(1 . 2))
+
+==> 2
+
+; Improper list: dot before a non-list, non-null cdr
+
+>>> '(1 2 . 3)
+
+==> (1 2 . 3)
+
+>>> '(1 2 3 . 4)
+
+==> (1 2 3 . 4)
+
+; Dot before a list is equivalent to a proper list
+
+>>> '(1 . (2 3))
+
+==> (1 2 3)
+
+>>> '(1 . (2 . (3 . ())))
+
+==> (1 2 3)
+
+; Dot before the empty list yields a proper single-element list
+
+>>> '(1 . ())
+
+==> (1)
+
+; Dot notation in nested structure
+
+>>> '(1 . (2 . 3))
+
+==> (1 2 . 3)
+
+; A period that is part of an identifier is NOT the dot notation
+; (. is a valid subsequent character in identifiers)
+
+>>> (define a.b 99)
+
+>>> a.b
+
+==> 99
+
+>>> (eq? 'a.b 'a.b)
+
+==> #t
+
+; In a list context the period surrounded by delimiters IS the dot token
+
+>>> (equal? '(a . b) (cons 'a 'b))
+
+==> #t
+
+; ==========================================================================
+; #t  #f  #true  #false  —  Boolean constants
+; ==========================================================================
+
+>>> #t
+
+==> #t
+
+>>> #f
+
+==> #f
+
+; #true and #false are alternative spellings of #t and #f
+
+>>> #true
+
+==> #t
+
+>>> #false
+
+==> #f
+
+; They are the same objects as #t and #f
+
+>>> (eq? #true #t)
+
+==> #t
+
+>>> (eq? #false #f)
+
+==> #t
+
+>>> (boolean? #t)
+
+==> #t
+
+>>> (boolean? #f)
+
+==> #t
+
+; #f is the only false value; everything else is true
+
+>>> (if #f 'yes 'no)
+
+==> no
+
+>>> (if #t 'yes 'no)
+
+==> yes
+
+>>> (if 0 'yes 'no)
+
+==> yes
+
+>>> (if '() 'yes 'no)
+
+==> yes
+
+>>> (if "" 'yes 'no)
+
+==> yes
+
+; ==========================================================================
+; #\  —  Character constants
+; ==========================================================================
+
+; Single printable characters
+
+>>> #\a
+
+==> #\a
+
+>>> #\A
+
+==> #\A
+
+>>> #\0
+
+==> #\0
+
+>>> #\z
+
+==> #\z
+
+>>> #\Z
+
+==> #\Z
+
+>>> #\9
+
+==> #\9
+
+; Character case is significant: #\a and #\A are distinct
+
+>>> (char=? #\a #\A)
+
+==> #f
+
+>>> (char=? #\a #\a)
+
+==> #t
+
+; Special single characters
+
+>>> #\space
+
+==> #\space
+
+>>> #\newline
+
+==> #\newline
+
+>>> #\tab
+
+==> #\tab
+
+>>> #\null
+
+==> #\null
+
+>>> #\alarm
+
+==> #\alarm
+
+>>> #\backspace
+
+==> #\backspace
+
+>>> #\return
+
+==> #\return
+
+>>> #\escape
+
+==> #\escape
+
+>>> #\delete
+
+==> #\delete
+
+; All named characters are characters
+
+>>> (char? #\space)
+
+==> #t
+
+>>> (char? #\newline)
+
+==> #t
+
+>>> (char? #\tab)
+
+==> #t
+
+; Hex character notation  #\xN  where N is a hex scalar value
+
+>>> #\x41
+
+==> #\A
+
+>>> #\x61
+
+==> #\a
+
+>>> #\x30
+
+==> #\0
+
+>>> #\x20
+
+==> #\space
+
+>>> #\x9
+
+==> #\tab
+
+>>> #\x0
+
+==> #\null
+
+>>> #\x3BB
+
+==> #\x3BB
+
+; Hex notation and named/literal notation name the same character
+
+>>> (char=? #\x41 #\A)
+
+==> #t
+
+>>> (char=? #\x20 #\space)
+
+==> #t
+
+>>> (char=? #\x9 #\tab)
+
+==> #t
+
+>>> (char=? #\x0 #\null)
+
+==> #t
+
+; ==========================================================================
+; "  —  String constants
+; ==========================================================================
+
+>>> "hello"
+
+==> "hello"
+
+>>> ""
+
+==> ""
+
+>>> (string? "hello")
+
+==> #t
+
+>>> (string-length "hello")
+
+==> 5
+
+>>> (string-length "")
+
+==> 0
+
+; String escape sequences
+
+; \" — literal double-quote inside a string
+
+>>> (string-length "\"")
+
+==> 1
+
+>>> (string-ref "\"" 0)
+
+==> #\"
+
+; \\ — literal backslash
+
+>>> (string-length "\\")
+
+==> 1
+
+>>> (string-ref "\\" 0)
+
+==> #\\
+
+; \n — newline character (one character, not two)
+
+>>> (string-length "\n")
+
+==> 1
+
+>>> (char=? (string-ref "\n" 0) #\newline)
+
+==> #t
+
+; \t — tab character
+
+>>> (string-length "\t")
+
+==> 1
+
+>>> (char=? (string-ref "\t" 0) #\tab)
+
+==> #t
+
+; \a — alarm character
+
+>>> (string-length "\a")
+
+==> 1
+
+>>> (char=? (string-ref "\a" 0) #\alarm)
+
+==> #t
+
+; \b — backspace character
+
+>>> (string-length "\b")
+
+==> 1
+
+>>> (char=? (string-ref "\b" 0) #\backspace)
+
+==> #t
+
+; \r — carriage return
+
+>>> (string-length "\r")
+
+==> 1
+
+>>> (char=? (string-ref "\r" 0) #\return)
+
+==> #t
+
+; \xN; — hex escape in a string
+
+>>> (string-length "\x41;")
+
+==> 1
+
+>>> (string-ref "\x41;" 0)
+
+==> #\A
+
+>>> (char=? (string-ref "\x41;" 0) #\A)
+
+==> #t
+
+>>> (string=? "\x68;\x65;\x6C;\x6C;\x6F;" "hello")
+
+==> #t
+
+; A line ending inside a string preceded by \ is folded (ignored)
+
+>>> (string-length "hello\
+... world")
+
+==> 10
+
+; ==========================================================================
+; #( )  —  Vector constants
+; ==========================================================================
+
+; Vectors are self-evaluating
+
+>>> #()
+
+==> #()
+
+>>> #(1 2 3)
+
+==> #(1 2 3)
+
+>>> (vector? #(1 2 3))
+
+==> #t
+
+>>> (vector-length #(1 2 3))
+
+==> 3
+
+>>> (vector-ref #(1 2 3) 0)
+
+==> 1
+
+>>> (vector-ref #(1 2 3) 2)
+
+==> 3
+
+; Vectors are not lists
+
+>>> (list? #(1 2 3))
+
+==> #f
+
+; Heterogeneous vector
+
+>>> #(1 "two" #t #\3)
+
+==> #(1 "two" #t #\3)
+
+; Nested vector
+
+>>> #(1 #(2 3) 4)
+
+==> #(1 #(2 3) 4)
+
+; Vector containing an empty list
+
+>>> #(())
+
+==> #(())
+
+; ==========================================================================
+; #u8( )  —  Bytevector constants
+; ==========================================================================
+
+>>> #u8()
+
+==> #u8()
+
+>>> #u8(0 1 2 3)
+
+==> #u8(0 1 2 3)
+
+>>> (bytevector? #u8(1 2 3))
+
+==> #t
+
+>>> (bytevector-length #u8(1 2 3))
+
+==> 3
+
+>>> (bytevector-u8-ref #u8(10 20 30) 0)
+
+==> 10
+
+>>> (bytevector-u8-ref #u8(10 20 30) 2)
+
+==> 30
+
+; Bytevector elements must be exact integers in range 0–255
+
+>>> #u8(0 127 255)
+
+==> #u8(0 127 255)
+
+; Bytevectors are not vectors
+
+>>> (vector? #u8(1 2 3))
+
+==> #f
+
+; --- Bytevector elements outside the range 0–255 are an error ---
+; R7RS explicitly states it is an error if any element is not an exact
+; integer in the range 0 to 255 inclusive.
+
+>>> #u8(256)
+
+%%% %any-error% element out of range 0-255
+
+>>> #u8(-1)
+
+%%% %any-error% element out of range 0-255
+
+>>> #u8(0 255 256)
+
+%%% %any-error% element out of range 0-255
+
+>>> #u8(0 -1 2)
+
+%%% %any-error% element out of range 0-255
+
+; A non-integer element is also an error
+
+>>> #u8(1.5)
+
+%%% %any-error% element is not an exact integer
+
+>>> #u8(1/2)
+
+%%% %any-error% element is not an exact integer
+
+; ==========================================================================
+; '  —  Quote abbreviation  (quote <datum>)
+; ==========================================================================
+
+; 'x is identical to (quote x)
+
+>>> 'hello
+
+==> hello
+
+>>> (quote hello)
+
+==> hello
+
+>>> (equal? 'hello (quote hello))
+
+==> #t
+
+; Quoted list
+
+>>> '(1 2 3)
+
+==> (1 2 3)
+
+; Quoting prevents evaluation — the list is not called as a procedure
+
+>>> '(+ 1 2)
+
+==> (+ 1 2)
+
+; Quoting a boolean, number, string — already self-evaluating, quote is a no-op
+
+>>> '#t
+
+==> #t
+
+>>> '42
+
+==> 42
+
+>>> '"hello"
+
+==> "hello"
+
+; Nested quotes: ''x = (quote (quote x))
+
+>>> ''x
+
+==> (quote x)
+
+>>> '''x
+
+==> (quote (quote x))
+
+; Quoting a dotted pair
+
+>>> '(1 . 2)
+
+==> (1 . 2)
+
+; Quoting a vector
+
+>>> '#(1 2 3)
+
+==> #(1 2 3)
+
+; ==========================================================================
+; `  ,  ,@  —  Quasiquote, unquote, unquote-splicing
+; ==========================================================================
+
+; Basic quasiquote with no unquoting — equivalent to quote
+
+>>> `hello
+
+==> hello
+
+>>> `(1 2 3)
+
+==> (1 2 3)
+
+; Unquote , causes evaluation of the sub-expression
+
+>>> `,(+ 1 2)
+
+==> 3
+
+>>> `(1 ,(+ 1 1) 3)
+
+==> (1 2 3)
+
+>>> (let ((x 42)) `(the answer is ,x))
+
+==> (the answer is 42)
+
+; Multiple unquotes in one quasiquote
+
+>>> (let ((a 1) (b 2)) `(,a ,b ,(+ a b)))
+
+==> (1 2 3)
+
+; Unquote-splicing ,@ splices a list into the enclosing list
+
+>>> `(1 ,@(list 2 3) 4)
+
+==> (1 2 3 4)
+
+>>> `(a ,@'(b c d) e)
+
+==> (a b c d e)
+
+; Splicing an empty list
+
+>>> `(1 ,@'() 2)
+
+==> (1 2)
+
+; ,@ and , together
+
+>>> (let ((xs '(2 3))) `(1 ,@xs ,(+ 1 (length xs)) 5))
+
+==> (1 2 3 3 5)
+
+; Nested quasiquote — the inner ` is not evaluated by the outer
+
+>>> `(a `(b ,(+ 1 2)))
+
+==> (a (quasiquote (b (unquote (+ 1 2)))))
+
+; Quasiquote abbreviations are equivalent to their long forms
+
+>>> (equal? '`x '(quasiquote x))
+
+==> #t
+
+>>> (equal? '`,x '(quasiquote (unquote x)))
+
+==> #t
+
+>>> (equal? '`,@x '(quasiquote (unquote-splicing x)))
+
+==> #t
+
+; --- Unquote and unquote-splicing outside a quasiquote context ---
+; R7RS 4.2.8 explicitly states it is an error for , or ,@ to appear
+; in positions not enclosed within a quasiquote template.
+
+>>> ,x
+
+%%% %any-error% unquote outside quasiquote
+
+>>> ,@x
+
+%%% %any-error% unquote-splicing outside quasiquote
+
+>>> (define x 1)
+
+>>> ,x
+
+%%% %any-error% unquote outside quasiquote
+
+>>> ,@(list 1 2)
+
+%%% %any-error% unquote-splicing outside quasiquote
+
+; Inside a plain quote, , and ,@ are not active — but they are also not
+; valid datums at the top level when unquoted
+
+>>> (+ ,x 1)
+
+%%% %any-error% unquote outside quasiquote
+
+>>> (list ,@'(1 2))
+
+%%% %any-error% unquote-splicing outside quasiquote
+
+; ==========================================================================
+; #b  #o  #d  #x  —  Radix prefixes for number constants
+; ==========================================================================
+
+; Binary  #b
+
+>>> #b0
+
+==> 0
+
+>>> #b1
+
+==> 1
+
+>>> #b101
+
+==> 5
+
+>>> #b1010
+
+==> 10
+
+>>> #b11111111
+
+==> 255
+
+>>> #b-101
+
+==> -5
+
+>>> #b-1
+
+==> -1
+
+; Octal  #o
+
+>>> #o0
+
+==> 0
+
+>>> #o7
+
+==> 7
+
+>>> #o10
+
+==> 8
+
+>>> #o17
+
+==> 15
+
+>>> #o177
+
+==> 127
+
+>>> #o377
+
+==> 255
+
+>>> #o-7
+
+==> -7
+
+>>> #o-17
+
+==> -15
+
+; Decimal  #d  (same as no prefix, but explicit)
+
+>>> #d0
+
+==> 0
+
+>>> #d42
+
+==> 42
+
+>>> #d255
+
+==> 255
+
+>>> #d-1
+
+==> -1
+
+; Hexadecimal  #x
+
+>>> #x0
+
+==> 0
+
+>>> #xf
+
+==> 15
+
+>>> #x10
+
+==> 16
+
+>>> #xff
+
+==> 255
+
+>>> #x100
+
+==> 256
+
+>>> #xdeadbeef
+
+==> 3735928559
+
+>>> #x-ff
+
+==> -255
+
+; Hex digits are case-insensitive
+
+>>> #xFF
+
+==> 255
+
+>>> #xDeAdBeEf
+
+==> 3735928559
+
+>>> (= #xff #xFF)
+
+==> #t
+
+>>> (= #xab #xAB)
+
+==> #t
+
+; Cross-radix equality: same value written in different bases
+
+>>> (= #b11111111 #o377 #d255 #xff)
+
+==> #t
+
+>>> (= #b1010 #o12 #d10 #xa)
+
+==> #t
+
+; ==========================================================================
+; #e  #i  —  Exactness prefixes
+; ==========================================================================
+
+; #i  —  force inexact
+
+>>> #i1
+
+==> 1.0
+
+>>> #i0
+
+==> 0.0
+
+>>> #i-1
+
+==> -1.0
+
+>>> (inexact? #i1)
+
+==> #t
+
+>>> (inexact? #i0)
+
+==> #t
+
+; #e  —  force exact
+
+>>> #e1.0
+
+==> 1
+
+>>> #e0.0
+
+==> 0
+
+>>> (exact? #e1.0)
+
+==> #t
+
+>>> (exact? #e0.0)
+
+==> #t
+
+; #e on a decimal fraction produces an exact rational
+
+>>> #e1.5
+
+==> 3/2
+
+>>> #e0.1
+
+==> 1/10
+
+>>> #e0.25
+
+==> 1/4
+
+>>> (exact? #e1.5)
+
+==> #t
+
+>>> (rational? #e1.5)
+
+==> #t
+
+; #i on an already-inexact number is a no-op in terms of value
+
+>>> (inexact? #i1.5)
+
+==> #t
+
+; #e on an already-exact number is a no-op in terms of value
+
+>>> (exact? #e3)
+
+==> #t
+
+>>> #e3
+
+==> 3
+
+; ==========================================================================
+; Combining radix and exactness prefixes
+; Both orderings are legal: #e#b or #b#e
+; ==========================================================================
+
+; Exact binary
+
+>>> #e#b101
+
+==> 5
+
+>>> #b#e101
+
+==> 5
+
+>>> (exact? #e#b101)
+
+==> #t
+
+; Inexact binary
+
+>>> #i#b101
+
+==> 5.0
+
+>>> #b#i101
+
+==> 5.0
+
+>>> (inexact? #i#b101)
+
+==> #t
+
+; Exact octal
+
+>>> #e#o17
+
+==> 15
+
+>>> (exact? #e#o17)
+
+==> #t
+
+; Inexact hex
+
+>>> #i#xff
+
+==> 255.0
+
+>>> (inexact? #i#xff)
+
+==> #t
+
+; Exact decimal (explicit) — same as plain exact integer
+
+>>> #e#d42
+
+==> 42
+
+>>> (exact? #e#d42)
+
+==> #t
+
+; The two prefixes can appear in either order and both are equivalent
+
+>>> (= #e#b101 #b#e101)
+
+==> #t
+
+>>> (= #i#xff #x#iff)
+
+==> #t
+
+; Note: #x#iff parses as radix-16 + inexact-prefix + hex digits "ff" = 255.0
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; String line-continuation trims leading intraline whitespace on the next
+; line (R7RS 6.7 / 7.1.1): \ <intraline ws>* <line ending> <intraline ws>*
+; expands to nothing.  The indentation after the newline is removed.
+; ===
+
+>>> (string-length "abc\
+...                  def")
+
+==> 6
+
+>>> (string=? "abc\
+...      def" "abcdef")
+
+==> #t
+
+>>> (string=? "abc   \
+... def" "abc   def")
+... ; Intraline whitespace BEFORE the backslash is PRESERVED (ordinary string
+... ; content); only whitespace after the backslash, the line ending, and
+... ; leading whitespace on the next line are removed (R7RS 6.7).
+
+==> #t
+
+; ===
+; The empty vector and empty bytevector are self-evaluating and equal? to
+; their quoted forms (R7RS 2.3 / 4.1.2).
+; ===
+
+>>> (equal? '#() #())
+
+==> #t
+
+>>> (equal? '#u8() #u8())
+
+==> #t
+
+; ===
+; Quote of a quote prints with the long form quote (R7RS 4.1.2 example
+; '(quote a) = (quote a)).
+; ===
+
+>>> '(quote a)
+
+==> (quote a)
+
+; ===
+; Vector quasiquote: unquote inside a #( ) template evaluates (R7RS 4.2.8).
+; ===
+
+>>> `#(1 ,(+ 1 1) 3)
+
+==> #(1 2 3)
+
+>>> `#(1 ,@(list 2 3) 4)
+
+==> #(1 2 3 4)
+
+; ===
+; Nested quasiquote: an inner unquote at depth 2 is not evaluated by the
+; outer quasiquote (R7RS 4.2.8).
+; ===
+
+>>> `(1 `(2 ,(+ 1 2)))
+
+==> (1 (quasiquote (2 (unquote (+ 1 2)))))
+
+; A double unquote at depth 2 IS evaluated by the outer quasiquote
+
+>>> (let ((x 5)) `(1 `(2 ,(foo ,x))))
+
+==> (1 (quasiquote (2 (unquote (foo 5)))))
+
+; ===
+; #\ followed by a delimiter character is that character literal
+; (R7RS 6.6): #\( #\) #\" are valid single-character constants.
+; ===
+
+>>> (char=? #\( (string-ref "(" 0))
+
+==> #t
+
+>>> (char=? #\) (string-ref ")" 0))
+
+==> #t
+
+; ===
+; Radix prefix with explicit exactness on a decimal point literal
+; (R7RS 6.2.5): #x and #o digits never include a decimal point, but #d
+; with a fraction stays exact under #e.
+; ===
+
+>>> #e#d2.5
+
+==> 5/2
+
+; ===
+; Hex string escape spelling a non-ASCII scalar value (R7RS 6.7):
+; "\x3bb;" is a one-character string holding U+03BB.
+; ===
+
+>>> (string-length "\x3bb;")
+
+==> 1
+
+>>> (char=? (string-ref "\x3bb;" 0) #\x3bb)
+
+==> #t
+
+; ===
+; A delimited + or - sign by itself is an identifier, not a number
+; (R7RS 2.3: "A delimited plus or minus sign by itself is also an
+; identifier").
+; ===
+
+>>> (symbol? '+)
+
+==> #t
+
+>>> (symbol? '-)
+
+==> #t
+
+>>> '+
+
+==> +
+
+>>> '-
+
+==> -
+
+; The reader produces the very same symbol as string->symbol
+
+>>> (eq? '+ (string->symbol "+"))
+
+==> #t
+
+>>> (eq? '- (string->symbol "-"))
+
+==> #t
+
+; The bare + and - identifiers are still bound to the arithmetic procedures
+
+>>> (procedure? +)
+
+==> #t
+
+>>> (procedure? -)
+
+==> #t
+
+; ===
+; A sequence of two or more periods is an identifier (R7RS 2.3:
+; "Note that a sequence of two or more periods is an identifier").
+; This distinguishes it from the single delimited period (dot notation).
+; ===
+
+>>> (symbol? '...)
+
+==> #t
+
+>>> (symbol? '..)
+
+==> #t
+
+>>> '...
+
+==> ...
+
+>>> '..
+
+==> ..
+
+>>> (eq? '... (string->symbol "..."))
+
+==> #t
+
+>>> (eq? '.. (string->symbol ".."))
+
+==> #t
+
+; ===
+; A delimited period (not within a number or identifier) indicates a
+; rest-parameter in a formal parameter list (R7RS 2.3 referencing 4.1.4).
+; The same dot token used for pairs binds the remaining arguments as a list.
+; ===
+
+>>> ((lambda (a . b) b) 1 2 3)
+
+==> (2 3)
+
+>>> ((lambda (a . b) a) 1 2 3)
+
+==> 1
+
+>>> ((lambda args args) 1 2 3)
+
+==> (1 2 3)
+
+>>> ((lambda (a b . rest) rest) 1 2 3 4 5)
+
+==> (3 4 5)
+
+; With exactly the required arguments the rest parameter is the empty list
+
+>>> ((lambda (a . b) b) 1)
+
+==> ()

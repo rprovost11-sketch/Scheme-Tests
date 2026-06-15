@@ -1,0 +1,451 @@
+; Section 4.2.7 - Exception Handling
+;
+; (guard (<var> <clause1> <clause2> ...) <body>)
+;
+; Evaluates <body>.  If no exception is raised, the value of the last
+; body expression is returned and the clauses are ignored.
+;
+; If an exception is raised, the raised object is bound to <var> and
+; the clauses are tried in order, exactly like cond:
+;   - (<test> <expr> ...)  — if test is true, evaluate exprs and return last
+;   - (<test> => <proc>)   — pass test value to proc
+;   - (else <expr> ...)    — catch-all
+;
+; If no clause matches (and there is no else), the exception is re-raised
+; in the dynamic context of the guard expression (not the body).
+;
+; guard interacts with raise, raise-continuable, error, and with-exception-handler.
+
+; ==========================================================================
+; guard — no exception: body value returned, clauses not evaluated
+; ==========================================================================
+
+>>> (guard (exn (#t 'caught))
+...   42)
+
+==> 42
+
+>>> (guard (exn (#t 'caught))
+...   (+ 1 2))
+
+==> 3
+
+>>> (guard (exn (#t 'caught))
+...   'no-error)
+
+==> no-error
+
+; ==========================================================================
+; guard — basic exception catch with else
+; ==========================================================================
+
+>>> (guard (exn (else 'caught))
+...   (error "oops"))
+
+==> caught
+
+>>> (guard (exn (else 'caught))
+...   (raise 42))
+
+==> caught
+
+; ==========================================================================
+; guard — exception object is bound to the variable
+; ==========================================================================
+
+>>> (guard (exn (else exn))
+...   (raise 'my-error))
+
+==> my-error
+
+>>> (guard (exn (else exn))
+...   (raise 99))
+
+==> 99
+
+>>> (guard (exn (else exn))
+...   (raise '(a b c)))
+
+==> (a b c)
+
+; ==========================================================================
+; guard — error object (from error procedure)
+; ==========================================================================
+
+>>> (guard (exn (else (error-object-message exn)))
+...   (error "something went wrong"))
+
+==> "something went wrong"
+
+>>> (guard (exn (else (error-object? exn)))
+...   (error "test"))
+
+==> #t
+
+>>> (guard (exn (else (error-object-message exn)))
+...   (error "bad input" 42))
+
+==> "bad input"
+
+>>> (guard (exn (else (error-object-irritants exn)))
+...   (error "bad input" 42 'x))
+
+==> (42 x)
+
+; ==========================================================================
+; guard — clause test uses the exception object
+; ==========================================================================
+
+>>> (guard (exn
+...          ((string? exn) (string-append "string: " exn))
+...          ((number? exn) (+ exn 1))
+...          (else 'other))
+...   (raise "hello"))
+
+==> "string: hello"
+
+>>> (guard (exn
+...          ((string? exn) (string-append "string: " exn))
+...          ((number? exn) (+ exn 1))
+...          (else 'other))
+...   (raise 41))
+
+==> 42
+
+>>> (guard (exn
+...          ((string? exn) (string-append "string: " exn))
+...          ((number? exn) (+ exn 1))
+...          (else 'other))
+...   (raise 'something))
+
+==> other
+
+; ==========================================================================
+; guard — => (arrow) clause form
+; ==========================================================================
+
+>>> (guard (exn
+...          ((and (number? exn) exn) => (lambda (x) (* x 2))))
+...   (raise 21))
+
+==> 42
+
+>>> (guard (exn
+...          ((and (error-object? exn) exn) => error-object-message)
+...          (else 'not-error))
+...   (error "arrow test"))
+
+==> "arrow test"
+
+; ==========================================================================
+; guard — multiple clauses, first match wins
+; ==========================================================================
+
+>>> (guard (exn
+...          ((equal? exn 'first) 1)
+...          ((equal? exn 'first) 99)
+...          (else 0))
+...   (raise 'first))
+
+==> 1
+
+>>> (guard (exn
+...          ((symbol? exn) 'is-symbol)
+...          ((equal? exn 'foo) 'is-foo)
+...          (else 'other))
+...   (raise 'foo))
+
+==> is-symbol
+
+; ==========================================================================
+; guard — body with multiple expressions
+; ==========================================================================
+
+>>> (define g-log '())
+
+>>> (guard (exn (else 'caught))
+...   (set! g-log (cons 1 g-log))
+...   (set! g-log (cons 2 g-log))
+...   (error "boom"))
+
+==> caught
+
+>>> g-log
+
+==> (2 1)
+
+; ==========================================================================
+; guard — no exception, multiple body expressions, last returned
+; ==========================================================================
+
+>>> (guard (exn (else 'caught))
+...   1
+...   2
+...   3)
+
+==> 3
+
+; ==========================================================================
+; guard — nested: inner guard catches first
+; ==========================================================================
+
+>>> (guard (outer (else 'outer-caught))
+...   (guard (inner (else 'inner-caught))
+...     (error "inner error")))
+
+==> inner-caught
+
+; ==========================================================================
+; guard — no matching clause re-raises exception
+; ==========================================================================
+
+; If no clause matches, the exception propagates outward.
+
+>>> (guard (outer (else (list 're-raised outer)))
+...   (guard (inner ((number? inner) 'number))
+...     (raise 'not-a-number)))
+
+==> (re-raised not-a-number)
+
+; ==========================================================================
+; guard — re-raise in dynamic context of guard (not body)
+; ==========================================================================
+
+>>> (define context-log '())
+
+>>> (guard (exn (else (cons 'outer-handler context-log)))
+...   (guard (inner ((equal? inner 'skip) 'skipped))
+...     (begin
+...       (set! context-log (cons 'body context-log))
+...       (raise 'not-skip))))
+
+==> (outer-handler body)
+
+; ==========================================================================
+; guard — catching errors from built-in operations
+; ==========================================================================
+
+>>> (guard (exn (else 'caught-div-zero))
+...   (/ 1 0))
+
+==> caught-div-zero
+
+>>> (guard (exn (else 'caught-car))
+...   (car '()))
+
+==> caught-car
+
+>>> (guard (exn (else 'caught-type))
+...   (+ 1 "two"))
+
+==> caught-type
+
+; ==========================================================================
+; guard — body returns normally past a raise in a branch not taken
+; ==========================================================================
+
+>>> (guard (exn (else 'error))
+...   (if #t 'ok (raise 'never)))
+
+==> ok
+
+; ==========================================================================
+; guard — exception raised in clause handler
+; ==========================================================================
+
+>>> (guard (outer (else (list 'outer (error-object-message outer))))
+...   (guard (inner (#t (error "from handler")))
+...     (raise 'trigger)))
+
+==> (outer "from handler")
+
+; ==========================================================================
+; guard — with-exception-handler interop
+; ==========================================================================
+
+; guard is defined in terms of with-exception-handler.
+; Verify that exceptions raised inside a with-exception-handler body
+; are caught by an enclosing guard.
+
+>>> (guard (exn (else (list 'caught exn)))
+...   (with-exception-handler
+...     (lambda (e) (raise (list 'wrapped e)))
+...     (lambda () (raise 'original))))
+
+==> (caught (wrapped original))
+
+; ==========================================================================
+; raise vs raise-continuable
+; ==========================================================================
+
+; raise: non-continuable — handler must not return normally
+
+>>> (guard (exn (else (error-object-message exn)))
+...   (raise-continuable (error "continuable")))
+
+==> "continuable"
+
+; raise-continuable: the handler's return value becomes the value of
+; the raise-continuable expression.
+
+>>> (guard (exn (#t 'handled))
+...   (raise 'non-continuable))
+
+==> handled
+
+; ==========================================================================
+; guard — in tail position
+; ==========================================================================
+
+>>> (define (guard-tail n)
+...   (if (= n 0)
+...       'done
+...       (guard (exn (else 'error))
+...         (guard-tail (- n 1)))))
+
+>>> (guard-tail 1000000)
+
+==> done
+
+; ==========================================================================
+; guard — else clause with multiple expressions
+; ==========================================================================
+
+>>> (define side 0)
+
+>>> (guard (exn
+...          (else
+...           (set! side 1)
+...           (set! side 2)
+...           side))
+...   (raise 'x))
+
+==> 2
+
+>>> side
+
+==> 2
+
+; ==========================================================================
+; guard — exception object is #f (falsy but still bindable)
+; ==========================================================================
+
+>>> (guard (exn
+...          ((not exn) 'caught-false)
+...          (else 'other))
+...   (raise #f))
+
+==> caught-false
+
+; ==========================================================================
+; guard — zero clauses re-raises unconditionally
+; ==========================================================================
+
+; (guard (e) body) with no clauses always re-raises.
+
+>>> (guard (outer (else 'propagated))
+...   (guard (inner)
+...     (raise 'bubble)))
+
+==> propagated
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === raise-continuable: handler return value becomes the raise expression value ===
+
+; From R7RS 6.11: with-exception-handler whose handler returns 65, used in
+; (+ (raise-continuable ...) 23) => 65.
+
+>>> (with-exception-handler
+...   (lambda (con) 42)
+...   (lambda ()
+...     (+ (raise-continuable "should be a number") 23)))
+
+==> 65
+
+; === raise-continuable: handler installed is the one in place when handler was installed ===
+
+>>> (define rc-result
+...   (with-exception-handler
+...     (lambda (e) 10)
+...     (lambda () (raise-continuable (quote x)))))
+
+>>> rc-result
+
+==> 10
+
+; === guard: => clause selects proc; non-matching falls through to else ===
+
+>>> (guard (e ((assv e (quote ((1 . one) (2 . two)))) => cdr)
+...           (else (quote unknown)))
+...   (raise 2))
+
+==> two
+
+>>> (guard (e ((assv e (quote ((1 . one) (2 . two)))) => cdr)
+...           (else (quote unknown)))
+...   (raise 9))
+
+==> unknown
+
+; === guard: error-object-irritants with no irritants is empty list ===
+
+>>> (guard (e (else (error-object-irritants e)))
+...   (error "no irritants"))
+
+==> ()
+
+; === guard: condition re-raised through two levels reaches outermost ===
+
+>>> (guard (top (else (list (quote top) top)))
+...   (guard (mid ((number? mid) (quote num)))
+...     (guard (low ((string? low) (quote str)))
+...       (raise (quote sym)))))
+
+==> (top sym)
+
+; === guard: body value preserved when no clause needed (compound result) ===
+
+>>> (guard (e (else (quote err)))
+...   (cons 1 (cons 2 (quote ()))))
+
+==> (1 2)
+
+; === guard: handler can itself use guard to catch a re-raise ===
+
+>>> (guard (outer ((symbol? outer) (list (quote outer-sym) outer)))
+...   (guard (inner ((number? inner) (quote was-num)))
+...     (raise (quote escalate))))
+
+==> (outer-sym escalate)
+
+; === guard: clause with side effect then value ===
+
+>>> (define gx 0)
+
+>>> (guard (e (#t (set! gx (+ gx 5)) gx))
+...   (raise (quote anything)))
+
+==> 5
+
+; === error-object?: #f for a raised non-error object ===
+
+>>> (guard (e (else (error-object? e)))
+...   (raise (quote plain-symbol)))
+
+==> #f
+; ==========================================================================
+; R7RS section 4.2.7 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (guard (condition ((assq 'a condition) => cdr) ((assq 'b condition))) (raise (list (cons 'a 42))))
+
+==> 42
+
+>>> (guard (condition ((assq 'a condition) => cdr) ((assq 'b condition))) (raise (list (cons 'b 23))))
+
+==> (b . 23)
+

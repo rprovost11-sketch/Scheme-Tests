@@ -1,0 +1,8 @@
+*~
+.mosh
+.cache
+outputs
+out
+
+.dotnet
+.local/share/NuGet

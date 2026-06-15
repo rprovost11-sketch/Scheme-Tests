@@ -1,0 +1,552 @@
+; Section 5.7 - The REPL (Read-Eval-Print Loop)
+;
+; R7RS section 5.7 describes the interactive environment:
+;
+; - Implementations may provide an interactive session (REPL).
+; - In an interactive environment, top-level expressions are read and
+;   evaluated one at a time.
+; - The current interaction environment is mutable: define, set!,
+;   define-syntax etc. all affect it.
+; - import at the top level of an interactive session must be supported.
+; - A definition at the top level of a session may shadow a previous
+;   definition of the same name.
+; - Expressions that produce multiple values may print each value.
+; - Expressions that produce no values (unspecified) may print nothing.
+;
+; These properties are tested via (interaction-environment) from
+; (scheme repl) and (scheme eval), which expose the mutable environment.
+
+; ==========================================================================
+; Import for interaction-environment and eval
+; ==========================================================================
+
+>>> (import (scheme repl))
+
+>>> (import (scheme eval))
+... 
+... ; ==========================================================================
+... ; The interaction environment is a valid environment for eval
+... ; ==========================================================================
+
+>>> (eval '(+ 1 2) (interaction-environment))
+
+==> 3
+
+>>> (eval '(* 6 7) (interaction-environment))
+
+==> 42
+
+; ==========================================================================
+; Definitions at top level are visible in interaction-environment
+; ==========================================================================
+
+; A top-level define binds in the interaction environment
+
+>>> (define repl-a 10)
+
+>>> (eval 'repl-a (interaction-environment))
+
+==> 10
+
+; A top-level define of a procedure
+
+>>> (define (repl-square x) (* x x))
+
+>>> (eval '(repl-square 9) (interaction-environment))
+
+==> 81
+
+; ==========================================================================
+; eval in interaction-environment affects the top-level environment
+; ==========================================================================
+
+>>> (eval '(define repl-eval-x 55) (interaction-environment))
+
+>>> repl-eval-x
+
+==> 55
+
+>>> (eval '(define (repl-eval-f n) (* n 3)) (interaction-environment))
+
+>>> (repl-eval-f 7)
+
+==> 21
+
+; ==========================================================================
+; Top-level redefinition — later define shadows earlier one
+; ==========================================================================
+
+>>> (define repl-redef 'first)
+
+>>> repl-redef
+
+==> first
+
+>>> (define repl-redef 'second)
+
+>>> repl-redef
+
+==> second
+
+; Redefinition of a procedure
+
+>>> (define (repl-redef-fn) 1)
+
+>>> (repl-redef-fn)
+
+==> 1
+
+>>> (define (repl-redef-fn) 2)
+
+>>> (repl-redef-fn)
+
+==> 2
+
+; ==========================================================================
+; set! at top level modifies an existing binding
+; ==========================================================================
+
+>>> (define repl-mutable 0)
+
+>>> (set! repl-mutable 99)
+
+>>> repl-mutable
+
+==> 99
+
+>>> (set! repl-mutable (+ repl-mutable 1))
+
+>>> repl-mutable
+
+==> 100
+
+; ==========================================================================
+; import at top level makes library bindings available
+; ==========================================================================
+
+; (scheme base) is always available; importing others adds new names
+
+>>> (import (scheme char))
+
+>>> (char-upcase #\a)
+
+==> #\A
+
+>>> (import (scheme inexact))
+
+>>> (floor 2.7)
+
+==> 2.0
+
+>>> (import (scheme write))
+
+>>> (procedure? write)
+
+==> #t
+
+; ==========================================================================
+; define-syntax at top level makes macros available globally
+; ==========================================================================
+
+>>> (define-syntax repl-my-if
+...   (syntax-rules ()
+...     ((_ test then else)
+...      (cond (test then) (else else)))))
+
+>>> (repl-my-if #t 'yes 'no)
+
+==> yes
+
+>>> (repl-my-if #f 'yes 'no)
+
+==> no
+
+; Macro is visible via eval in interaction-environment
+
+>>> (eval '(repl-my-if (= 1 1) 'match 'no-match)
+...        (interaction-environment))
+
+==> match
+
+; ==========================================================================
+; define-record-type at top level
+; ==========================================================================
+
+>>> (define-record-type <repl-point>
+...   (make-repl-point x y)
+...   repl-point?
+...   (x repl-point-x)
+...   (y repl-point-y))
+
+>>> (repl-point? (make-repl-point 3 4))
+
+==> #t
+
+>>> (repl-point-x (make-repl-point 3 4))
+
+==> 3
+
+>>> (repl-point-y (make-repl-point 3 4))
+
+==> 4
+
+; ==========================================================================
+; Top-level expressions are evaluated sequentially
+; ==========================================================================
+
+; Later expressions see bindings from earlier ones in the same session
+
+>>> (define repl-seq-x 1)
+
+>>> (define repl-seq-y (+ repl-seq-x 10))
+
+>>> repl-seq-y
+
+==> 11
+
+>>> (define repl-seq-z (* repl-seq-y 2))
+
+>>> repl-seq-z
+
+==> 22
+
+; Procedures defined later can reference names defined earlier
+
+>>> (define repl-base 7)
+
+>>> (define (repl-uses-base) (* repl-base 6))
+
+>>> (repl-uses-base)
+
+==> 42
+
+; ==========================================================================
+; Mutual recursion at the top level (via internal define)
+; ==========================================================================
+
+; At top level, forward references via lambda work because the procedures
+; are not called until both are defined.
+
+>>> (define (repl-even? n)
+...   (if (= n 0) #t (repl-odd? (- n 1))))
+
+>>> (define (repl-odd? n)
+...   (if (= n 0) #f (repl-even? (- n 1))))
+
+>>> (repl-even? 10)
+
+==> #t
+
+>>> (repl-odd? 7)
+
+==> #t
+
+>>> (repl-even? 1001)
+
+==> #f
+
+; ==========================================================================
+; define-values at top level binds multiple names
+; ==========================================================================
+
+>>> (define-values (repl-dv-a repl-dv-b repl-dv-c) (values 1 2 3))
+
+>>> repl-dv-a
+
+==> 1
+
+>>> repl-dv-b
+
+==> 2
+
+>>> repl-dv-c
+
+==> 3
+
+; ==========================================================================
+; begin at top level splices definitions into the environment
+; ==========================================================================
+
+>>> (begin
+...   (define repl-begin-x 10)
+...   (define repl-begin-y 20))
+
+>>> repl-begin-x
+
+==> 10
+
+>>> repl-begin-y
+
+==> 20
+
+>>> (+ repl-begin-x repl-begin-y)
+
+==> 30
+
+; begin can interleave definitions and expressions
+
+>>> (begin
+...   (define repl-begin-a 5)
+...   repl-begin-a)
+
+==> 5
+
+; ==========================================================================
+; Expressions with no values — unspecified result
+; ==========================================================================
+
+; set! produces an unspecified value (no error)
+
+>>> (define repl-unspec 0)
+
+>>> (set! repl-unspec 1)
+... 
+... ; The expression above has an unspecified (but not error) result.
+
+>>> repl-unspec
+
+==> 1
+
+; define at top level produces an unspecified value
+
+>>> (define repl-unspec2 42)
+... 
+... ; Again unspecified result — no error.
+
+>>> repl-unspec2
+
+==> 42
+
+; ==========================================================================
+; Multiple values
+; ==========================================================================
+
+; Passing more than one value (or zero values) to the REPL's single-value
+; print continuation is unspecified (R7RS 6.10: "the effect of passing no
+; values or more than one value to continuations that were not created [by
+; call-with-values etc.] is unspecified").  The displayed form of a bare
+; top-level multiple-value result is therefore implementation-defined; we
+; test the values themselves through call-with-values, which is defined to
+; accept any number of values.
+
+>>> (call-with-values (lambda () (values 1 2 3)) list)
+
+==> (1 2 3)
+
+>>> (call-with-values (lambda () (values)) list)
+
+==> ()
+
+>>> (call-with-values (lambda () (floor/ 17 5)) list)
+
+==> (3 2)
+
+; ==========================================================================
+; Interaction environment is the same object each call
+; ==========================================================================
+
+>>> (eq? (interaction-environment) (interaction-environment))
+
+==> #t or ==> #f
+
+; Both are valid — an implementation may return the same mutable object
+; each time (eq? = #t) or create a fresh view (eq? = #f).
+; In either case, mutations via eval are reflected.
+
+>>> (eval '(define repl-env-check 777) (interaction-environment))
+
+>>> (eval 'repl-env-check (interaction-environment))
+
+==> 777
+
+; ==========================================================================
+; REPL environment sees standard library bindings without explicit import
+; ==========================================================================
+
+; In an interactive REPL the base library is pre-imported.
+
+>>> (procedure? car)
+
+==> #t
+
+>>> (procedure? map)
+
+==> #t
+
+>>> (procedure? string-append)
+
+==> #t
+
+>>> (number? 42)
+
+==> #t
+
+; ==========================================================================
+; Error in REPL expression does not kill the session
+; ==========================================================================
+
+; A guard at the top level can catch an error from a sub-expression.
+
+>>> (guard (exn (#t 'recovered))
+...   (error "session error test"))
+
+==> recovered
+
+; After catching the error, subsequent expressions still work.
+
+>>> (+ 1 2)
+
+==> 3
+
+>>> (define repl-post-error 'still-alive)
+
+>>> repl-post-error
+
+==> still-alive
+
+; ==========================================================================
+; Parameterize at top level affects the current session dynamically
+; ==========================================================================
+
+>>> (define repl-param (make-parameter 0))
+
+>>> (repl-param)
+
+==> 0
+
+>>> (parameterize ((repl-param 42))
+...   (repl-param))
+
+==> 42
+
+>>> (repl-param)
+
+==> 0
+
+; Nested parameterize at top level
+
+>>> (parameterize ((repl-param 1))
+...   (parameterize ((repl-param 2))
+...     (repl-param)))
+
+==> 2
+
+>>> (repl-param)
+
+==> 0
+
+; ==========================================================================
+; dynamic-wind at top level
+; ==========================================================================
+
+>>> (define repl-dw-log '())
+
+>>> (dynamic-wind
+...   (lambda () (set! repl-dw-log (cons 'in repl-dw-log)))
+...   (lambda () (set! repl-dw-log (cons 'body repl-dw-log)) 'result)
+...   (lambda () (set! repl-dw-log (cons 'out repl-dw-log))))
+
+==> result
+
+>>> (reverse repl-dw-log)
+
+==> (in body out)
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === A define made via eval into interaction-environment is callable directly
+
+>>> (eval '(define (repl-eval-cube n) (* n n n)) (interaction-environment))
+
+>>> (repl-eval-cube 3)
+
+==> 27
+
+; === A direct top-level define is observable via eval and used in eval
+
+>>> (define repl-shared 21)
+
+>>> (eval '(* repl-shared 2) (interaction-environment))
+
+==> 42
+
+; === A define-syntax made via eval is usable in a later direct expression
+
+>>> (eval '(define-syntax repl-eval-mac
+...          (syntax-rules ()
+...            ((repl-eval-mac x) (+ x 100))))
+...        (interaction-environment))
+
+>>> (repl-eval-mac 5)
+
+==> 105
+
+; === (environment ...) yields a fresh environment usable by eval (scheme eval)
+; A program-style environment evaluates standard forms.
+
+>>> (eval '(let ((x 4)) (* x x)) (environment '(scheme base)))
+
+==> 16
+
+>>> (eval '(map (lambda (n) (+ n 1)) '(1 2 3)) (environment '(scheme base)))
+
+==> (2 3 4)
+
+; === set! via eval mutates the interaction environment's binding
+
+>>> (define repl-set-target 0)
+
+>>> (eval '(set! repl-set-target 77) (interaction-environment))
+
+>>> repl-set-target
+
+==> 77
+
+; === Top-level define-values observable through eval
+
+>>> (define-values (repl-ev-a repl-ev-b) (values 'x 'y))
+
+>>> (eval 'repl-ev-a (interaction-environment))
+
+==> x
+
+>>> (eval 'repl-ev-b (interaction-environment))
+
+==> y
+
+; === Sequential top-level evaluation: a later expression sees an eval-define
+
+>>> (eval '(define repl-chain 1) (interaction-environment))
+
+>>> (define repl-chain2 (+ repl-chain 1))
+
+>>> repl-chain2
+
+==> 2
+
+; === guard recovers from an eval-signaled error; session continues
+
+>>> (guard (e (#t 'recovered-eval))
+...   (eval '(car '()) (interaction-environment)))
+
+==> recovered-eval
+
+>>> (+ 2 3)
+
+==> 5
+
+; === Redefinition via eval shadows the earlier binding for later references
+
+>>> (eval '(define repl-redef-eval 'one) (interaction-environment))
+
+>>> repl-redef-eval
+
+==> one
+
+>>> (eval '(define repl-redef-eval 'two) (interaction-environment))
+
+>>> repl-redef-eval
+
+==> two

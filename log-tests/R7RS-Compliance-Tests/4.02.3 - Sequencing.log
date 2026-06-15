@@ -1,0 +1,383 @@
+; Section 4.2.3 - Sequencing
+;
+; (begin <expr1> <expr2> ...)
+;
+; Two distinct roles depending on context:
+;
+; 1. Expression context: all expressions evaluated left-to-right;
+;    value of the last expression is returned.
+;
+; 2. Definition context (top level or body): begin splices its contents
+;    into the surrounding context — definitions inside begin are treated
+;    as if they appeared at that point in the enclosing body or top level.
+;    This is the "splicing" begin used for conditional definitions and
+;    macro output.
+
+; ==========================================================================
+; begin in expression context — returns last value
+; ==========================================================================
+
+>>> (begin 1)
+
+==> 1
+
+>>> (begin 1 2 3)
+
+==> 3
+
+>>> (begin 'a 'b 'c)
+
+==> c
+
+>>> (begin (+ 1 2) (* 3 4) (- 10 1))
+
+==> 9
+
+; ==========================================================================
+; begin — all expressions are evaluated (side effects)
+; ==========================================================================
+
+>>> (define log '())
+
+>>> (begin
+...   (set! log (cons 1 log))
+...   (set! log (cons 2 log))
+...   (set! log (cons 3 log)))
+
+>>> log
+
+==> (3 2 1)
+
+; ==========================================================================
+; begin — left-to-right evaluation order
+; ==========================================================================
+
+>>> (define order '())
+
+>>> (begin
+...   (set! order (cons 'first order))
+...   (set! order (cons 'second order))
+...   (set! order (cons 'third order))
+...   order)
+
+==> (third second first)
+
+; ==========================================================================
+; begin — single expression (trivial case)
+; ==========================================================================
+
+>>> (begin 42)
+
+==> 42
+
+>>> (begin (+ 1 1))
+
+==> 2
+
+>>> (begin (define x 5) x)
+
+==> 5
+
+; ==========================================================================
+; begin — nested begin (flattened semantics)
+; ==========================================================================
+
+>>> (begin
+...   (begin 1 2)
+...   (begin 3 4))
+
+==> 4
+
+>>> (begin
+...   (begin
+...     (begin 'a 'b))
+...   'c)
+
+==> c
+
+; ==========================================================================
+; begin — used for sequencing side effects before a value
+; ==========================================================================
+
+>>> (define counter 0)
+
+>>> (define (next!)
+...   (begin
+...     (set! counter (+ counter 1))
+...     counter))
+
+>>> (next!)
+
+==> 1
+
+>>> (next!)
+
+==> 2
+
+>>> (next!)
+
+==> 3
+
+; ==========================================================================
+; begin — in tail position
+; ==========================================================================
+
+; The last expression of begin is in tail position.
+
+>>> (define (begin-tail n)
+...   (if (= n 0)
+...       'done
+...       (begin
+...         (begin-tail (- n 1)))))
+
+>>> (begin-tail 1000000)
+
+==> done
+
+; Multiple exprs, last in tail position
+
+>>> (define (count-begin n)
+...   (define i 0)
+...   (define (loop)
+...     (if (= i n)
+...         i
+...         (begin
+...           (set! i (+ i 1))
+...           (loop))))
+...   (loop))
+
+>>> (count-begin 1000000)
+
+==> 1000000
+
+; ==========================================================================
+; begin in definition context — splices definitions
+; ==========================================================================
+
+; Definitions inside a top-level begin are top-level definitions.
+
+>>> (begin
+...   (define splice-a 10)
+...   (define splice-b 20))
+
+>>> splice-a
+
+==> 10
+
+>>> splice-b
+
+==> 20
+
+>>> (+ splice-a splice-b)
+
+==> 30
+
+; ==========================================================================
+; begin splicing — mixed definitions and expressions at top level
+; ==========================================================================
+
+>>> (begin
+...   (define splice-x 1)
+...   (define splice-y 2)
+...   (define splice-z (+ splice-x splice-y)))
+
+>>> splice-z
+
+==> 3
+
+; ==========================================================================
+; begin splicing — inside a lambda body
+; ==========================================================================
+
+>>> (define (f)
+...   (begin
+...     (define inner-a 7)
+...     (define inner-b 8))
+...   (+ inner-a inner-b))
+
+>>> (f)
+
+==> 15
+
+; ==========================================================================
+; begin splicing — inside let body
+; ==========================================================================
+
+>>> (let ()
+...   (begin
+...     (define let-a 3)
+...     (define let-b 4))
+...   (+ let-a let-b))
+
+==> 7
+
+; ==========================================================================
+; begin — as argument (expression position)
+; ==========================================================================
+
+>>> (+ (begin 1 2) (begin 3 4))
+
+==> 6
+
+>>> (list (begin 'a 'b) (begin 'c 'd))
+
+==> (b d)
+
+; ==========================================================================
+; begin — in conditional branches
+; ==========================================================================
+
+>>> (define side-a 0)
+
+>>> (define side-b 0)
+
+>>> (if #t
+...     (begin (set! side-a 1) (set! side-b 2))
+...     (begin (set! side-a 9) (set! side-b 9)))
+
+>>> (list side-a side-b)
+
+==> (1 2)
+
+>>> (if #f
+...     (begin (set! side-a 99))
+...     (begin (set! side-a 0) (set! side-b 0)))
+
+>>> (list side-a side-b)
+
+==> (0 0)
+
+; ==========================================================================
+; begin — zero expressions is valid at top level / definition context
+; ==========================================================================
+
+; An empty begin at top level or body context is valid (splices nothing).
+
+>>> (begin)
+... 
+... ; No error, no output.
+
+>>> (if #t 'ok)
+
+==> ok
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === begin: value of single non-definition expression in body context ===
+
+>>> (define (only-begin) (begin 7))
+
+>>> (only-begin)
+
+==> 7
+
+; === begin: deeply nested expression begins return last ===
+
+>>> (begin (begin (begin (begin 1 2 3))))
+
+==> 3
+
+; === begin: evaluation order across nested begins (side effects) ===
+
+>>> (define seq-log (quote ()))
+
+>>> (begin
+...   (begin (set! seq-log (cons 1 seq-log)))
+...   (begin
+...     (set! seq-log (cons 2 seq-log))
+...     (set! seq-log (cons 3 seq-log)))
+...   seq-log)
+
+==> (3 2 1)
+
+; === begin: returns value usable directly as procedure argument ===
+
+>>> (* (begin 2 3) (begin 4 5))
+
+==> 15
+
+; === begin: splicing define then immediate use in same top-level begin ===
+
+>>> (begin
+...   (define spliced-p 6)
+...   (define spliced-q (* spliced-p spliced-p)))
+
+>>> spliced-q
+
+==> 36
+
+; === begin: nested splicing begins inside a body ===
+
+>>> (define (nested-splice)
+...   (begin
+...     (begin
+...       (define ns-a 3))
+...     (define ns-b 4))
+...   (* ns-a ns-b))
+
+>>> (nested-splice)
+
+==> 12
+
+; === begin: empty begin in body context, value comes from following expr ===
+
+>>> (define (empty-then-val)
+...   (begin)
+...   99)
+
+>>> (empty-then-val)
+
+==> 99
+
+; === begin: literal R7RS example — (and (= x 0) (begin (set! x 5) (+ x 1))) => 6 ===
+
+>>> (define and-begin-x 0)
+
+>>> (and (= and-begin-x 0)
+...      (begin (set! and-begin-x 5) (+ and-begin-x 1)))
+
+==> 6
+
+; === begin: the set! side effect from the prior example took place ===
+
+>>> and-begin-x
+
+==> 5
+
+; === begin: top-level begin with a definition followed by an expression ===
+; The begin splices the define and returns the value of the final expression.
+
+>>> (begin (define mix-tl 1) (+ mix-tl 4))
+
+==> 5
+
+>>> mix-tl
+
+==> 1
+
+; === begin: body context mixing define, set!, then a value expression ===
+
+>>> (define (body-mix)
+...   (begin
+...     (define bm 1)
+...     (set! bm (+ bm 9))
+...     bm))
+
+>>> (body-mix)
+
+==> 10
+; ==========================================================================
+; R7RS section 4.2.3 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (define x 0)
+
+==> 
+
+>>> (and (= x 0) (begin (set! x 5) (+ x 1)))
+
+==> 6
+

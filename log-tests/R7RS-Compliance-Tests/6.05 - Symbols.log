@@ -1,0 +1,609 @@
+; Section 6.5 - Symbols
+;
+; Symbols are interned identifiers: two symbols with the same name are
+; always the same object (eq?).  Case sensitivity is implementation-defined
+; but R7RS implementations are case-sensitive by default.
+;
+; (symbol? obj)                  — #t for symbols
+; (symbol=? sym1 sym2 ...)       — #t if all have the same name
+; (symbol->string sym)           — name of symbol as a string
+; (string->symbol str)           — intern a string as a symbol
+
+; ==========================================================================
+; symbol? — true only for symbols
+; ==========================================================================
+
+>>> (symbol? 'a)
+
+==> #t
+
+>>> (symbol? 'foo)
+
+==> #t
+
+>>> (symbol? '+)
+
+==> #t
+
+>>> (symbol? 'hello-world)
+
+==> #t
+
+>>> (symbol? '||)
+
+==> #t
+
+>>> (symbol? "hello")
+
+==> #f
+
+>>> (symbol? 42)
+
+==> #f
+
+>>> (symbol? #t)
+
+==> #f
+
+>>> (symbol? '())
+
+==> #f
+
+>>> (symbol? '(a b))
+
+==> #f
+
+>>> (symbol? #\a)
+
+==> #f
+
+>>> (symbol? (lambda (x) x))
+
+==> #f
+
+; ==========================================================================
+; Symbols are interned — same name means same object
+; ==========================================================================
+
+>>> (eq? 'foo 'foo)
+
+==> #t
+
+>>> (eq? 'hello 'hello)
+
+==> #t
+
+>>> (eq? 'a 'b)
+
+==> #f
+
+>>> (eq? (string->symbol "x") (string->symbol "x"))
+
+==> #t
+
+>>> (eq? (string->symbol "foo") 'foo)
+
+==> #t
+
+; ==========================================================================
+; symbol=? — compares by name
+; ==========================================================================
+
+>>> (symbol=? 'a 'a)
+
+==> #t
+
+>>> (symbol=? 'a 'b)
+
+==> #f
+
+>>> (symbol=? 'foo 'foo 'foo)
+
+==> #t
+
+>>> (symbol=? 'foo 'foo 'bar)
+
+==> #f
+
+>>> (symbol=? 'abc 'abc 'abc 'abc)
+
+==> #t
+
+; symbol=? with computed symbols
+
+>>> (symbol=? (string->symbol "hello") 'hello)
+
+==> #t
+
+>>> (symbol=? (string->symbol "x") (string->symbol "x"))
+
+==> #t
+
+; ==========================================================================
+; symbol->string — returns the symbol's name as a string
+; ==========================================================================
+
+>>> (symbol->string 'a)
+
+==> "a"
+
+>>> (symbol->string 'foo)
+
+==> "foo"
+
+>>> (symbol->string 'hello-world)
+
+==> "hello-world"
+
+>>> (symbol->string '+)
+
+==> "+"
+
+>>> (symbol->string '*)
+
+==> "*"
+
+>>> (symbol->string 'set!)
+
+==> "set!"
+
+>>> (symbol->string 'define)
+
+==> "define"
+
+>>> (symbol->string '||)
+
+==> ""
+
+; Result is a string
+
+>>> (string? (symbol->string 'foo))
+
+==> #t
+
+; ==========================================================================
+; symbol->string — special identifier forms
+; ==========================================================================
+
+>>> (symbol->string 'hello-world)
+
+==> "hello-world"
+
+>>> (symbol->string 'camelCase)
+
+==> "camelCase"
+
+>>> (symbol->string '...)
+
+==> "..."
+
+>>> (symbol->string '->)
+
+==> "->"
+
+>>> (symbol->string 'a?)
+
+==> "a?"
+
+>>> (symbol->string 'a!)
+
+==> "a!"
+
+; Pipe-quoted symbol with spaces
+
+>>> (symbol->string '|hello world|)
+
+==> "hello world"
+
+>>> (symbol->string '|foo bar baz|)
+
+==> "foo bar baz"
+
+; ==========================================================================
+; string->symbol — interns a string as a symbol
+; ==========================================================================
+
+>>> (string->symbol "foo")
+
+==> foo
+
+>>> (string->symbol "hello-world")
+
+==> hello-world
+
+>>> (string->symbol "")
+
+==> ||
+
+>>> (string->symbol "+")
+
+==> +
+
+>>> (string->symbol "hello world")
+
+==> |hello world|
+
+; Result is a symbol
+
+>>> (symbol? (string->symbol "anything"))
+
+==> #t
+
+; ==========================================================================
+; symbol->string / string->symbol roundtrip
+; ==========================================================================
+
+>>> (string=? "foo" (symbol->string (string->symbol "foo")))
+
+==> #t
+
+>>> (string=? "" (symbol->string (string->symbol "")))
+
+==> #t
+
+>>> (string=? "hello world" (symbol->string (string->symbol "hello world")))
+
+==> #t
+
+>>> (eq? 'foo (string->symbol (symbol->string 'foo)))
+
+==> #t
+
+>>> (eq? '+ (string->symbol (symbol->string '+)))
+
+==> #t
+
+; ==========================================================================
+; Case sensitivity — R7RS is case-sensitive by default
+; ==========================================================================
+
+>>> (eq? 'foo 'FOO)
+
+==> #f
+
+>>> (eq? 'Foo 'foo)
+
+==> #f
+
+>>> (symbol=? 'abc 'ABC)
+
+==> #f
+
+>>> (symbol=? 'Hello 'hello)
+
+==> #f
+
+>>> (string=? (symbol->string 'Foo) "Foo")
+
+==> #t
+
+>>> (string=? (symbol->string 'FOO) "FOO")
+
+==> #t
+
+; ==========================================================================
+; Symbols in various contexts
+; ==========================================================================
+
+; Symbols as list elements
+
+>>> (list 'a 'b 'c)
+
+==> (a b c)
+
+>>> (car '(foo bar baz))
+
+==> foo
+
+>>> (cadr '(foo bar baz))
+
+==> bar
+
+; Symbols as keys in association lists
+
+>>> (assq 'b '((a 1) (b 2) (c 3)))
+
+==> (b 2)
+
+; Symbols as quoted data
+
+>>> 'hello
+
+==> hello
+
+>>> (quote world)
+
+==> world
+
+; ==========================================================================
+; Symbols in eqv? and equal?
+; ==========================================================================
+
+>>> (eqv? 'a 'a)
+
+==> #t
+
+>>> (eqv? 'a 'b)
+
+==> #f
+
+>>> (equal? 'foo 'foo)
+
+==> #t
+
+>>> (equal? 'foo 'bar)
+
+==> #f
+
+; ==========================================================================
+; Peculiar identifier symbols
+; ==========================================================================
+
+>>> (symbol? '+)
+
+==> #t
+
+>>> (symbol? '-)
+
+==> #t
+
+>>> (symbol? '...)
+
+==> #t
+
+>>> (symbol->string '+)
+
+==> "+"
+
+>>> (symbol->string '-)
+
+==> "-"
+
+>>> (symbol->string '...)
+
+==> "..."
+
+; ==========================================================================
+; Symbols with special characters (via pipe notation)
+; ==========================================================================
+
+>>> (symbol? '|hello world|)
+
+==> #t
+
+>>> (symbol? '|123|)
+
+==> #t
+
+>>> (symbol? '|a b c|)
+
+==> #t
+
+>>> (eq? '|foo| 'foo)
+
+==> #t
+
+>>> (eq? '|foo bar| '|foo bar|)
+
+==> #t
+
+; ==========================================================================
+; Symbols in data structures
+; ==========================================================================
+
+>>> (vector 'a 'b 'c)
+
+==> #(a b c)
+
+>>> (vector-ref '#(foo bar baz) 1)
+
+==> bar
+
+>>> (map symbol->string '(a bb ccc))
+
+==> ("a" "bb" "ccc")
+
+>>> (map string->symbol '("x" "y" "z"))
+
+==> (x y z)
+
+; ==========================================================================
+; symbol->string returns an immutable string (R7RS)
+; ==========================================================================
+
+; The string returned by symbol->string is immutable in R7RS.
+; Mutating it is an error.
+
+>>> (define s (symbol->string 'foo))
+
+>>> (string? s)
+
+==> #t
+
+>>> (string=? s "foo")
+
+==> #t
+
+; ==========================================================================
+; Symbols with numeric-looking names
+; ==========================================================================
+
+; These are symbols, not numbers, because they contain non-digit chars
+; or have the wrong format for a number.
+
+>>> (symbol? '|123abc|)
+
+==> #t
+
+>>> (symbol? 'a1b2c3)
+
+==> #t
+
+; But '1 reads as a number, not a symbol
+
+>>> (number? 1)
+
+==> #t
+
+>>> (symbol? '1)
+
+==> #f
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; symbol=? returns an actual boolean; it is an error to pass non-symbols
+; ===
+
+>>> (boolean? (symbol=? 'a 'a))
+
+==> #t
+
+>>> (boolean? (symbol=? 'a 'b))
+
+==> #t
+
+>>> (symbol=? 'a "a")
+
+%%% %any-error%
+
+>>> (symbol=? 'a 1)
+
+%%% %any-error%
+
+; ===
+; Symbols are identical in the sense of eqv? when spelled the same (R7RS 6.5)
+; ===
+
+>>> (eqv? 'foo 'foo)
+
+==> #t
+
+>>> (eqv? (string->symbol "bar") (string->symbol "bar"))
+
+==> #t
+
+>>> (eqv? 'foo 'bar)
+
+==> #f
+
+; ===
+; write/read invariance: a symbol written and read back is eqv? (R7RS 6.5)
+; ===
+
+>>> (eqv? 'hello (string->symbol (symbol->string 'hello)))
+
+==> #t
+
+>>> (eqv? '|hello world| (string->symbol (symbol->string '|hello world|)))
+
+==> #t
+
+; ===
+; Pipe notation with inline hex / mnemonic escapes denotes ordinary symbols
+; |H\x65;llo| is the same identifier as Hello (R7RS 2.1)
+; ===
+
+>>> (eq? '|H\x65;llo| 'Hello)
+
+==> #t
+
+>>> (symbol->string '|H\x65;llo|)
+
+==> "Hello"
+
+>>> (eq? '|\x9;\x9;| '|		|)
+
+==> #t
+
+; ===
+; symbol->string of a symbol whose name needs vertical-bar quoting on output
+; round-trips through string->symbol back to the same symbol
+; ===
+
+>>> (eq? (string->symbol "two words")
+...      (string->symbol (symbol->string (string->symbol "two words"))))
+
+==> #t
+
+>>> (symbol->string (string->symbol "a|b"))
+
+==> "a|b"
+
+; ===
+; string->symbol does NOT share with / is not affected by its argument string
+; (the argument may be mutated afterwards without changing the symbol)
+; ===
+
+>>> (define str (string #\f #\o #\o))
+
+>>> (define sym (string->symbol str))
+
+>>> (string-set! str 0 #\b)
+
+>>> (symbol->string sym)
+
+==> "foo"
+
+>>> (eq? sym 'foo)
+
+==> #t
+
+; ==========================================================================
+; R7RS section 6.5 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (symbol? 'foo)
+
+==> #t
+
+>>> (symbol? (car '(a b)))
+
+==> #t
+
+>>> (symbol? "bar")
+
+==> #f
+
+>>> (symbol? 'nil)
+
+==> #t
+
+>>> (symbol? '())
+
+==> #f
+
+>>> (symbol? #f)
+
+==> #f
+
+>>> (symbol->string 'flying-fish)
+
+==> "flying-fish"
+
+>>> (symbol->string 'Martin)
+
+==> "Martin"
+
+>>> (symbol->string (string->symbol "Malvina"))
+
+==> "Malvina"
+
+>>> (string->symbol "mISSISSIppi")
+
+==> mISSISSIppi
+
+>>> (eqv? 'bitBlt (string->symbol "bitBlt"))
+
+==> #t
+
+>>> (eqv? 'LollyPop (string->symbol (symbol->string 'LollyPop)))
+
+==> #t
+
+>>> (string=? "K. Harper, M.D." (symbol->string (string->symbol "K. Harper, M.D.")))
+
+==> #t
+

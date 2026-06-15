@@ -1,0 +1,778 @@
+
+****************************
+Benchmarking IronScheme on Fri 16 Jan 16:30:17 CET 2026 under Linux h4nex 6.16.8-arch3-1 #1 SMP PREEMPT_DYNAMIC Mon, 22 Sep 2025 22:08:35 +0000 x86_64 GNU/Linux
+
+Testing browse under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/browse.sps /tmp/r7rs-benchmarks/IronScheme/browse.sps
+Running...
+Running browse:2000
+Elapsed time: 6.5677199 seconds (6) for browse:2000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,browse:2000,6.5677199
+
+real	0m8.609s
+user	0m8.434s
+sys	0m0.208s
+
+Testing deriv under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/deriv.sps /tmp/r7rs-benchmarks/IronScheme/deriv.sps
+Running...
+Running deriv:10000000
+Elapsed time: 8.2605724 seconds (8) for deriv:10000000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,deriv:10000000,8.2605724
+
+real	0m10.078s
+user	0m9.896s
+sys	0m0.170s
+
+Testing destruc under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/destruc.sps /tmp/r7rs-benchmarks/IronScheme/destruc.sps
+Running...
+Running destruc:600:50:4000
+Elapsed time: 38.4368915 seconds (39) for destruc:600:50:4000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,destruc:600:50:4000,38.4368915
+
+real	0m40.285s
+user	0m40.048s
+sys	0m0.163s
+
+Testing diviter under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/diviter.sps /tmp/r7rs-benchmarks/IronScheme/diviter.sps
+Running...
+Running diviter:1000:1000000
+Elapsed time: 6.0581851 seconds (7) for diviter:1000:1000000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,diviter:1000:1000000,6.0581851
+
+real	0m7.934s
+user	0m7.807s
+sys	0m0.227s
+
+Testing divrec under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/divrec.sps /tmp/r7rs-benchmarks/IronScheme/divrec.sps
+Running...
+Running divrec:1000:1000000
+Elapsed time: 11.130536 seconds (11) for divrec:1000:1000000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,divrec:1000:1000000,11.130536
+
+real	0m12.948s
+user	0m12.777s
+sys	0m0.154s
+
+Testing puzzle under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/puzzle.sps /tmp/r7rs-benchmarks/IronScheme/puzzle.sps
+Running...
+Running puzzle:1000
+Elapsed time: 47.8687896 seconds (48) for puzzle:1000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,puzzle:1000,47.8687896
+
+real	0m49.761s
+user	0m49.637s
+sys	0m0.093s
+
+Testing triangl under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/triangl.sps /tmp/r7rs-benchmarks/IronScheme/triangl.sps
+Running...
+Running triangl:22:1:50
+Elapsed time: 39.1216599 seconds (39) for triangl:22:1:50
++!CSVLINE!+ironscheme-1.0.357-2046e7e,triangl:22:1:50,39.1216599
+
+real	0m40.958s
+user	0m40.806s
+sys	0m0.069s
+
+Testing tak under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/tak.sps /tmp/r7rs-benchmarks/IronScheme/tak.sps
+Running...
+Running tak:40:20:11:1
+Elapsed time: 32.0605596 seconds (32) for tak:40:20:11:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,tak:40:20:11:1,32.0605596
+
+real	0m33.849s
+user	0m33.746s
+sys	0m0.070s
+
+Testing takl under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/takl.sps /tmp/r7rs-benchmarks/IronScheme/takl.sps
+Running...
+Running takl:40:20:12:1
+Elapsed time: 9.4888121 seconds (9) for takl:40:20:12:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,takl:40:20:12:1,9.4888121
+
+real	0m11.382s
+user	0m11.267s
+sys	0m0.086s
+
+Testing ntakl under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/ntakl.sps /tmp/r7rs-benchmarks/IronScheme/ntakl.sps
+Running...
+Running ntakl:40:20:12:1
+Elapsed time: 9.0743537 seconds (9) for ntakl:40:20:12:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,ntakl:40:20:12:1,9.0743537
+
+real	0m10.894s
+user	0m10.795s
+sys	0m0.072s
+
+Testing cpstak under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/cpstak.sps /tmp/r7rs-benchmarks/IronScheme/cpstak.sps
+Running...
+Running cpstak:40:20:11:1
+Elapsed time: 100.9353802 seconds (101) for cpstak:40:20:11:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,cpstak:40:20:11:1,100.9353802
+
+real	1m42.763s
+user	1m41.292s
+sys	0m1.132s
+
+Testing ctak under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/ctak.sps /tmp/r7rs-benchmarks/IronScheme/ctak.sps
+Running...
+Running ctak:32:16:8:1
+Elapsed time: 109.1212715 seconds (109) for ctak:32:16:8:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,ctak:32:16:8:1,109.1212715
+
+real	1m50.920s
+user	1m50.401s
+sys	0m0.303s
+
+Testing fib under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/fib.sps /tmp/r7rs-benchmarks/IronScheme/fib.sps
+Running...
+Running fib:40:5
+Elapsed time: 81.7521641 seconds (82) for fib:40:5
++!CSVLINE!+ironscheme-1.0.357-2046e7e,fib:40:5,81.7521641
+
+real	1m23.563s
+user	1m23.365s
+sys	0m0.082s
+
+Testing fibc under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/fibc.sps /tmp/r7rs-benchmarks/IronScheme/fibc.sps
+Running...
+Running fibc:30:10
+Elapsed time: 81.4050466 seconds (82) for fibc:30:10
++!CSVLINE!+ironscheme-1.0.357-2046e7e,fibc:30:10,81.4050466
+
+real	1m23.229s
+user	1m22.880s
+sys	0m0.205s
+
+Testing fibfp under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/fibfp.sps /tmp/r7rs-benchmarks/IronScheme/fibfp.sps
+Running...
+Running fibfp:35.0:10
+Elapsed time: 181.8531111 seconds (182) for fibfp:35.0:10
++!CSVLINE!+ironscheme-1.0.357-2046e7e,fibfp:35.0:10,181.8531111
+
+real	3m3.689s
+user	3m1.202s
+sys	0m1.949s
+
+Testing sum under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/sum.sps /tmp/r7rs-benchmarks/IronScheme/sum.sps
+Running...
+Running sum:10000:200000
+Elapsed time: 121.5249626 seconds (122) for sum:10000:200000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,sum:10000:200000,121.5249626
+
+real	2m3.330s
+user	2m2.565s
+sys	0m0.509s
+
+Testing sumfp under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/sumfp.sps /tmp/r7rs-benchmarks/IronScheme/sumfp.sps
+Running...
+Running sumfp:1000000.0:500
+Elapsed time: 278.2449376 seconds (278) for sumfp:1000000.0:500
++!CSVLINE!+ironscheme-1.0.357-2046e7e,sumfp:1000000.0:500,278.2449376
+
+real	4m40.062s
+user	4m36.906s
+sys	0m2.314s
+
+Testing fft under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/fft.sps /tmp/r7rs-benchmarks/IronScheme/fft.sps
+Running...
+Running fft:65536:100
+Elapsed time: 27.570682 seconds (27) for fft:65536:100
++!CSVLINE!+ironscheme-1.0.357-2046e7e,fft:65536:100,27.570682
+
+real	0m29.397s
+user	0m29.133s
+sys	0m0.339s
+
+Testing mbrot under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/mbrot.sps /tmp/r7rs-benchmarks/IronScheme/mbrot.sps
+Running...
+Running mbrot:75:1000
+Elapsed time: 199.6347474 seconds (200) for mbrot:75:1000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,mbrot:75:1000,199.6347474
+
+real	3m21.417s
+user	3m19.129s
+sys	0m1.756s
+
+Testing mbrotZ under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/mbrotZ.sps /tmp/r7rs-benchmarks/IronScheme/mbrotZ.sps
+Running...
+Running mbrotZ:75:1000
+Elapsed time: 203.7477878 seconds (203) for mbrotZ:75:1000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,mbrotZ:75:1000,203.7477878
+
+real	3m25.624s
+user	3m23.270s
+sys	0m1.798s
+
+Testing nucleic under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/nucleic.sps /tmp/r7rs-benchmarks/IronScheme/nucleic.sps
+Running...
+Running nucleic:50
+Elapsed time: 28.7899263 seconds (29) for nucleic:50
++!CSVLINE!+ironscheme-1.0.357-2046e7e,nucleic:50,28.7899263
+
+real	0m31.464s
+user	0m31.941s
+sys	0m0.314s
+
+Testing pi under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/pi.sps /tmp/r7rs-benchmarks/IronScheme/pi.sps
+Running...
+Running pi:50:500:50:100
+Elapsed time: 141.8544906 seconds (142) for pi:50:500:50:100
++!CSVLINE!+ironscheme-1.0.357-2046e7e,pi:50:500:50:100,141.8544906
+
+real	2m23.668s
+user	2m23.057s
+sys	0m0.427s
+
+Testing pnpoly under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/pnpoly.sps /tmp/r7rs-benchmarks/IronScheme/pnpoly.sps
+Running...
+Running pnpoly:1000000
+/home/nex/bin/ironscheme: line 3: 435161 Killed                     dotnet /home/nex/tmp/IronScheme/IronScheme.ConsoleCore.dll "$@"
+
+real	5m0.917s
+user	4m56.922s
+sys	0m3.045s
++!CSVLINE!+ironscheme,pnpoly,ULIMITKILLED
+
+Testing ray under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/ray.sps /tmp/r7rs-benchmarks/IronScheme/ray.sps
+Running...
+Running ray:50
+Elapsed time: 51.9929747 seconds (52) for ray:50
++!CSVLINE!+ironscheme-1.0.357-2046e7e,ray:50,51.9929747
+
+real	0m53.805s
+user	0m53.464s
+sys	0m0.503s
+
+Testing simplex under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/simplex.sps /tmp/r7rs-benchmarks/IronScheme/simplex.sps
+Running...
+Running simplex:1000000
+Elapsed time: 74.9584259 seconds (75) for simplex:1000000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,simplex:1000000,74.9584259
+
+real	1m16.830s
+user	1m16.075s
+sys	0m0.619s
+
+Testing ack under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/ack.sps /tmp/r7rs-benchmarks/IronScheme/ack.sps
+Running...
+Running ack:3:12:2
+Elapsed time: 154.6449249 seconds (155) for ack:3:12:2
++!CSVLINE!+ironscheme-1.0.357-2046e7e,ack:3:12:2,154.6449249
+
+real	2m36.399s
+user	2m35.925s
+sys	0m0.239s
+
+Testing array1 under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/array1.sps /tmp/r7rs-benchmarks/IronScheme/array1.sps
+Running...
+Running array1:1000000:500
+Elapsed time: 90.1069039 seconds (90) for array1:1000000:500
++!CSVLINE!+ironscheme-1.0.357-2046e7e,array1:1000000:500,90.1069039
+
+real	1m31.884s
+user	1m33.171s
+sys	0m3.401s
+
+Testing string under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/string.sps /tmp/r7rs-benchmarks/IronScheme/string.sps
+Running...
+Running string:500000:100
+Elapsed time: 1.2166739 seconds (1) for string:500000:100
++!CSVLINE!+ironscheme-1.0.357-2046e7e,string:500000:100,1.2166739
+
+real	0m2.989s
+user	0m3.585s
+sys	0m0.416s
+
+Testing sum1 under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/sum1.sps /tmp/r7rs-benchmarks/IronScheme/sum1.sps
+Running...
+Running sum1:25
+/home/nex/bin/ironscheme: line 3: 436025 Killed                     dotnet /home/nex/tmp/IronScheme/IronScheme.ConsoleCore.dll "$@"
+
+real	5m2.185s
+user	4m59.113s
+sys	0m0.858s
++!CSVLINE!+ironscheme,sum1,ULIMITKILLED
+
+Testing cat under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/cat.sps /tmp/r7rs-benchmarks/IronScheme/cat.sps
+Running...
+Running cat:50
+Elapsed time: 32.0229129 seconds (32) for cat:50
++!CSVLINE!+ironscheme-1.0.357-2046e7e,cat:50,32.0229129
+
+real	0m33.790s
+user	0m33.100s
+sys	0m0.850s
+
+Testing tail under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/tail.sps /tmp/r7rs-benchmarks/IronScheme/tail.sps
+Running...
+Running tail:50
+Elapsed time: 1.8861814 seconds (2) for tail:50
++!CSVLINE!+ironscheme-1.0.357-2046e7e,tail:50,1.8861814
+
+real	0m3.654s
+user	0m3.587s
+sys	0m0.423s
+
+Testing wc under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/wc.sps /tmp/r7rs-benchmarks/IronScheme/wc.sps
+Running...
+Running wc:inputs/bib:50
+Elapsed time: 33.1365812 seconds (33) for wc:inputs/bib:50
++!CSVLINE!+ironscheme-1.0.357-2046e7e,wc:inputs/bib:50,33.1365812
+
+real	0m34.911s
+user	0m34.512s
+sys	0m0.495s
+
+Testing read1 under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/read1.sps /tmp/r7rs-benchmarks/IronScheme/read1.sps
+Running...
+Running read1:2500
+Elapsed time: 16.8966992 seconds (17) for read1:2500
++!CSVLINE!+ironscheme-1.0.357-2046e7e,read1:2500,16.8966992
+
+real	0m18.781s
+user	0m19.209s
+sys	0m0.371s
+
+Testing compiler under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/compiler.sps /tmp/r7rs-benchmarks/IronScheme/compiler.sps
+Running...
+Running compiler:2000
+Elapsed time: 11.6230218 seconds (11) for compiler:2000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,compiler:2000,11.6230218
+
+real	0m16.551s
+user	0m18.163s
+sys	0m0.250s
+
+Testing conform under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/conform.sps /tmp/r7rs-benchmarks/IronScheme/conform.sps
+Running...
+Running conform:500
+Elapsed time: 11.5350889 seconds (12) for conform:500
++!CSVLINE!+ironscheme-1.0.357-2046e7e,conform:500,11.5350889
+
+real	0m13.390s
+user	0m13.249s
+sys	0m0.167s
+
+Testing dynamic under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/dynamic.sps /tmp/r7rs-benchmarks/IronScheme/dynamic.sps
+Running...
+Running dynamic:500
+Elapsed time: 32.6841635 seconds (32) for dynamic:500
++!CSVLINE!+ironscheme-1.0.357-2046e7e,dynamic:500,32.6841635
+
+real	0m34.746s
+user	0m35.196s
+sys	0m1.005s
+
+Testing earley under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/earley.sps /tmp/r7rs-benchmarks/IronScheme/earley.sps
+Running...
+Running earley:1
+Elapsed time: 22.5032063 seconds (23) for earley:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,earley:1,22.5032063
+
+real	0m24.471s
+user	0m23.774s
+sys	0m0.883s
+
+Testing graphs under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/graphs.sps /tmp/r7rs-benchmarks/IronScheme/graphs.sps
+Running...
+Running graphs:7:3
+Elapsed time: 31.839905 seconds (32) for graphs:7:3
++!CSVLINE!+ironscheme-1.0.357-2046e7e,graphs:7:3,31.839905
+
+real	0m33.686s
+user	0m33.282s
+sys	0m0.343s
+
+Testing lattice under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/lattice.sps /tmp/r7rs-benchmarks/IronScheme/lattice.sps
+Running...
+Running lattice:44:10
+Elapsed time: 20.3529603 seconds (21) for lattice:44:10
++!CSVLINE!+ironscheme-1.0.357-2046e7e,lattice:44:10,20.3529603
+
+real	0m22.131s
+user	0m22.011s
+sys	0m0.106s
+
+Testing matrix under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/matrix.sps /tmp/r7rs-benchmarks/IronScheme/matrix.sps
+Running...
+Running matrix:5:5:2500
+Elapsed time: 21.4116616 seconds (21) for matrix:5:5:2500
++!CSVLINE!+ironscheme-1.0.357-2046e7e,matrix:5:5:2500,21.4116616
+
+real	0m23.376s
+user	0m23.154s
+sys	0m0.229s
+
+Testing maze under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/maze.sps /tmp/r7rs-benchmarks/IronScheme/maze.sps
+Running...
+Running maze:20:7:10000
+Elapsed time: 9.0545876 seconds (9) for maze:20:7:10000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,maze:20:7:10000,9.0545876
+
+real	0m10.954s
+user	0m10.870s
+sys	0m0.134s
+
+Testing mazefun under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/mazefun.sps /tmp/r7rs-benchmarks/IronScheme/mazefun.sps
+Running...
+Running mazefun:11:11:10000
+Elapsed time: 36.9021618 seconds (37) for mazefun:11:11:10000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,mazefun:11:11:10000,36.9021618
+
+real	0m38.703s
+user	0m38.570s
+sys	0m0.134s
+
+Testing nqueens under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/nqueens.sps /tmp/r7rs-benchmarks/IronScheme/nqueens.sps
+Running...
+Running nqueens:13:10
+Elapsed time: 88.0742115 seconds (88) for nqueens:13:10
++!CSVLINE!+ironscheme-1.0.357-2046e7e,nqueens:13:10,88.0742115
+
+real	1m29.832s
+user	1m29.589s
+sys	0m0.126s
+
+Testing paraffins under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/paraffins.sps /tmp/r7rs-benchmarks/IronScheme/paraffins.sps
+Running...
+Running paraffins:23:10
+Elapsed time: 14.2707211 seconds (14) for paraffins:23:10
++!CSVLINE!+ironscheme-1.0.357-2046e7e,paraffins:23:10,14.2707211
+
+real	0m16.091s
+user	0m15.675s
+sys	0m0.924s
+
+Testing parsing under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/parsing.sps /tmp/r7rs-benchmarks/IronScheme/parsing.sps
+Running...
+Running parsing:2500
+Elapsed time: 21.8203206 seconds (22) for parsing:2500
++!CSVLINE!+ironscheme-1.0.357-2046e7e,parsing:2500,21.8203206
+
+real	0m23.734s
+user	0m23.640s
+sys	0m0.212s
+
+Testing peval under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/peval.sps /tmp/r7rs-benchmarks/IronScheme/peval.sps
+Running...
+Running peval:2000
+Elapsed time: 11.9640767 seconds (12) for peval:2000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,peval:2000,11.9640767
+
+real	0m13.852s
+user	0m13.756s
+sys	0m0.161s
+
+Testing primes under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/primes.sps /tmp/r7rs-benchmarks/IronScheme/primes.sps
+Running...
+Running primes:1000:10000
+Elapsed time: 41.7569307 seconds (42) for primes:1000:10000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,primes:1000:10000,41.7569307
+
+real	0m43.540s
+user	0m43.381s
+sys	0m0.134s
+
+Testing quicksort under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/quicksort.sps /tmp/r7rs-benchmarks/IronScheme/quicksort.sps
+Running...
+Running quicksort:10000:2500
+Elapsed time: 53.9853544 seconds (54) for quicksort:10000:2500
++!CSVLINE!+ironscheme-1.0.357-2046e7e,quicksort:10000:2500,53.9853544
+
+real	0m55.991s
+user	0m55.811s
+sys	0m0.163s
+
+Testing scheme under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/scheme.sps /tmp/r7rs-benchmarks/IronScheme/scheme.sps
+Running...
+Running scheme:100000
+Elapsed time: 13.9261221 seconds (14) for scheme:100000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,scheme:100000,13.9261221
+
+real	0m15.926s
+user	0m15.833s
+sys	0m0.109s
+
+Testing slatex under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/slatex.sps /tmp/r7rs-benchmarks/IronScheme/slatex.sps
+Running...
+Running slatex:500
+Elapsed time: 14.7970372 seconds (15) for slatex:500
++!CSVLINE!+ironscheme-1.0.357-2046e7e,slatex:500,14.7970372
+
+real	0m16.914s
+user	0m14.115s
+sys	0m3.321s
+
+Testing chudnovsky under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/chudnovsky.sps /tmp/r7rs-benchmarks/IronScheme/chudnovsky.sps
+Running...
+Running chudnovsky:50:500:50:1000
+Elapsed time: 24.2013543 seconds (24) for chudnovsky:50:500:50:1000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,chudnovsky:50:500:50:1000,24.2013543
+
+real	0m25.981s
+user	0m25.889s
+sys	0m0.147s
+
+Testing nboyer under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/nboyer.sps /tmp/r7rs-benchmarks/IronScheme/nboyer.sps
+Running...
+Running nboyer:5:1
+Elapsed time: 13.2869006 seconds (13) for nboyer:5:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,nboyer:5:1,13.2869006
+
+real	0m15.195s
+user	0m15.143s
+sys	0m0.485s
+
+Testing sboyer under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/sboyer.sps /tmp/r7rs-benchmarks/IronScheme/sboyer.sps
+Running...
+Running sboyer:5:1
+Elapsed time: 5.3851962 seconds (5) for sboyer:5:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,sboyer:5:1,5.3851962
+
+real	0m7.227s
+user	0m7.123s
+sys	0m0.152s
+
+Testing gcbench under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/gcbench.sps /tmp/r7rs-benchmarks/IronScheme/gcbench.sps
+Running...
+The garbage collector should touch about 128 megabytes of heap storage.
+The use of more or less memory will skew the results.
+Running gcbench:20:1
+Garbage Collector Test
+ Stretching memory with a binary tree of depth 20
+ Total memory available= ???????? bytes  Free memory= ???????? bytes
+GCBench: Main
+ Creating a long-lived binary tree of depth 18
+ Creating a long-lived array of 2097148 inexact reals
+ Total memory available= ???????? bytes  Free memory= ???????? bytes
+Creating 135300 trees of depth 4
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 33026 trees of depth 6
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 8208 trees of depth 8
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 2048 trees of depth 10
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 512 trees of depth 12
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 128 trees of depth 14
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 32 trees of depth 16
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 8 trees of depth 18
+GCBench: Top down construction
+GCBench: Bottom up construction
+ Total memory available= ???????? bytes  Free memory= ???????? bytes
+Elapsed time: 35.4384475 seconds (35) for gcbench:20:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,gcbench:20:1,35.4384475
+
+real	0m37.230s
+user	0m36.698s
+sys	0m0.616s
+
+Testing mperm under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/mperm.sps /tmp/r7rs-benchmarks/IronScheme/mperm.sps
+Running...
+Running mperm:20:10:2:1
+Elapsed time: 59.6070253 seconds (60) for mperm:20:10:2:1
++!CSVLINE!+ironscheme-1.0.357-2046e7e,mperm:20:10:2:1,59.6070253
+
+real	1m4.627s
+user	1m6.705s
+sys	0m1.945s
+
+Testing equal under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/equal.sps /tmp/r7rs-benchmarks/IronScheme/equal.sps
+Running...
+Running equal:100:100:8:1000:2000:5000
+Elapsed time: 4.8896336 seconds (5) for equal:100:100:8:1000:2000:5000
++!CSVLINE!+ironscheme-1.0.357-2046e7e,equal:100:100:8:1000:2000:5000,4.8896336
+
+real	0m6.700s
+user	0m6.962s
+sys	0m0.144s
+
+Testing bv2string under IronScheme
+Including prelude /home/nex/src/r7rs-benchmarks/src/IronScheme-prelude.scm
+Compiling...
+ironscheme_comp /tmp/r7rs-benchmarks/IronScheme/bv2string.sps /tmp/r7rs-benchmarks/IronScheme/bv2string.sps
+Running...
+Running bv2string:1000:1000:100
+Elapsed time: 42.2795865 seconds (42) for bv2string:1000:1000:100
++!CSVLINE!+ironscheme-1.0.357-2046e7e,bv2string:1000:1000:100,42.2795865
+
+real	0m44.055s
+user	0m43.983s
+sys	0m0.170s

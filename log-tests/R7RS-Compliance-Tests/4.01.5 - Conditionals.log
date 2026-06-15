@@ -1,0 +1,381 @@
+; Section 4.1.5 - Conditionals
+;
+; (if <test> <consequent> <alternate>)
+; (if <test> <consequent>)             — one-armed form
+;
+; If <test> yields a true value (anything except #f), <consequent> is
+; evaluated and its value returned.  Otherwise <alternate> is evaluated
+; (two-armed form) or an unspecified value is returned (one-armed form).
+; Only one branch is evaluated — never both.
+
+; ==========================================================================
+; Basic two-armed if
+; ==========================================================================
+
+>>> (if #t 'yes 'no)
+
+==> yes
+
+>>> (if #f 'yes 'no)
+
+==> no
+
+>>> (if #t (+ 1 2) (+ 3 4))
+
+==> 3
+
+>>> (if #f (+ 1 2) (+ 3 4))
+
+==> 7
+
+; ==========================================================================
+; Every value except #f is true
+; ==========================================================================
+
+; Zero is true
+
+>>> (if 0 'true 'false)
+
+==> true
+
+; Empty list is true
+
+>>> (if '() 'true 'false)
+
+==> true
+
+; Empty string is true
+
+>>> (if "" 'true 'false)
+
+==> true
+
+; The number 1 is true
+
+>>> (if 1 'true 'false)
+
+==> true
+
+; Any non-zero number is true
+
+>>> (if -1 'true 'false)
+
+==> true
+
+>>> (if 3.14 'true 'false)
+
+==> true
+
+; A non-empty list is true
+
+>>> (if '(1 2 3) 'true 'false)
+
+==> true
+
+; A string is true
+
+>>> (if "hello" 'true 'false)
+
+==> true
+
+; A character is true
+
+>>> (if #\a 'true 'false)
+
+==> true
+
+; A procedure is true
+
+>>> (if car 'true 'false)
+
+==> true
+
+; A vector is true
+
+>>> (if #(1 2 3) 'true 'false)
+
+==> true
+
+; #t is true
+
+>>> (if #t 'true 'false)
+
+==> true
+
+; #f is the only false value
+
+>>> (if #f 'true 'false)
+
+==> false
+
+; ==========================================================================
+; One-armed if — when test is false, result is unspecified
+; ==========================================================================
+
+; When test is true, consequent value is returned
+
+>>> (if #t 42)
+
+==> 42
+
+>>> (if 0 'yes)
+
+==> yes
+
+; When test is false, result is unspecified — we verify no error is raised
+; and use the result in a context that accepts any value
+
+>>> (define result (if #f 42))
+...
+... ; result is now bound to an unspecified value — no error occurred
+
+>>> (if #t 'completed)
+
+==> completed
+
+; ==========================================================================
+; Only the selected branch is evaluated
+; ==========================================================================
+
+; Consequent side effect only happens when test is true
+
+>>> (define log '())
+
+>>> (if #t (set! log (cons 'consequent log)) (set! log (cons 'alternate log)))
+
+>>> log
+
+==> (consequent)
+
+>>> (if #f (set! log (cons 'consequent log)) (set! log (cons 'alternate log)))
+
+>>> log
+
+==> (alternate consequent)
+
+; Neither branch affects the other
+
+>>> (define x 0)
+
+>>> (if #t (set! x 1) (set! x 2))
+
+>>> x
+
+==> 1
+
+>>> (if #f (set! x 10) (set! x 20))
+
+>>> x
+
+==> 20
+
+; ==========================================================================
+; Test expression is evaluated
+; ==========================================================================
+
+>>> (if (= 1 1) 'equal 'not-equal)
+
+==> equal
+
+>>> (if (= 1 2) 'equal 'not-equal)
+
+==> not-equal
+
+>>> (if (null? '()) 'empty 'not-empty)
+
+==> empty
+
+>>> (if (null? '(1)) 'empty 'not-empty)
+
+==> not-empty
+
+>>> (if (> 5 3) (* 5 3) (+ 5 3))
+
+==> 15
+
+>>> (if (< 5 3) (* 5 3) (+ 5 3))
+
+==> 8
+
+; ==========================================================================
+; Nested if
+; ==========================================================================
+
+>>> (if #t
+...     (if #t 'tt 'tf)
+...     (if #t 'ft 'ff))
+
+==> tt
+
+>>> (if #t
+...     (if #f 'tt 'tf)
+...     (if #t 'ft 'ff))
+
+==> tf
+
+>>> (if #f
+...     (if #t 'tt 'tf)
+...     (if #f 'ft 'ff))
+
+==> ff
+
+; Simulating cond with nested ifs
+
+>>> (define (classify n)
+...   (if (< n 0)
+...       'negative
+...       (if (= n 0)
+...           'zero
+...           'positive)))
+
+>>> (classify -5)
+
+==> negative
+
+>>> (classify 0)
+
+==> zero
+
+>>> (classify 7)
+
+==> positive
+
+; ==========================================================================
+; if in various expression contexts
+; ==========================================================================
+
+; if as an argument
+
+>>> (+ (if #t 1 0) (if #f 0 2))
+
+==> 3
+
+>>> (list (if #t 'a 'b) (if #f 'c 'd))
+
+==> (a d)
+
+; if as operator (the test selects which procedure to call)
+
+>>> ((if #t + -) 10 3)
+
+==> 13
+
+>>> ((if #f + -) 10 3)
+
+==> 7
+
+; if result used in further computation
+
+>>> (* 2 (if (even? 4) 10 20))
+
+==> 20
+
+>>> (* 2 (if (odd? 4) 10 20))
+
+==> 40
+
+; ==========================================================================
+; if with complex test expressions
+; ==========================================================================
+
+>>> (define (between? lo x hi)
+...   (if (and (>= x lo) (<= x hi)) #t #f))
+
+>>> (between? 1 5 10)
+
+==> #t
+
+>>> (between? 1 0 10)
+
+==> #f
+
+>>> (between? 1 10 10)
+
+==> #t
+
+>>> (between? 1 11 10)
+
+==> #f
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Spec examples (R7RS §4.1.5):
+;   (if (> 3 2) 'yes 'no) ==> yes
+;   (if (> 2 3) 'yes 'no) ==> no
+;   (if (> 3 2) (- 3 2) (+ 3 2)) ==> 1
+; ===
+
+>>> (if (> 3 2) 'yes 'no)
+
+==> yes
+
+>>> (if (> 2 3) 'yes 'no)
+
+==> no
+
+>>> (if (> 3 2) (- 3 2) (+ 3 2))
+
+==> 1
+
+; ===
+; if returns exactly the value of the chosen branch (a single value)
+; ===
+
+>>> (if #t (values 'one) 'other)
+
+==> one
+
+; ===
+; The test may itself be any expression, including a nested if
+; ===
+
+>>> (if (if #t #f #t) 'a 'b)
+
+==> b
+
+>>> (if (not #f) 'taken 'skipped)
+
+==> taken
+
+; ===
+; Only #f is false: a value produced by an expression that yields #f
+; selects the alternate; any other produced value selects the consequent
+; ===
+
+>>> (if (memq 'x '(a b c)) 'found 'absent)
+
+==> absent
+
+>>> (if (memq 'b '(a b c)) 'found 'absent)
+
+==> found
+
+; ===
+; A one-armed if whose test is true returns the consequent value, usable
+; directly in an enclosing expression
+; ===
+
+>>> (+ 1 (if (> 2 1) 9))
+
+==> 10
+
+; ===
+; Spec: "its values are returned" — if propagates ALL values produced by the
+; chosen branch, not just one (consequent branch yields multiple values)
+; ===
+
+>>> (call-with-values (lambda () (if #t (values 1 2) (values 3 4))) +)
+
+==> 3
+
+; ===
+; Spec: the alternate branch likewise returns all of its values
+; ===
+
+>>> (call-with-values (lambda () (if #f 'x (values 5 6))) list)
+
+==> (5 6)

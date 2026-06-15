@@ -1,0 +1,1001 @@
+; Section 6.10 - Control Features
+;
+; (procedure? obj)
+; (apply proc arg1 ... args)        — args is the final list of arguments
+; (map proc list1 ...)              — returns list of results
+; (string-map proc str1 ...)        — returns string of results
+; (for-each proc list1 ...)         — side effects only, unspecified return
+; (string-for-each proc str1 ...)   — side effects only
+; (vector-map proc vec1 ...)        — returns vector of results (see 6.8)
+; (vector-for-each proc vec1 ...)   — side effects only (see 6.8)
+; (call-with-current-continuation proc)  — abbreviated call/cc
+; (values obj ...)                  — return multiple values
+; (call-with-values producer consumer)
+; (dynamic-wind before thunk after)
+
+; ==========================================================================
+; procedure? — true for all callable objects
+; ==========================================================================
+
+>>> (procedure? car)
+
+==> #t
+
+>>> (procedure? (lambda (x) x))
+
+==> #t
+
+>>> (procedure? (lambda () 42))
+
+==> #t
+
+>>> (procedure? +)
+
+==> #t
+
+>>> (procedure? map)
+
+==> #t
+
+>>> (procedure? call/cc)
+
+==> #t
+
+>>> (procedure? values)
+
+==> #t
+
+>>> (procedure? 42)
+
+==> #f
+
+>>> (procedure? 'car)
+
+==> #f
+
+>>> (procedure? '(lambda (x) x))
+
+==> #f
+
+>>> (procedure? #t)
+
+==> #f
+
+>>> (procedure? '())
+
+==> #f
+
+; ==========================================================================
+; apply — apply a procedure to a list of arguments
+; ==========================================================================
+
+>>> (apply + '(1 2 3))
+
+==> 6
+
+>>> (apply + '())
+
+==> 0
+
+>>> (apply * '(2 3 4))
+
+==> 24
+
+>>> (apply list '(1 2 3))
+
+==> (1 2 3)
+
+; Leading fixed arguments before the final list
+
+>>> (apply + 1 2 '(3 4))
+
+==> 10
+
+>>> (apply list 'a 'b '(c d))
+
+==> (a b c d)
+
+>>> (apply string #\h #\i '(#\! ))
+
+==> "hi!"
+
+>>> (apply max '(3 1 4 1 5 9 2 6))
+
+==> 9
+
+>>> (apply min '(3 1 4 1 5 9 2 6))
+
+==> 1
+
+; apply with a lambda
+
+>>> (apply (lambda (x y) (+ x y)) '(3 4))
+
+==> 7
+
+>>> (apply (lambda (x . rest) (list x rest)) '(1 2 3))
+
+==> (1 (2 3))
+
+; apply with a single-element list
+
+>>> (apply - '(5))
+
+==> -5
+
+>>> (apply car '((1 2 3)))
+
+==> 1
+
+; ==========================================================================
+; map — returns a list of results
+; ==========================================================================
+
+>>> (map (lambda (x) (* x x)) '(1 2 3 4 5))
+
+==> (1 4 9 16 25)
+
+>>> (map car '((a b) (c d) (e f)))
+
+==> (a c e)
+
+>>> (map cdr '((a b) (c d) (e f)))
+
+==> ((b) (d) (f))
+
+>>> (map (lambda (x) (+ x 1)) '(1 2 3))
+
+==> (2 3 4)
+
+>>> (map number->string '(1 2 3))
+
+==> ("1" "2" "3")
+
+; Empty list
+
+>>> (map (lambda (x) x) '())
+
+==> ()
+
+; Multiple lists (parallel)
+
+>>> (map + '(1 2 3) '(4 5 6))
+
+==> (5 7 9)
+
+>>> (map list '(1 2 3) '(a b c))
+
+==> ((1 a) (2 b) (3 c))
+
+>>> (map * '(1 2 3) '(4 5 6) '(7 8 9))
+
+==> (28 80 162)
+
+; map preserves order (result reflects left-to-right element order)
+
+>>> (map (lambda (x) x) '(a b c d e))
+
+==> (a b c d e)
+
+; ==========================================================================
+; for-each — side effects, unspecified return
+; ==========================================================================
+
+>>> (define fe-log '())
+
+>>> (for-each (lambda (x) (set! fe-log (cons x fe-log))) '(1 2 3))
+
+>>> (reverse fe-log)
+
+==> (1 2 3)
+
+; for-each with multiple lists
+
+>>> (define fe-pairs '())
+
+>>> (for-each (lambda (a b) (set! fe-pairs (cons (+ a b) fe-pairs)))
+...           '(1 2 3)
+...           '(10 20 30))
+
+>>> (reverse fe-pairs)
+
+==> (11 22 33)
+
+; for-each on empty list
+
+>>> (define fe-count 0)
+
+>>> (for-each (lambda (x) (set! fe-count (+ fe-count 1))) '())
+
+>>> fe-count
+
+==> 0
+
+; for-each evaluates in order
+
+>>> (define fe-order '())
+
+>>> (for-each (lambda (x) (set! fe-order (cons x fe-order)))
+...           '(first second third))
+
+>>> fe-order
+
+==> (third second first)
+
+; ==========================================================================
+; string-map — returns a string
+; ==========================================================================
+
+>>> (string-map char-upcase "hello")
+
+==> "HELLO"
+
+>>> (string-map char-downcase "WORLD")
+
+==> "world"
+
+>>> (string-map (lambda (c) (integer->char (+ (char->integer c) 1))) "abc")
+
+==> "bcd"
+
+>>> (string-map (lambda (c) c) "")
+
+==> ""
+
+; Multiple strings (parallel)
+
+>>> (string-map (lambda (a b) (if (char<? a b) a b)) "abc" "xyz")
+
+==> "abc"
+
+>>> (string-map (lambda (c1 c2) c1) "hello" "world")
+
+==> "hello"
+
+; ==========================================================================
+; string-for-each — side effects over characters of one or more strings
+; ==========================================================================
+
+>>> (define sfe-log '())
+
+>>> (string-for-each
+...   (lambda (c) (set! sfe-log (cons c sfe-log)))
+...   "abc")
+
+>>> (reverse sfe-log)
+
+==> (#\a #\b #\c)
+
+; string-for-each visits every character in order
+
+>>> (define sfe-result '())
+
+>>> (string-for-each
+...   (lambda (c) (set! sfe-result (cons (char->integer c) sfe-result)))
+...   "hello")
+
+>>> (reverse sfe-result)
+
+==> (104 101 108 108 111)
+
+; string-for-each on empty string — proc never called
+
+>>> (define sfe-count 0)
+
+>>> (string-for-each (lambda (c) (set! sfe-count (+ sfe-count 1))) "")
+
+>>> sfe-count
+
+==> 0
+
+; string-for-each with multiple strings (parallel)
+
+>>> (define sfe-pairs '())
+
+>>> (string-for-each
+...   (lambda (a b)
+...     (set! sfe-pairs (cons (list a b) sfe-pairs)))
+...   "abc"
+...   "xyz")
+
+>>> (reverse sfe-pairs)
+
+==> ((#\a #\x) (#\b #\y) (#\c #\z))
+
+; string-for-each stops at the shortest string
+
+>>> (define sfe-short '())
+
+>>> (string-for-each
+...   (lambda (a b) (set! sfe-short (cons a sfe-short)))
+...   "abcde"
+...   "xy")
+
+>>> (length sfe-short)
+
+==> 2
+
+; string-for-each return value is unspecified (we just check it doesn't error)
+
+>>> (if #t 'ok)
+
+==> ok
+
+; ==========================================================================
+; vector-map — applies proc to corresponding elements, returns new vector
+; ==========================================================================
+
+>>> (vector-map (lambda (x) (* x x)) #(1 2 3 4 5))
+
+==> #(1 4 9 16 25)
+
+>>> (vector-map car #((a b) (c d) (e f)))
+
+==> #(a c e)
+
+>>> (vector-map (lambda (x) (+ x 1)) #(10 20 30))
+
+==> #(11 21 31)
+
+; vector-map on empty vector returns empty vector
+
+>>> (vector-map (lambda (x) x) #())
+
+==> #()
+
+; vector-map with multiple vectors (parallel)
+
+>>> (vector-map + #(1 2 3) #(4 5 6))
+
+==> #(5 7 9)
+
+>>> (vector-map list #(1 2 3) #(a b c))
+
+==> #((1 a) (2 b) (3 c))
+
+>>> (vector-map * #(1 2 3) #(4 5 6) #(7 8 9))
+
+==> #(28 80 162)
+
+; vector-map returns a fresh vector (not the original)
+
+>>> (define vm-orig #(1 2 3))
+
+>>> (define vm-result (vector-map (lambda (x) x) vm-orig))
+
+>>> (eq? vm-orig vm-result)
+
+==> #f
+
+; vector-map result is a vector
+
+>>> (vector? (vector-map (lambda (x) x) #(1 2 3)))
+
+==> #t
+
+; ==========================================================================
+; vector-for-each — side effects over vector elements
+; ==========================================================================
+
+>>> (define vfe-log '())
+
+>>> (vector-for-each
+...   (lambda (x) (set! vfe-log (cons x vfe-log)))
+...   #(1 2 3))
+
+>>> (reverse vfe-log)
+
+==> (1 2 3)
+
+; vector-for-each visits elements in index order
+
+>>> (define vfe-order '())
+
+>>> (vector-for-each
+...   (lambda (x) (set! vfe-order (cons x vfe-order)))
+...   #(a b c d))
+
+>>> vfe-order
+
+==> (d c b a)
+
+; vector-for-each on empty vector — proc never called
+
+>>> (define vfe-count 0)
+
+>>> (vector-for-each (lambda (x) (set! vfe-count (+ vfe-count 1))) #())
+
+>>> vfe-count
+
+==> 0
+
+; vector-for-each with multiple vectors (parallel)
+
+>>> (define vfe-sums '())
+
+>>> (vector-for-each
+...   (lambda (a b) (set! vfe-sums (cons (+ a b) vfe-sums)))
+...   #(1 2 3)
+...   #(10 20 30))
+
+>>> (reverse vfe-sums)
+
+==> (11 22 33)
+
+; vector-for-each with three vectors
+
+>>> (define vfe-triples '())
+
+>>> (vector-for-each
+...   (lambda (a b c) (set! vfe-triples (cons (list a b c) vfe-triples)))
+...   #(1 2 3)
+...   #(4 5 6)
+...   #(7 8 9))
+
+>>> (reverse vfe-triples)
+
+==> ((1 4 7) (2 5 8) (3 6 9))
+
+; vector-for-each return value is unspecified
+
+>>> (if #t 'ok)
+
+==> ok
+
+; ==========================================================================
+; call-with-current-continuation (call/cc)
+; ==========================================================================
+
+; Basic: call/cc captures the current continuation
+
+>>> (call/cc (lambda (k) 42))
+
+==> 42
+
+>>> (call/cc (lambda (k) (k 42) 99))
+
+==> 42
+
+>>> (+ 1 (call/cc (lambda (k) (k 10))))
+
+==> 11
+
+>>> (+ 1 (call/cc (lambda (k) 10)))
+
+==> 11
+
+; call/cc as escape
+
+>>> (define (find-first pred lst)
+...   (call/cc
+...     (lambda (return)
+...       (for-each (lambda (x)
+...                   (when (pred x) (return x)))
+...                 lst)
+...       #f)))
+
+>>> (find-first even? '(1 3 5 4 7))
+
+==> 4
+
+>>> (find-first even? '(1 3 5 7))
+
+==> #f
+
+; call/cc for early exit from nested loops
+
+>>> (define (has-pair? lst)
+...   (call/cc
+...     (lambda (exit)
+...       (for-each
+...         (lambda (x)
+...           (for-each
+...             (lambda (y)
+...               (when (= (+ x y) 10)
+...                 (exit #t)))
+...             lst))
+...         lst)
+...       #f)))
+
+>>> (has-pair? '(3 7 2 8))
+
+==> #t
+
+>>> (has-pair? '(1 2 3))
+
+==> #f
+
+; call/cc and list-building (reverse-map)
+
+>>> (define result '())
+
+>>> (for-each
+...   (lambda (x)
+...     (call/cc
+...       (lambda (k)
+...         (when (even? x) (k #f))
+...         (set! result (cons x result)))))
+...   '(1 2 3 4 5))
+
+>>> result
+
+==> (5 3 1)
+
+; Saved continuation invoked later
+
+>>> (define saved-k #f)
+
+>>> (define counter 0)
+
+>>> (define val
+...   (+ 1 (call/cc (lambda (k)
+...                   (set! saved-k k)
+...                   0))))
+
+>>> val
+
+==> 1
+
+>>> (saved-k 10)
+
+>>> val
+
+==> 11
+
+; call/cc abbreviation
+
+>>> (call-with-current-continuation (lambda (k) (k 'yes)))
+
+==> yes
+
+; ==========================================================================
+; values — return multiple values
+; ==========================================================================
+
+>>> (call-with-values (lambda () (values 1 2 3)) list)
+
+==> (1 2 3)
+
+>>> (call-with-values (lambda () (values)) list)
+
+==> ()
+
+>>> (values 42)
+
+==> 42
+
+>>> (define-values (a b) (values 10 20))
+
+>>> a
+
+==> 10
+
+>>> b
+
+==> 20
+
+; ==========================================================================
+; call-with-values — consume multiple values
+; ==========================================================================
+
+>>> (call-with-values (lambda () (values 1 2 3)) list)
+
+==> (1 2 3)
+
+>>> (call-with-values (lambda () (values 4 5)) +)
+
+==> 9
+
+>>> (call-with-values (lambda () 42) (lambda (x) (* x 2)))
+
+==> 84
+
+>>> (call-with-values (lambda () (values)) list)
+
+==> ()
+
+>>> (call-with-values (lambda () (values 1 2))
+...                   (lambda (a b) (- a b)))
+
+==> -1
+
+; floor/ returns two values — consumable with call-with-values
+
+>>> (call-with-values (lambda () (floor/ 17 5)) list)
+
+==> (3 2)
+
+>>> (call-with-values (lambda () (floor/ 17 5)) cons)
+
+==> (3 . 2)
+
+; ==========================================================================
+; dynamic-wind — before/thunk/after with continuation protection
+; ==========================================================================
+
+; Basic: before, thunk, after called in order
+
+>>> (define dw-log '())
+
+>>> (dynamic-wind
+...   (lambda () (set! dw-log (cons 'before dw-log)))
+...   (lambda () (set! dw-log (cons 'thunk  dw-log)) 42)
+...   (lambda () (set! dw-log (cons 'after  dw-log))))
+
+==> 42
+
+>>> (reverse dw-log)
+
+==> (before thunk after)
+
+; After is called even if thunk raises an error (via guard)
+
+>>> (define dw-after-called #f)
+
+>>> (guard (exn (#t 'caught))
+...   (dynamic-wind
+...     (lambda () #f)
+...     (lambda () (error "boom"))
+...     (lambda () (set! dw-after-called #t))))
+
+==> caught
+
+>>> dw-after-called
+
+==> #t
+
+; dynamic-wind with call/cc — after is called on exit, before on re-entry
+
+>>> (define dw2-log '())
+
+>>> (define dw2-k #f)
+
+>>> (dynamic-wind
+...   (lambda () (set! dw2-log (cons 'in dw2-log)))
+...   (lambda ()
+...     (call/cc (lambda (k) (set! dw2-k k)))
+...     (set! dw2-log (cons 'body dw2-log)))
+...   (lambda () (set! dw2-log (cons 'out dw2-log))))
+
+>>> (reverse dw2-log)
+
+==> (in body out)
+
+>>> (dw2-k #f)
+
+>>> (reverse dw2-log)
+
+==> (in body out in body out)
+
+; After is called in reverse order of nested dynamic-winds
+
+>>> (define nest-log '())
+
+>>> (dynamic-wind
+...   (lambda () (set! nest-log (cons 'outer-in  nest-log)))
+...   (lambda ()
+...     (dynamic-wind
+...       (lambda () (set! nest-log (cons 'inner-in  nest-log)))
+...       (lambda () (set! nest-log (cons 'inner-body nest-log)))
+...       (lambda () (set! nest-log (cons 'inner-out nest-log)))))
+...   (lambda () (set! nest-log (cons 'outer-out nest-log))))
+
+>>> (reverse nest-log)
+
+==> (outer-in inner-in inner-body inner-out outer-out)
+
+; dynamic-wind returns the value of thunk
+
+>>> (dynamic-wind
+...   (lambda () #f)
+...   (lambda () (* 6 7))
+...   (lambda () #f))
+
+==> 42
+
+; ==========================================================================
+; Higher-order programming with map and apply
+; ==========================================================================
+
+; Composing map calls
+
+>>> (map (lambda (x) (* x x))
+...      (map (lambda (x) (+ x 1))
+...           '(0 1 2 3 4)))
+
+==> (1 4 9 16 25)
+
+; apply used to "spread" a list as arguments
+
+>>> (apply string-append (map number->string '(1 2 3)))
+
+==> "123"
+
+>>> (apply max (map abs '(-5 3 -8 2 -1)))
+
+==> 8
+
+; ==========================================================================
+; map and for-each are not guaranteed to be tail-recursive
+; but processing large lists should work
+; ==========================================================================
+
+>>> (length (map (lambda (x) x) (make-list 10000 0)))
+
+==> 10000
+
+>>> (let ((n 0))
+...   (for-each (lambda (x) (set! n (+ n 1)))
+...             (make-list 10000 0))
+...   n)
+
+==> 10000
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; map — terminates when the shortest list runs out (unequal lengths)
+; ===
+
+>>> (map + '(1 2 3) '(10 20 30 40 50))
+
+==> (11 22 33)
+
+>>> (map list '(a b) '(1 2 3 4))
+
+==> ((a 1) (b 2))
+
+>>> (map cons '(1 2 3 4 5) '(a b))
+
+==> ((1 . a) (2 . b))
+
+; map with three lists of differing length stops at the shortest
+
+>>> (map + '(1 2 3 4) '(10 20 30) '(100 200))
+
+==> (111 222)
+
+; ===
+; apply — final list combined with multiple leading arguments
+; ===
+
+>>> (apply + 1 2 3 '(4 5))
+
+==> 15
+
+>>> (apply list 1 2 3 '())
+
+==> (1 2 3)
+
+>>> (apply cons 'a '(b))
+
+==> (a . b)
+
+; apply where the spread list is the only argument and is empty
+
+>>> (apply + 10 '())
+
+==> 10
+
+; apply with vector — proc receives spread elements
+
+>>> (apply vector 1 2 '(3 4 5))
+
+==> #(1 2 3 4 5)
+
+; ===
+; call-with-values — consumer's continuation is that of call-with-values
+; ===
+
+>>> (+ 1 (call-with-values (lambda () (values 2 3)) +))
+
+==> 6
+
+>>> (call-with-values (lambda () (values 1 2 3 4 5)) +)
+
+==> 15
+
+; producer returning a single value; consumer of one argument
+
+>>> (call-with-values (lambda () (* 4 5)) (lambda (x) (+ x 1)))
+
+==> 21
+
+; truncate/ delivers two values to a list consumer
+
+>>> (call-with-values (lambda () (truncate/ 7 2)) list)
+
+==> (3 1)
+
+; ===
+; values — extra values discarded by a sequence's non-final continuation
+; ===
+
+; The continuation of a non-final expression in begin discards all values.
+
+>>> (begin (values 1 2 3) 'last)
+
+==> last
+
+>>> (let ((x 5)) (values 1 2) x)
+
+==> 5
+
+; A single value flows through an ordinary continuation unchanged
+
+>>> (+ 1 (values 41))
+
+==> 42
+
+; ===
+; dynamic-wind — before/after run on continuation escape out of extent
+; ===
+
+>>> (define dw-escape-log '())
+
+>>> (call/cc
+...   (lambda (k)
+...     (dynamic-wind
+...       (lambda () (set! dw-escape-log (cons 'before dw-escape-log)))
+...       (lambda () (k 'escaped))
+...       (lambda () (set! dw-escape-log (cons 'after dw-escape-log))))))
+
+==> escaped
+
+>>> (reverse dw-escape-log)
+
+==> (before after)
+
+; ===
+; dynamic-wind — re-entry via continuation re-runs before, then after
+; (R7RS connect/talk/disconnect example)
+; ===
+
+>>> (let ((path '())
+...       (c #f))
+...   (let ((add (lambda (s) (set! path (cons s path)))))
+...     (dynamic-wind
+...       (lambda () (add 'connect))
+...       (lambda ()
+...         (add (call-with-current-continuation
+...                (lambda (c0)
+...                  (set! c c0)
+...                  'talk1))))
+...       (lambda () (add 'disconnect)))
+...     (if (< (length path) 4)
+...         (c 'talk2)
+...         (reverse path))))
+
+==> (connect talk1 disconnect connect talk2 disconnect)
+
+; ===
+; call/cc — re-invoking a saved continuation iterates (counts to a limit)
+; ===
+
+>>> (let ((count 0) (k #f))
+...   (call/cc (lambda (c) (set! k c)))
+...   (set! count (+ count 1))
+...   (if (< count 5) (k #f) count))
+
+==> 5
+
+; call/cc — product where the continuation supplies a value mid-expression
+
+>>> (* 2 (call/cc (lambda (k) (+ 1 (k 21)))))
+
+==> 42
+
+; ===
+; procedure? — true for continuations and values-returning consumers
+; ===
+
+>>> (procedure? (call/cc (lambda (k) k)))
+
+==> #t
+
+>>> (procedure? dynamic-wind)
+
+==> #t
+
+>>> (procedure? apply)
+
+==> #t
+
+; ==========================================================================
+; R7RS section 6.10 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (procedure? (lambda (x) (* x x)))
+
+==> #t
+
+>>> (procedure? '(lambda (x) (* x x)))
+
+==> #f
+
+>>> (call-with-current-continuation procedure?)
+
+==> #t
+
+>>> (apply + (list 3 4))
+
+==> 7
+
+>>> (define compose (lambda (f g) (lambda args (f (apply g args)))))
+
+==> 
+
+>>> ((compose sqrt *) 12 75)
+
+==> 30
+
+>>> (map cadr '((a b) (d e) (g h)))
+
+==> (b e h)
+
+>>> (map (lambda (n) (expt n n)) '(1 2 3 4 5))
+
+==> (1 4 27 256 3125)
+
+>>> (map + '(1 2 3) '(4 5 6 7))
+
+==> (5 7 9)
+
+>>> (string-map char-foldcase "AbdEgH")
+
+==> "abdegh"
+
+>>> (string-map (lambda (c) (integer->char (+ 1 (char->integer c)))) "HAL")
+
+==> "IBM"
+
+>>> (string-map (lambda (c k) ((if (eqv? k #\u) char-upcase char-downcase) c)) "studlycaps xxx" "ululululul")
+
+==> "StUdLyCaPs"
+
+>>> (vector-map cadr '#((a b) (d e) (g h)))
+
+==> #(b e h)
+
+>>> (vector-map (lambda (n) (expt n n)) '#(1 2 3 4 5))
+
+==> #(1 4 27 256 3125)
+
+>>> (let ((v (make-vector 5))) (for-each (lambda (i) (vector-set! v i (* i i))) '(0 1 2 3 4)) v)
+
+==> #(0 1 4 9 16)
+
+>>> (let ((v '())) (string-for-each (lambda (c) (set! v (cons (char->integer c) v))) "abcde") v)
+
+==> (101 100 99 98 97)
+
+>>> (let ((v (make-list 5))) (vector-for-each (lambda (i) (list-set! v i (* i i))) '#(0 1 2 3 4)) v)
+
+==> (0 1 4 9 16)
+
+>>> (call-with-current-continuation (lambda (exit) (for-each (lambda (x) (if (negative? x) (exit x))) '(54 0 37 -3 245 19)) #t))
+
+==> -3
+
+>>> (define list-length (lambda (obj) (call-with-current-continuation (lambda (return) (letrec ((r (lambda (obj) (cond ((null? obj) 0) ((pair? obj) (+ (r (cdr obj)) 1)) (else (return #f)))))) (r obj))))))
+
+==> 
+
+>>> (list-length '(1 2 3 4))
+
+==> 4
+
+>>> (list-length '(a b . c))
+
+==> #f
+
+>>> (call-with-values (lambda () (values 4 5)) (lambda (a b) b))
+
+==> 5
+
+>>> (call-with-values * -)
+
+==> -1
+

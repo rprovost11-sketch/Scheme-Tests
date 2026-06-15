@@ -1,0 +1,402 @@
+; Section 3.1 - Variables, Syntactic Keywords, and Regions
+;
+; This section is largely definitional.  The two explicitly stated errors are:
+;   - referencing an unbound variable
+;   - using a syntactic keyword where a value expression is expected
+
+; ==========================================================================
+; Unbound variable reference
+; ==========================================================================
+
+>>> undefined-variable
+
+%%% %any-error%
+
+>>> (+ undefined-variable 1)
+
+%%% %any-error%
+
+>>> (car undefined-variable)
+
+%%% %any-error%
+
+; ==========================================================================
+; Syntactic keyword used as an expression
+; ==========================================================================
+
+>>> if
+
+%%% %any-error%
+
+>>> lambda
+
+%%% %any-error%
+
+>>> define
+
+%%% %any-error%
+
+>>> (list if)
+
+%%% %any-error%
+
+>>> (+ lambda 1)
+
+%%% %any-error%
+
+; ==========================================================================
+; Syntactic keywords — other standard keywords as expressions
+; ==========================================================================
+
+>>> begin
+
+%%% %any-error%
+
+>>> cond
+
+%%% %any-error%
+
+>>> case
+
+%%% %any-error%
+
+>>> and
+
+%%% %any-error%
+
+>>> or
+
+%%% %any-error%
+
+>>> when
+
+%%% %any-error%
+
+>>> unless
+
+%%% %any-error%
+
+>>> do
+
+%%% %any-error%
+
+>>> let
+
+%%% %any-error%
+
+>>> let*
+
+%%% %any-error%
+
+>>> letrec
+
+%%% %any-error%
+
+>>> letrec*
+
+%%% %any-error%
+
+>>> quote
+
+%%% %any-error%
+
+>>> quasiquote
+
+%%% %any-error%
+
+>>> set!
+
+%%% %any-error%
+
+>>> define
+
+%%% %any-error%
+
+>>> define-syntax
+
+%%% %any-error%
+
+>>> let-syntax
+
+%%% %any-error%
+
+>>> letrec-syntax
+
+%%% %any-error%
+
+>>> syntax-rules
+
+%%% %any-error%
+
+; ==========================================================================
+; Binding regions — a variable is in scope from its definition onward
+; ==========================================================================
+
+; A variable defined at top level is visible after its definition
+
+>>> (define region-x 10)
+
+>>> region-x
+
+==> 10
+
+; A variable defined inside a lambda body is local to that lambda
+
+>>> (define (region-outer)
+...   (define region-inner 42)
+...   region-inner)
+
+>>> (region-outer)
+
+==> 42
+
+>>> region-inner
+
+%%% %any-error%
+
+; let bindings are local to the let body
+
+>>> (let ((region-let-var 99))
+...   region-let-var)
+
+==> 99
+
+>>> region-let-var
+
+%%% %any-error%
+
+; lambda parameter names are local to the lambda body
+
+>>> (define (region-f region-param) region-param)
+
+>>> (region-f 7)
+
+==> 7
+
+>>> region-param
+
+%%% %any-error%
+
+; internal define shadows outer binding inside the body
+
+>>> (define region-shadow 1)
+
+>>> (define (region-shadow-fn)
+...   (define region-shadow 2)
+...   region-shadow)
+
+>>> (region-shadow-fn)
+
+==> 2
+
+>>> region-shadow
+
+==> 1
+
+; ==========================================================================
+; Variables vs. syntactic keywords — keywords cannot be used as values
+; ==========================================================================
+
+; A syntactic keyword can be locally shadowed by a variable binding
+
+>>> (let ((if 42)) if)
+
+==> 42
+
+>>> (let ((define 99)) define)
+
+==> 99
+
+; Once shadowed by let, the original keyword semantics are gone for that scope
+
+>>> (let ((quote 7)) (+ quote 1))
+
+==> 8
+
+; ==========================================================================
+; set! on an unbound variable is an error
+; ==========================================================================
+
+>>> (set! totally-unbound-xyz 1)
+
+%%% %any-error%
+
+; ==========================================================================
+; define establishes a fresh binding, not a set!
+; ==========================================================================
+
+; Redefining an existing top-level variable is permitted at the top level
+
+>>> (define redef-var 1)
+
+>>> (define redef-var 2)
+
+>>> redef-var
+
+==> 2
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Innermost region wins (R7RS 3.1): a mention refers to the binding of the
+; innermost enclosing region, shadowing any outer binding of the same name.
+; ===
+
+>>> (define region-shadow-x 1)
+
+>>> (let ((region-shadow-x 2))
+...   (let ((region-shadow-x 3))
+...     region-shadow-x))
+
+==> 3
+
+>>> (let ((region-shadow-x 2))
+...   (let ((region-shadow-x 3))
+...     region-shadow-x)
+...   region-shadow-x)
+
+==> 2
+
+>>> region-shadow-x
+
+==> 1
+
+; ===
+; A lambda parameter shadows a same-named top-level variable inside the
+; body (R7RS 3.1: the region of a lambda binding is the entire lambda).
+; ===
+
+>>> (define region-p 100)
+
+>>> ((lambda (region-p) region-p) 7)
+
+==> 7
+
+>>> region-p
+
+==> 100
+
+; ===
+; do binding variables are local to the do expression (R7RS 4.2.4 / 3.1).
+; ===
+
+>>> (do ((region-do-i 0 (+ region-do-i 1)))
+...     ((= region-do-i 3) 'done))
+
+==> done
+
+>>> region-do-i
+
+%%% %any-error%
+
+; ===
+; letrec* makes each binding visible in the bodies of later bindings
+; (R7RS 4.2.2 / 3.1 region rules).
+; ===
+
+>>> (letrec* ((region-a 5)
+...           (region-b (+ region-a 1)))
+...   region-b)
+
+==> 6
+
+; ===
+; A locally rebound syntactic keyword loses keyword meaning only within the
+; binding region; outside, it is a keyword again (R7RS 3.1).
+; ===
+
+>>> (let ((or 'shadowed)) or)
+
+==> shadowed
+
+>>> (or #f 5)
+
+==> 5
+
+; ===
+; Each top-level redefinition replaces the prior binding's value; later
+; references see the latest value (R7RS 3.1 / 5.3.1).
+; ===
+
+>>> (define region-redef 'first)
+
+>>> (define (region-redef-getter) region-redef)
+
+>>> (define region-redef 'second)
+
+>>> (region-redef-getter)
+
+==> second
+
+; ===
+; let is a parallel binding construct: the region of a let binding does NOT
+; include the init expressions, so each init is evaluated in the enclosing
+; environment and sees the OUTER binding of the same name (R7RS 3.1 / 4.2.2).
+; ===
+
+>>> (define region-let-outer 10)
+
+>>> (let ((region-let-outer 1)
+...       (region-let-shadow region-let-outer))
+...   region-let-shadow)
+
+==> 10
+
+; ===
+; let* is a sequential binding construct: the region of each binding includes
+; the init expressions of all subsequent bindings, so a later init sees the
+; earlier binding (R7RS 3.1 / 4.2.2).
+; ===
+
+>>> (let* ((region-lstar-a 1)
+...        (region-lstar-b (+ region-lstar-a 10)))
+...   region-lstar-b)
+
+==> 11
+
+; ===
+; letrec: the region of each binding is the entire letrec expression, so the
+; bindings may refer to one another (mutual recursion) (R7RS 3.1 / 4.2.2).
+; ===
+
+>>> (letrec ((region-even?
+...            (lambda (n) (if (= n 0) #t (region-odd? (- n 1)))))
+...          (region-odd?
+...            (lambda (n) (if (= n 0) #f (region-even? (- n 1))))))
+...   (region-even? 10))
+
+==> #t
+
+; ===
+; When no enclosing region binds an identifier, a reference inside a procedure
+; body refers to the binding in the global environment (R7RS 3.1).
+; ===
+
+>>> (define region-global 55)
+
+>>> (define (region-global-reader) region-global)
+
+>>> (region-global-reader)
+
+==> 55
+
+; ===
+; A lambda parameter shadows a syntactic keyword for the entire lambda body,
+; so the keyword name is usable as an ordinary variable there (R7RS 3.1).
+; ===
+
+>>> ((lambda (if) (+ if 1)) 41)
+
+==> 42
+
+; ===
+; A nested lambda parameter shadows an identically named outer lambda
+; parameter; the innermost region wins (R7RS 3.1).
+; ===
+
+>>> (((lambda (region-np) (lambda (region-np) region-np)) 1) 2)
+
+==> 2

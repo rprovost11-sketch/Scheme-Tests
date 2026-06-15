@@ -1,0 +1,382 @@
+; Section 4.1.1 - Variable References
+;
+; An identifier that appears as an expression is a variable reference.
+; It evaluates to the value currently bound to the variable in the
+; current environment.  It is an error to reference an unbound variable.
+
+; ==========================================================================
+; Basic variable reference
+; ==========================================================================
+
+>>> (define x 42)
+
+>>> x
+
+==> 42
+
+>>> (define y "hello")
+
+>>> y
+
+==> "hello"
+
+>>> (define b #t)
+
+>>> b
+
+==> #t
+
+>>> (define c #\a)
+
+>>> c
+
+==> #\a
+
+>>> (define n 3.14)
+
+>>> n
+
+==> 3.14
+
+>>> (define p '(1 2 3))
+
+>>> p
+
+==> (1 2 3)
+
+; ==========================================================================
+; Variable reference returns the current value — after set! it returns
+; the new value, not the original
+; ==========================================================================
+
+>>> (define v 1)
+
+>>> v
+
+==> 1
+
+>>> (set! v 2)
+
+>>> v
+
+==> 2
+
+>>> (set! v "changed")
+
+>>> v
+
+==> "changed"
+
+>>> (set! v '(a b c))
+
+>>> v
+
+==> (a b c)
+
+; ==========================================================================
+; Variable references in expression contexts
+; ==========================================================================
+
+; As an argument to a procedure
+
+>>> (define a 10)
+
+>>> (define b 20)
+
+>>> (+ a b)
+
+==> 30
+
+>>> (list a b)
+
+==> (10 20)
+
+; As the operator in a call — a variable can hold a procedure
+
+>>> (define my-add +)
+
+>>> (my-add 3 4)
+
+==> 7
+
+>>> (define my-car car)
+
+>>> (my-car '(1 2 3))
+
+==> 1
+
+; Nested references
+
+>>> (define m 5)
+
+>>> (define n 6)
+
+>>> (* (+ m n) (- n m))
+
+==> 11
+
+; ==========================================================================
+; Built-in identifiers are variable references
+; ==========================================================================
+
+>>> (procedure? +)
+
+==> #t
+
+>>> (procedure? car)
+
+==> #t
+
+>>> (procedure? map)
+
+==> #t
+
+>>> (procedure? null?)
+
+==> #t
+
+; ==========================================================================
+; Each variable reference is independent
+; ==========================================================================
+
+>>> (define r 1)
+
+>>> (define s r)
+
+>>> (set! r 99)
+...
+... ; s still holds the value r had at the time of the define, not r's new value
+
+>>> r
+
+==> 99
+
+>>> s
+
+==> 1
+
+; ==========================================================================
+; Unbound variable reference is an error
+; ==========================================================================
+
+>>> no-such-variable
+
+%%% %any-error%
+
+>>> (+ 1 no-such-variable)
+
+%%% %any-error%
+
+>>> (define (f) no-such-variable)
+
+>>> (f)
+
+%%% %any-error%
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ==========================================================================
+; Lexically-scoped variable references — a reference resolves to the
+; binding established by the nearest enclosing binding form (let/lambda)
+; ==========================================================================
+
+>>> (let ((w 7)) w)
+
+==> 7
+
+>>> (let ((w 7))
+...   (let ((w 8))
+...     w))
+
+==> 8
+
+; Inner reference sees the inner binding; outer binding is unaffected
+
+>>> (let ((w 7))
+...   (let ((w 8)) w)
+...   w)
+
+==> 7
+
+; A reference in a let body that names no local binding refers to the
+; enclosing (here top-level) binding
+
+>>> (define outer-ref 55)
+
+>>> (let ((local 1)) outer-ref)
+
+==> 55
+
+; lambda parameter reference resolves to the parameter, not a same-named
+; top-level variable
+
+>>> (define shadowed 1000)
+
+>>> ((lambda (shadowed) shadowed) 5)
+
+==> 5
+
+>>> shadowed
+
+==> 1000
+
+; ==========================================================================
+; A variable reference yields the value currently in the location, even
+; when the location is mutated by an inner closure between references
+; ==========================================================================
+
+>>> (define mutated 0)
+
+>>> (define (bump!) (set! mutated (+ mutated 10)))
+
+>>> mutated
+
+==> 0
+
+>>> (bump!)
+...
+... ; mutate the binding via a procedure
+
+>>> mutated
+
+==> 10
+
+; ==========================================================================
+; Reference resolution chooses the innermost binding through nested lets
+; ==========================================================================
+
+>>> (let ((k 1))
+...   (let ((k 2))
+...     (let ((k 3))
+...       k)))
+
+==> 3
+
+; Referencing an outer binding from within an inner scope that does not
+; rebind that name
+
+>>> (let ((a 1) (b 2))
+...   (let ((c 3))
+...     (+ a b c)))
+
+==> 6
+
+
+; ===
+; A variable reference yields the procedure object itself; the same
+; variable referenced twice yields an eqv? identical object (R7RS §4.1.1 / §6.1)
+; ===
+
+>>> (define proc-var car)
+
+>>> (eqv? proc-var proc-var)
+
+==> #t
+
+>>> (eq? proc-var car)
+
+==> #t
+
+; ===
+; Reference to a variable bound by a named let resolves to the loop binding
+; ===
+
+>>> (let loop ((acc 0) (i 1))
+...   (if (> i 5) acc (loop (+ acc i) (+ i 1))))
+
+==> 15
+
+; ===
+; Reference inside letrec sees the recursively-bound name
+; ===
+
+>>> (letrec ((ev? (lambda (n) (if (= n 0) #t (od? (- n 1)))))
+...          (od? (lambda (n) (if (= n 0) #f (ev? (- n 1))))))
+...   (ev? 10))
+
+==> #t
+
+; ===
+; A variable reference appearing as an init expression of a later binding
+; in let* resolves to the earlier binding
+; ===
+
+>>> (let* ((p 3) (q (* p p)))
+...   q)
+
+==> 9
+
+; ===
+; R7RS §3.4: an object fetched from a location by a variable reference is
+; equivalent in the sense of eqv? to the object last stored before the fetch.
+; A fetch of a compound object yields the same (eqv?) object that was stored.
+; ===
+
+>>> (define stored-obj (list 1 2 3))
+
+>>> (eqv? stored-obj stored-obj)
+
+==> #t
+
+; After set! stores a new compound object, a reference fetches that very object
+
+>>> (define loc1 (vector 9 8 7))
+
+>>> (set! loc1 (vector 0 0 0))
+
+>>> (define captured (vector 5 5 5))
+
+>>> (set! loc1 captured)
+...
+... ; the location now holds the object named by captured
+
+>>> (eqv? loc1 captured)
+
+==> #t
+
+; ===
+; A free-variable reference inside a closure resolves through the enclosing
+; environment and yields the value currently stored in that location, even
+; after the location is mutated by set! between calls (R7RS §4.1.1 / §3.4)
+; ===
+
+>>> (define free-x 100)
+
+>>> (define get-free (lambda () free-x))
+
+>>> (get-free)
+
+==> 100
+
+>>> (set! free-x 200)
+
+>>> (get-free)
+
+==> 200
+
+; ===
+; A variable reference whose location holds a procedure is itself callable,
+; and the reference yields the same procedure each time (R7RS §4.1.1)
+; ===
+
+>>> (define held cons)
+
+>>> (held 1 2)
+
+==> (1 . 2)
+
+>>> (eqv? held cons)
+
+==> #t
+; ==========================================================================
+; R7RS section 4.1.1 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (define x 28)
+
+>>> x
+
+==> 28
+

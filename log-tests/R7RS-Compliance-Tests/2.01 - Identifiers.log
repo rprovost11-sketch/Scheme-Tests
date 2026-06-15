@@ -1,0 +1,970 @@
+; Section 2.1 - Identifiers
+;
+; R7RS identifier grammar:
+;   ordinary  : <initial> <subsequent>*
+;   initial   : letter | ! $ % & * / : < = > ? ^ _ ~
+;   subsequent: initial | digit | + - . @
+;   peculiar  : +  |  -  |  ...  |  -> <subsequent>*
+;   quoted    : | <symbol-element>* |
+;
+; R7RS is case-sensitive.
+
+; ==========================================================================
+; Ordinary identifiers
+; ==========================================================================
+
+; --- Letters and digits in subsequent position ---
+
+>>> (define abc 1)
+
+>>> abc
+
+==> 1
+
+>>> (define abc123 2)
+
+>>> abc123
+
+==> 2
+
+; Hyphens are valid subsequent characters (a-b-c is one identifier, not subtraction)
+
+>>> (define a-b-c 3)
+
+>>> a-b-c
+
+==> 3
+
+; Dot is a valid subsequent character
+
+>>> (define a.b.c 4)
+
+>>> a.b.c
+
+==> 4
+
+; @ is a valid subsequent character
+
+>>> (define a@b 5)
+
+>>> a@b
+
+==> 5
+
+; + and - are valid subsequent characters when not the first character
+
+>>> (define a+b 6)
+
+>>> a+b
+
+==> 6
+
+>>> (define a-b 7)
+
+>>> a-b
+
+==> 7
+
+; ==========================================================================
+; Case sensitivity  (Hello, hello, HELLO are three distinct identifiers)
+; ==========================================================================
+
+>>> (define Hello 10)
+
+>>> (define hello 11)
+
+>>> (define HELLO 12)
+
+>>> Hello
+
+==> 10
+
+>>> hello
+
+==> 11
+
+>>> HELLO
+
+==> 12
+
+; ==========================================================================
+; All 14 special initial characters as standalone identifiers
+; (these shadow standard bindings where applicable)
+; ==========================================================================
+
+>>> (define ! 20)
+
+>>> !
+
+==> 20
+
+>>> (define $ 21)
+
+>>> $
+
+==> 21
+
+>>> (define % 22)
+
+>>> %
+
+==> 22
+
+>>> (define & 23)
+
+>>> &
+
+==> 23
+
+>>> (define * 24)
+
+>>> *
+
+==> 24
+
+>>> (define / 25)
+
+>>> /
+
+==> 25
+
+>>> (define : 26)
+
+>>> :
+
+==> 26
+
+>>> (define < 27)
+
+>>> <
+
+==> 27
+
+>>> (define = 28)
+
+>>> =
+
+==> 28
+
+>>> (define > 29)
+
+>>> >
+
+==> 29
+
+>>> (define ? 30)
+
+>>> ?
+
+==> 30
+
+>>> (define ^ 31)
+
+>>> ^
+
+==> 31
+
+>>> (define _ 32)
+
+>>> _
+
+==> 32
+
+>>> (define ~ 33)
+
+>>> ~
+
+==> 33
+
+; All 14 special initials combined in one identifier
+
+>>> (define !$%&*/:<=>?^_~ 34)
+
+>>> !$%&*/:<=>?^_~
+
+==> 34
+
+; Special initials mixed with letters and subsequent characters
+
+>>> (define my!flag 35)
+
+>>> my!flag
+
+==> 35
+
+>>> (define set-x! 36)
+
+>>> set-x!
+
+==> 36
+
+>>> (define x->y 37)
+
+>>> x->y
+
+==> 37
+
+>>> (define make-<thing> 38)
+
+>>> make-<thing>
+
+==> 38
+
+; ==========================================================================
+; Peculiar identifiers
+; ==========================================================================
+
+; + and - as standalone identifiers (shadow arithmetic builtins)
+
+>>> (define + 40)
+
+>>> +
+
+==> 40
+
+>>> (define - 41)
+
+>>> -
+
+==> 41
+
+; Ellipsis ... is a valid identifier
+
+>>> (define ... 42)
+
+>>> ...
+
+==> 42
+
+; -> alone (zero subsequent characters) is a valid peculiar identifier
+
+>>> (define -> 43)
+
+>>> ->
+
+==> 43
+
+; -> with subsequent characters
+
+>>> (define ->foo 44)
+
+>>> ->foo
+
+==> 44
+
+>>> (define ->+ 45)
+
+>>> ->+
+
+==> 45
+
+>>> (define ->123 46)
+
+>>> ->123
+
+==> 46
+
+; ==========================================================================
+; Vertical-bar quoted identifiers  | symbol-element* |
+; ==========================================================================
+
+; Empty symbol
+
+>>> (define || 50)
+
+>>> ||
+
+==> 50
+
+; Spaces inside |...|
+
+>>> (define |hello world| 51)
+
+>>> |hello world|
+
+==> 51
+
+; Digit as first character (not valid as an ordinary identifier)
+
+>>> (define |3| 52)
+
+>>> |3|
+
+==> 52
+
+>>> (define |123abc| 53)
+
+>>> |123abc|
+
+==> 53
+
+; Delimiter characters inside |...|
+
+>>> (define |(| 54)
+
+>>> |(|
+
+==> 54
+
+>>> (define |)| 55)
+
+>>> |)|
+
+==> 55
+
+>>> (define |[| 56)
+
+>>> |[|
+
+==> 56
+
+>>> (define |]| 57)
+
+>>> |]|
+
+==> 57
+
+; Semicolon inside |...| must not be treated as a line comment
+
+>>> (define |a;b| 58)
+
+>>> |a;b|
+
+==> 58
+
+>>> (define |;comment-looking| 59)
+
+>>> |;comment-looking|
+
+==> 59
+
+; Whitespace variants inside |...|
+
+>>> (define |with spaces and more| 60)
+
+>>> |with spaces and more|
+
+==> 60
+
+; ==========================================================================
+; Mnemonic (named) escapes inside |...|
+; \a alarm (U+0007), \b backspace (U+0008), \t tab (U+0009)
+; \n newline (U+000A), \r return (U+000D)
+; ==========================================================================
+
+>>> (define |\t| 70)
+
+>>> |\t|
+
+==> 70
+
+>>> (define |\n| 71)
+
+>>> |\n|
+
+==> 71
+
+>>> (define |\a| 72)
+
+>>> |\a|
+
+==> 72
+
+>>> (define |\b| 73)
+
+>>> |\b|
+
+==> 73
+
+>>> (define |\r| 74)
+
+>>> |\r|
+
+==> 74
+
+; Escaped double-quote inside |...|
+
+>>> (define |\"| 75)
+
+>>> |\"|
+
+==> 75
+
+; Escaped backslash inside |...|
+
+>>> (define |\\| 76)
+
+>>> |\\|
+
+==> 76
+
+; Escaped pipe inside |...|  (\| represents a literal | character)
+
+>>> (define |\|| 77)
+
+>>> |\||
+
+==> 77
+
+; ==========================================================================
+; Hex escapes  \xHEX;  inside |...|
+; ==========================================================================
+
+; \x65; = e (U+0065): |H\x65;llo| parses as the symbol Hello
+
+>>> (define |H\x65;llo| 80)
+
+>>> Hello
+
+==> 80
+
+; \x9; = tab (U+0009), same character as \t: cross-notation equivalence
+
+>>> (define |\t\t| 81)
+
+>>> |\x9;\x9;|
+
+==> 81
+
+; Reverse: defined with hex escapes, recalled with mnemonic escapes
+
+>>> (define |\x9;\x9;| 82)
+
+>>> |\t\t|
+
+==> 82
+
+; \x3BB; = λ (U+03BB, Greek lowercase lambda): Unicode in quoted symbol
+
+>>> (define |\x3BB;| 83)
+
+>>> |\x3BB;|
+
+==> 83
+
+; Multi-char hex sequence spelling a word: \x48;\x65;\x6C;\x6C;\x6F; = Hello
+
+>>> (define |\x48;\x65;\x6C;\x6C;\x6F;| 84)
+
+>>> Hello
+
+==> 84
+
+; ==========================================================================
+; Cross-notation equivalence using eq?
+; These verify that different surface representations name the same symbol.
+; ==========================================================================
+
+; |H\x65;llo| and Hello are the same symbol
+
+>>> (eq? '|H\x65;llo| 'Hello)
+
+==> #t
+
+; \t and \x9; in |...| both represent tab, so these are the same symbol
+
+>>> (eq? '|\t| '|\x9;|)
+
+==> #t
+
+; |\x48;\x65;\x6C;\x6C;\x6F;| and Hello are the same symbol
+
+>>> (eq? '|\x48;\x65;\x6C;\x6C;\x6F;| 'Hello)
+
+==> #t
+
+; Two quoted instances of the same symbol are eq?
+
+>>> (eq? 'abc 'abc)
+
+==> #t
+
+; Distinct symbols are not eq?
+
+>>> (eq? 'Hello 'hello)
+
+==> #f
+
+>>> (eq? 'hello 'HELLO)
+
+==> #f
+
+; ==========================================================================
+; #!fold-case and #!no-fold-case directives (R7RS 2.1)
+; These reader directives toggle case-folding for subsequent identifiers.
+; Default is no-fold-case (case-sensitive).
+; ==========================================================================
+
+; --- #!fold-case: all subsequent identifiers folded to lowercase ---
+
+#!fold-case
+
+; ALPHA is folded to alpha on read, so this defines alpha = 90
+
+>>> (define ALPHA 90)
+
+>>> alpha
+
+==> 90
+
+; ALPHA is also folded to alpha when recalled
+
+>>> ALPHA
+
+==> 90
+
+; Mixed-case identifier: Define is folded to define, FoObAr is folded to foobar
+
+>>> (define FoObAr 91)
+
+>>> foobar
+
+==> 91
+
+; Under fold-case, uppercase and lowercase spell the same symbol
+
+>>> (eq? 'ALPHA 'alpha)
+
+==> #t
+
+>>> (eq? 'FoObAr 'foobar)
+
+==> #t
+
+>>> (eq? 'HELLO 'hello)
+
+==> #t
+
+; --- #!no-fold-case: restore case-sensitive behavior ---
+
+#!no-fold-case
+
+; Beta and BETA are now distinct identifiers again
+
+>>> (define Beta 92)
+
+>>> Beta
+
+==> 92
+
+>>> (define BETA 93)
+
+>>> BETA
+
+==> 93
+
+>>> Beta
+
+==> 92
+
+; Confirm case-sensitivity is restored
+
+>>> (eq? 'Beta 'BETA)
+
+==> #f
+
+>>> (eq? 'Beta 'beta)
+
+==> #f
+
+; --- #!fold-case / #!no-fold-case can be toggled multiple times ---
+
+#!fold-case
+
+>>> (define GAMMA 94)
+
+>>> gamma
+
+==> 94
+
+#!no-fold-case
+
+>>> (define Delta 95)
+
+>>> Delta
+
+==> 95
+
+; Under fold-case, GAMMA and gamma were the same; now no-fold-case is active
+; but the binding established under fold-case used the folded name (gamma)
+
+>>> gamma
+
+==> 94
+
+; Delta defined under no-fold-case is case-sensitive
+
+>>> (eq? 'Delta 'delta)
+
+==> #f
+
+; ==========================================================================
+; Whitespace as token delimiter
+; Whitespace between tokens is required where tokens would otherwise merge,
+; and separates what might otherwise look like one identifier into two.
+; ==========================================================================
+
+; ab and c are two distinct identifiers; abc is a third, unrelated to either
+
+>>> (define ab 1)
+
+>>> (define c 2)
+
+>>> (define abc 3)
+
+>>> ab
+
+==> 1
+
+>>> c
+
+==> 2
+
+>>> abc
+
+==> 3
+
+>>> (eq? 'ab 'abc)
+
+==> #f
+
+>>> (eq? 'c 'abc)
+
+==> #f
+
+; A list expression containing two whitespace-delimited identifiers
+
+>>> (list ab c)
+
+==> (1 2)
+
+; Whitespace inside |...| is part of the symbol; |ab c| is one symbol distinct from ab and c
+
+>>> (define |ab c| 4)
+
+>>> |ab c|
+
+==> 4
+
+>>> (eq? '|ab c| 'ab)
+
+==> #f
+
+>>> (eq? '|ab c| 'abc)
+
+==> #f
+
+; Multiple whitespace characters between tokens are equivalent to one
+
+>>> (list    ab      c)
+
+==> (1 2)
+
+; Tab as whitespace delimiter
+
+>>> (list	ab	c)
+
+==> (1 2)
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ==========================================================================
+; Identifiers from the R7RS examples list (R7RS 2.1)
+; The report gives these as sample valid identifiers:
+;   ... + +soup+ <=? ->string a34kTMNs lambda* list->vector q V17a
+;   the-word-recursion-has-many-meanings
+; ==========================================================================
+
+; +soup+ : peculiar-looking but a valid ordinary identifier (sign as subsequent)
+
+>>> (define +soup+ 100)
+
+>>> +soup+
+
+==> 100
+
+; <=? : special initials and a subsequent ? character
+
+>>> (define <=? 101)
+
+>>> <=?
+
+==> 101
+
+; ->string : peculiar identifier -> followed by subsequent letters
+
+>>> (define ->string 102)
+
+>>> ->string
+
+==> 102
+
+; a34kTMNs : letters mixed with digits, case-significant
+
+>>> (define a34kTMNs 103)
+
+>>> a34kTMNs
+
+==> 103
+
+; list->vector : letters with -> inside (the canonical conversion-name shape)
+
+>>> (define list->vector 104)
+
+>>> list->vector
+
+==> 104
+
+; V17a : an identifier beginning with an uppercase letter
+
+>>> (define V17a 105)
+
+>>> V17a
+
+==> 105
+
+; the-word-recursion-has-many-meanings : many hyphens, all one identifier
+
+>>> (define the-word-recursion-has-many-meanings 106)
+
+>>> the-word-recursion-has-many-meanings
+
+==> 106
+
+; ==========================================================================
+; A sequence of two or more periods is an identifier (R7RS 2.3)
+; A single period is the dot token, but two or more periods form an identifier.
+; ==========================================================================
+
+>>> (define .. 110)
+
+>>> ..
+
+==> 110
+
+>>> (define .... 111)
+
+>>> ....
+
+==> 111
+
+; The ellipsis ... and the two-period identifier .. are distinct symbols
+
+>>> (eq? '.. '...)
+
+==> #f
+
+; ==========================================================================
+; An identifier must not have a prefix that is a valid number (R7RS 2.1)
+; A single period is not an identifier — bare . is the dot token and is
+; an error outside dotted-pair position.
+; ==========================================================================
+
+>>> .
+
+%%% %any-error%
+
+; ==========================================================================
+; Symbols read via string->symbol round-trip with identical printed names
+; (cross-checks the identifier reader against the symbol constructor)
+; ==========================================================================
+
+>>> (eq? (string->symbol "abc") 'abc)
+
+==> #t
+
+>>> (symbol->string 'set-x!)
+
+==> "set-x!"
+
+>>> (eq? (string->symbol "hello world") '|hello world|)
+
+==> #t
+
+; A symbol whose name needs vertical-bar quoting on output round-trips by name
+
+>>> (symbol->string '|hello world|)
+
+==> "hello world"
+
+; ==========================================================================
+; @ as an initial character is NOT permitted; @ is only a subsequent char
+; (R7RS extended identifier chars: @ appears only in subsequent position).
+; A bare @ is therefore not an ordinary identifier.
+; ==========================================================================
+
+; @foo would begin with @, which is not a valid initial character
+
+>>> (define @foo 1)
+
+%%% %any-error%
+
+; ==========================================================================
+; Hex-escape case-insensitivity inside |...| (R7RS 2.1: hex escapes do not
+; distinguish upper and lower case)
+; ==========================================================================
+
+>>> (eq? '|\x41;| '|\x41;|)
+
+==> #t
+
+>>> (eq? '|\x6a;| '|\x6A;|)
+
+==> #t
+
+; |\x41;| is the symbol named "A" (uppercase A, U+0041)
+
+>>> (symbol->string '|\x41;|)
+
+==> "A"
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; Spec example identifiers q and lambda used as quoted symbols (R7RS 2.1)
+; The report's identifier-example list includes single-letter q and the
+; word lambda; as quoted data these denote symbols.
+; ===
+
+>>> (symbol? 'q)
+
+==> #t
+
+>>> (symbol? 'lambda)
+
+==> #t
+
+>>> (symbol->string 'lambda)
+
+==> "lambda"
+
+; ===
+; |two\x20;words| equals |two words| (R7RS 2.1 worked example)
+; \x20; is the hex escape for U+0020 (space); both spell the same symbol.
+; ===
+
+>>> (eq? '|two\x20;words| '|two words|)
+
+==> #t
+
+>>> (symbol->string '|two\x20;words|)
+
+==> "two words"
+
+; ===
+; A sign followed by subsequent characters is an ordinary identifier
+; (peculiar identifier:  (explicit-sign sign-subsequent subsequent*)).
+; ===
+
+>>> (define +x 200)
+
+>>> +x
+
+==> 200
+
+>>> (define -y 201)
+
+>>> -y
+
+==> 201
+
+>>> (define +@ 202)
+
+>>> +@
+
+==> 202
+
+; ===
+; A dot-subsequent peculiar identifier: a sign or . followed by . then
+; subsequents (e.g. -.foo, .+).  R7RS 7.1.1 dot-subsequent grammar.
+; ===
+
+>>> (define -.x 203)
+
+>>> -.x
+
+==> 203
+
+; ===
+; symbol->string on a |...| symbol returns the unescaped character content
+; (R7RS 2.1: hex/mnemonic escapes denote the literal characters).
+; ===
+
+>>> (string-length (symbol->string '|a b|))
+
+==> 3
+
+>>> (string-ref (symbol->string '|a\x20;b|) 1)
+
+==> #\space
+
+; ===
+; || is a valid identifier different from any other identifier (R7RS 2.1)
+; The report states: "Note that || is a valid identifier that is different
+; from any other identifier."
+; ===
+
+>>> (symbol? '||)
+
+==> #t
+
+>>> (eq? '|| 'x)
+
+==> #f
+
+; The empty symbol || is the same symbol as (string->symbol "")
+
+>>> (eq? '|| (string->symbol ""))
+
+==> #t
+
+; ===
+; Vertical-bar quoting of a name that is already a valid ordinary identifier
+; denotes the SAME symbol (R7RS 2.1: |H\x65;llo| is the same identifier as
+; Hello; the same holds when no escapes are involved).
+; ===
+
+>>> (eq? '|abc| 'abc)
+
+==> #t
+
+>>> (eq? '|list->vector| 'list->vector)
+
+==> #t
+
+; ===
+; Vertical-bar quoting of a peculiar identifier denotes the same symbol
+; as its ordinary spelling (R7RS 2.1 / 7.1.1).
+; ===
+
+>>> (eq? '|+| '+)
+
+==> #t
+
+>>> (eq? '|...| '...)
+
+==> #t
+
+; ===
+; symbol->string resolves the escapes in a |...| identifier to its literal
+; characters: |H\x65;llo| names the symbol whose name is "Hello"
+; (R7RS 2.1 worked example).
+; ===
+
+>>> (symbol->string '|H\x65;llo|)
+
+==> "Hello"
+
+; ===
+; A symbol created by string->symbol with embedded whitespace is the same
+; symbol as its vertical-bar written form (R7RS 2.1 / 6.5).
+; ===
+
+>>> (eq? (string->symbol "two words") '|two words|)
+
+==> #t

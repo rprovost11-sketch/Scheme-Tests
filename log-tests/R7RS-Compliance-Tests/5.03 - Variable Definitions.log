@@ -1,0 +1,743 @@
+; Section 5.3 - Variable Definitions
+;
+; 5.3.1 Top-level definitions
+;
+;   (define <variable> <expression>)
+;   (define (<variable> <formals>) <body>)       — shorthand for lambda
+;   (define (<variable> <formals> . <rest>) <body>)
+;   (define (<variable> . <formals>) <body>)     — variadic (all args in list)
+;
+; 5.3.2 Internal definitions
+;
+;   define may appear at the start of any <body> (lambda, let, etc.).
+;   Internal defines have letrec* semantics: all variables are in scope
+;   for all init expressions, evaluated left-to-right.
+;   An expression in the body may not precede an internal define.
+;
+; (define-values (<variable> ...) <expression>)
+;   Evaluates <expression>, which must return as many values as variables.
+;   Binds each variable to the corresponding value.
+;
+; (define-values (<variable> ... . <rest>) <expression>)
+;   Like above but remaining values are collected into <rest>.
+
+; ==========================================================================
+; 5.3.1 — basic variable definition
+; ==========================================================================
+
+>>> (define answer 42)
+
+>>> answer
+
+==> 42
+
+>>> (define pi 3.141592653589793)
+
+>>> (< (abs (- pi 3.14159)) 0.001)
+
+==> #t
+
+>>> (define empty '())
+
+>>> empty
+
+==> ()
+
+>>> (define truth #t)
+
+>>> truth
+
+==> #t
+
+; ==========================================================================
+; 5.3.1 — define with expression
+; ==========================================================================
+
+>>> (define sum-1-to-10 (apply + '(1 2 3 4 5 6 7 8 9 10)))
+
+>>> sum-1-to-10
+
+==> 55
+
+>>> (define greeting (string-append "Hello" ", " "world!"))
+
+>>> greeting
+
+==> "Hello, world!"
+
+; ==========================================================================
+; 5.3.1 — shorthand procedure definition: fixed arity
+; ==========================================================================
+
+>>> (define (square x) (* x x))
+
+>>> (square 7)
+
+==> 49
+
+>>> (define (add x y) (+ x y))
+
+>>> (add 3 4)
+
+==> 7
+
+>>> (define (volume l w h) (* l w h))
+
+>>> (volume 2 3 4)
+
+==> 24
+
+; Zero-parameter shorthand
+
+>>> (define (forty-two) 42)
+
+>>> (forty-two)
+
+==> 42
+
+; ==========================================================================
+; 5.3.1 — shorthand is exactly equivalent to lambda
+; ==========================================================================
+
+>>> (define (f-shorthand x) (* x x))
+
+>>> (define f-lambda (lambda (x) (* x x)))
+
+>>> (f-shorthand 5)
+
+==> 25
+
+>>> (f-lambda 5)
+
+==> 25
+
+>>> (= (f-shorthand 6) (f-lambda 6))
+
+==> #t
+
+; ==========================================================================
+; 5.3.1 — shorthand with rest parameter (dotted pair formals)
+; ==========================================================================
+
+; (define (f x . rest) ...) — at least one arg, rest in list
+
+>>> (define (head-and-tail x . rest) (list x rest))
+
+>>> (head-and-tail 1 2 3 4)
+
+==> (1 (2 3 4))
+
+>>> (head-and-tail 1)
+
+==> (1 ())
+
+>>> (define (my-list . args) args)
+
+>>> (my-list 1 2 3)
+
+==> (1 2 3)
+
+>>> (my-list)
+
+==> ()
+
+; Two required, rest collected
+
+>>> (define (f2 a b . rest) (list a b rest))
+
+>>> (f2 1 2 3 4 5)
+
+==> (1 2 (3 4 5))
+
+>>> (f2 1 2)
+
+==> (1 2 ())
+
+; ==========================================================================
+; 5.3.1 — shorthand with multi-expression body
+; ==========================================================================
+
+>>> (define (count-and-sum lst)
+...   (define n (length lst))
+...   (define s (apply + lst))
+...   (list n s))
+
+>>> (count-and-sum '(1 2 3 4 5))
+
+==> (5 15)
+
+; Last expression is returned
+
+>>> (define (side-effect-and-return x)
+...   (define doubled (* x 2))
+...   doubled
+...   (+ doubled 1))
+
+>>> (side-effect-and-return 5)
+
+==> 11
+
+; ==========================================================================
+; 5.3.1 — redefining a variable
+; ==========================================================================
+
+>>> (define redef-x 1)
+
+>>> redef-x
+
+==> 1
+
+>>> (define redef-x 2)
+
+>>> redef-x
+
+==> 2
+
+; Redefining a procedure as a value
+
+>>> (define (redef-f x) (* x x))
+
+>>> (redef-f 3)
+
+==> 9
+
+>>> (define redef-f 100)
+
+>>> redef-f
+
+==> 100
+
+; Redefining a value as a procedure
+
+>>> (define redef-v 0)
+
+>>> (define (redef-v x) (+ x 1))
+
+>>> (redef-v 5)
+
+==> 6
+
+; ==========================================================================
+; 5.3.1 — define returns unspecified
+; ==========================================================================
+
+>>> (define _unused (define _inner 0))
+... 
+... ; No error; _unused holds unspecified value
+
+>>> (if #t 'ok)
+
+==> ok
+
+; ==========================================================================
+; 5.3.2 — internal definitions: letrec* semantics
+; ==========================================================================
+
+; Internal defines are evaluated left-to-right; each is visible to later ones.
+
+>>> ((lambda ()
+...    (define a 1)
+...    (define b (+ a 1))
+...    (define c (+ a b))
+...    (list a b c)))
+
+==> (1 2 3)
+
+>>> (let ()
+...   (define x 10)
+...   (define y (* x 2))
+...   (define z (+ x y))
+...   z)
+
+==> 30
+
+; ==========================================================================
+; 5.3.2 — internal definitions: all variables in scope (can reference forward
+; via lambda — safe because lambda defers evaluation)
+; ==========================================================================
+
+>>> (let ()
+...   (define (even? n) (if (= n 0) #t (odd?  (- n 1))))
+...   (define (odd?  n) (if (= n 0) #f (even? (- n 1))))
+...   (list (even? 10) (odd? 7)))
+
+==> (#t #t)
+
+; ==========================================================================
+; 5.3.2 — internal definitions: visible throughout body
+; ==========================================================================
+
+>>> (define (body-test)
+...   (define local 99)
+...   (define (get-local) local)
+...   (get-local))
+
+>>> (body-test)
+
+==> 99
+
+; ==========================================================================
+; 5.3.2 — internal definitions must precede expressions in body
+; ==========================================================================
+
+; Defines must come before non-definition expressions in a body.
+; An expression followed by a define is an error.
+
+>>> (define (bad-order)
+...   (define a 1)
+...   a
+...   (define b 2)
+...   b)
+
+%%% %any-error%
+
+; ==========================================================================
+; 5.3.2 — begin in body may contain definitions (spliced)
+; ==========================================================================
+
+>>> (let ()
+...   (begin
+...     (define splice-p 10)
+...     (define splice-q 20))
+...   (+ splice-p splice-q))
+
+==> 30
+
+; begin in body splices defines into the surrounding body
+
+>>> ((lambda ()
+...    (begin
+...      (define inner-a 5)
+...      (define inner-b 6))
+...    (* inner-a inner-b)))
+
+==> 30
+
+; ==========================================================================
+; 5.3.2 — internal definitions in let, let*, letrec bodies
+; ==========================================================================
+
+>>> (let ((outer 100))
+...   (define inner (+ outer 1))
+...   inner)
+
+==> 101
+
+>>> (let* ((x 1) (y (+ x 1)))
+...   (define z (+ x y))
+...   z)
+
+==> 3
+
+>>> (letrec ((f (lambda (n) (if (= n 0) 1 (* n (f (- n 1)))))))
+...   (define result (f 5))
+...   result)
+
+==> 120
+
+; ==========================================================================
+; 5.3.2 — internal definitions in cond, when, etc. bodies
+; ==========================================================================
+
+>>> (define (test-internal-in-when n)
+...   (when (> n 0)
+...     (define doubled (* n 2))
+...     doubled))
+
+>>> (test-internal-in-when 5)
+
+==> 10
+
+; ==========================================================================
+; define-values — basic
+; ==========================================================================
+
+>>> (define-values (dv-a dv-b) (values 1 2))
+
+>>> dv-a
+
+==> 1
+
+>>> dv-b
+
+==> 2
+
+>>> (define-values (x y z) (values 10 20 30))
+
+>>> (list x y z)
+
+==> (10 20 30)
+
+; ==========================================================================
+; define-values — single value
+; ==========================================================================
+
+>>> (define-values (solo) (values 99))
+
+>>> solo
+
+==> 99
+
+; ==========================================================================
+; define-values — using a procedure that returns multiple values
+; ==========================================================================
+
+>>> (define-values (q r) (floor/ 17 5))
+
+>>> q
+
+==> 3
+
+>>> r
+
+==> 2
+
+>>> (define-values (mn mx) (values (min 3 7 2) (max 3 7 2)))
+
+>>> mn
+
+==> 2
+
+>>> mx
+
+==> 7
+
+; ==========================================================================
+; define-values — with rest (collects remaining values)
+; ==========================================================================
+
+>>> (define-values (first-val . rest-vals) (values 1 2 3 4 5))
+
+>>> first-val
+
+==> 1
+
+>>> rest-vals
+
+==> (2 3 4 5)
+
+>>> (define-values (a b . c) (values 10 20 30 40))
+
+>>> a
+
+==> 10
+
+>>> b
+
+==> 20
+
+>>> c
+
+==> (30 40)
+
+; ==========================================================================
+; define-values — zero values with empty formals
+; ==========================================================================
+
+>>> (define-values () (values))
+... 
+... ; No error; no variables bound
+
+>>> (if #t 'ok)
+
+==> ok
+
+; ==========================================================================
+; define-values — error: wrong number of values
+; ==========================================================================
+
+>>> (define-values (p q) (values 1 2 3))
+
+%%% %any-error%
+
+>>> (define-values (p q) (values 1))
+
+%%% %any-error%
+
+; ==========================================================================
+; define-values — at top level and in body
+; ==========================================================================
+
+>>> (define-values (top-p top-q) (values 'alpha 'beta))
+
+>>> top-p
+
+==> alpha
+
+>>> top-q
+
+==> beta
+
+>>> (let ()
+...   (define-values (local-a local-b) (values 100 200))
+...   (+ local-a local-b))
+
+==> 300
+
+; ==========================================================================
+; Shorthand define — recursive procedures
+; ==========================================================================
+
+>>> (define (factorial n)
+...   (if (= n 0) 1 (* n (factorial (- n 1)))))
+
+>>> (factorial 0)
+
+==> 1
+
+>>> (factorial 5)
+
+==> 120
+
+>>> (factorial 10)
+
+==> 3628800
+
+>>> (define (fib n)
+...   (cond ((= n 0) 0)
+...         ((= n 1) 1)
+...         (else (+ (fib (- n 1)) (fib (- n 2))))))
+
+>>> (fib 0)
+
+==> 0
+
+>>> (fib 1)
+
+==> 1
+
+>>> (fib 10)
+
+==> 55
+
+; ==========================================================================
+; Shorthand define — higher-order procedures
+; ==========================================================================
+
+>>> (define (compose f g) (lambda (x) (f (g x))))
+
+>>> (define inc (lambda (x) (+ x 1)))
+
+>>> (define double (lambda (x) (* x 2)))
+
+>>> ((compose inc double) 5)
+
+==> 11
+
+>>> ((compose double inc) 5)
+
+==> 12
+
+>>> (define (make-adder n) (lambda (x) (+ x n)))
+
+>>> (define add7 (make-adder 7))
+
+>>> (add7 3)
+
+==> 10
+
+; ==========================================================================
+; Shorthand define — procedures with internal defines
+; ==========================================================================
+
+>>> (define (hypotenuse a b)
+...   (define a2 (* a a))
+...   (define b2 (* b b))
+...   (sqrt (+ a2 b2)))
+
+>>> (< (abs (- (hypotenuse 3.0 4.0) 5.0)) 1e-10)
+
+==> #t
+
+>>> (define (digits n)
+...   (define (loop n acc)
+...     (if (< n 10)
+...         (cons n acc)
+...         (loop (quotient n 10) (cons (remainder n 10) acc))))
+...   (loop n '()))
+
+>>> (digits 12345)
+
+==> (1 2 3 4 5)
+
+>>> (digits 7)
+
+==> (7)
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === 5.3.1 — variadic shorthand: (define (f . args) ...) with zero required
+; Already tested for my-list; here confirm the value passed is a fresh list
+; and that the body may use it as an ordinary list.
+
+>>> (define (sum-all . xs) (apply + xs))
+
+>>> (sum-all)
+
+==> 0
+
+>>> (sum-all 1 2 3 4)
+
+==> 10
+
+; === 5.3.1 — body of a shorthand define may contain internal define-values
+
+>>> (define (minmax lst)
+...   (define-values (lo hi)
+...     (values (apply min lst) (apply max lst)))
+...   (list lo hi))
+
+>>> (minmax '(3 1 4 1 5 9 2 6))
+
+==> (1 9)
+
+; === 5.3.2 — internal defines: a later init may call an earlier-defined proc
+
+>>> (let ()
+...   (define (twice f x) (f (f x)))
+...   (define add3 (lambda (n) (+ n 3)))
+...   (define result (twice add3 10))
+...   result)
+
+==> 16
+
+; === 5.3.2 — internal define inside a nested lambda body sees enclosing args
+
+>>> (define (outer-fn a)
+...   (define (inner-fn b)
+...     (define c (+ a b))
+...     (* c 2))
+...   (inner-fn 5))
+
+>>> (outer-fn 10)
+
+==> 30
+
+; === 5.3.2 — define-values as an internal definition (letrec* region)
+
+>>> (let ()
+...   (define-values (p q) (values 2 3))
+...   (define s (+ p q))
+...   (list p q s))
+
+==> (2 3 5)
+
+; === 5.3.2 — internal define-values with a rest variable
+
+>>> (define (split-first . items)
+...   (define-values (head . others) (apply values items))
+...   (list head others))
+
+>>> (split-first 1 2 3 4)
+
+==> (1 (2 3 4))
+
+>>> (split-first 'only)
+
+==> (only ())
+
+; === define-values — expression evaluated once, multiple names bound
+
+>>> (define dv-call-count 0)
+
+>>> (define-values (dv-1 dv-2)
+...   (begin
+...     (set! dv-call-count (+ dv-call-count 1))
+...     (values 'first 'second)))
+
+>>> (list dv-1 dv-2 dv-call-count)
+
+==> (first second 1)
+
+; === define-values — single value with rest collects empty list
+
+>>> (define-values (lone . extras) (values 42))
+
+>>> lone
+
+==> 42
+
+>>> extras
+
+==> ()
+
+; === 5.3.1 — nested internal defines mutually visible via lambda (letrec*)
+
+>>> (define (parity-pair n)
+...   (define (ev? k) (if (= k 0) #t (od? (- k 1))))
+...   (define (od? k) (if (= k 0) #f (ev? (- k 1))))
+...   (list (ev? n) (od? n)))
+
+>>> (parity-pair 4)
+
+==> (#t #f)
+
+>>> (parity-pair 5)
+
+==> (#f #t)
+
+; === define-values — error: too few values for the formals (no rest)
+
+>>> (define-values (e1 e2 e3) (values 1 2))
+
+%%% %any-error%
+
+; === 5.3.1 — spec example: define one variable to the value of another
+; (define first car) (first '(1 2)) => 1   [R7RS 5.3.1]
+
+>>> (define first-elt car)
+
+>>> (first-elt '(1 2))
+
+==> 1
+
+; === 5.3.1 — spec example: (define add3 (lambda (x) (+ x 3))) (add3 3) => 6
+
+>>> (define add3 (lambda (x) (+ x 3)))
+
+>>> (add3 3)
+
+==> 6
+
+; === 5.3.1 — top-level define on an already-bound name acts like set!
+; (the name keeps its single location; later reads see the new value)
+
+>>> (define rebind-top 1)
+
+>>> (define rebind-top 2)
+
+>>> rebind-top
+
+==> 2
+
+; === 5.3.2 — canonical internal-definition example from R7RS 5.3.2
+; foo refers forward to bar (deferred via lambda); evaluates to 45.
+
+>>> (let ((x 5))
+...   (define foo (lambda (y) (bar x y)))
+...   (define bar (lambda (a b) (+ (* a b) a)))
+...   (foo (+ x 3)))
+
+==> 45
+
+; === 5.3.2 — "It is an error to define the same identifier more than once
+; in the same body."  A duplicate internal definition is an error.
+
+>>> (let ()
+...   (define dup-id 1)
+...   (define dup-id 2)
+...   dup-id)
+
+%%% %any-error%
+
+; === 5.3.3 — spec example: define-values as an internal definition
+; (let () (define-values (x y) (values 1 2)) (+ x y)) => 3   [R7RS 5.3.2]
+
+>>> (let ()
+...   (define-values (dvx dvy) (values 1 2))
+...   (+ dvx dvy))
+
+==> 3
+

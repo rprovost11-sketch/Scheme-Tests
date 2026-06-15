@@ -1,0 +1,484 @@
+;;; ============================================================
+;;; test30-meta
+;;; meta.py: eval, environments, error objects, process context, time
+;;; ============================================================
+
+>>> (apply + '(1 2 3))
+==> 6
+
+>>> (apply + '())
+==> 0
+
+>>> (apply * '(2 3 4))
+... ;;; Leading args are prepended to the list contents.
+==> 24
+
+>>> (apply + 10 20 '(3 4))
+==> 37
+
+>>> (apply + 1 2 3 '(4 5 6))
+... ;;; Single-arg list.
+==> 21
+
+>>> (apply - '(100))
+... ;;; Apply a user-defined procedure.
+==> -100
+
+>>> (apply (lambda (x y) (+ x y)) '(100 200))
+==> 300
+
+>>> (apply (lambda args args) '(1 2 3 4 5))
+==> (1 2 3 4 5)
+
+>>> (apply (lambda (x . rest) (cons x rest)) '(head a b c))
+... ;;; Apply to an empty list with a nullary closure.
+==> (head a b c)
+
+>>> (apply (lambda () 42) '())
+... ;;; car applied to a quoted pair.
+==> 42
+
+>>> (apply car '((1 2)))
+... ;;; Result is a pair.
+==> 1
+
+>>> (apply cons '(1 2))
+... ;;; Nested apply.
+==> (1 . 2)
+
+>>> (apply apply (list + (list 1 2 3)))
+... ;;; Deep tail recursion through apply: each iteration tail-calls loop via
+... ;;; apply.  Without CEK-level apply dispatch this would blow Python stack.
+==> 6
+
+>>> (define (loop n acc) (if (zero? n) acc (apply loop (list (- n 1) (+ acc 1))))) (loop 100000 0)
+... ;;; Type errors.
+==> 100000
+
+>>> (apply + 'not-a-list)
+%%% SchemeTypeError: line 1, col 1: apply: last argument must be a proper list
+%%% (apply + 'not-a-list)
+%%% ^
+>>> (apply 1 '(2 3))
+%%% SchemeTypeError: line 1, col 1: apply: first argument must be a procedure
+%%% (apply 1 '(2 3))
+%%% ^
+>>> (apply (lambda (x y) (+ x y)) '(1))
+%%% SchemeArityError: line 1, col 1: 1 argument provided; 2 expected
+%%% (apply (lambda (x y) (+ x y)) '(1))
+%%% ^
+
+>>> (call-with-values (lambda () (values (lambda () 1) '())) apply)
+... ; apply reached through a re-entering (consumer) path is an error
+%%% SchemeTypeError: line 1, col 1: apply: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values (lambda () 1) '())) apply)
+%%% ^
+
+>>> (eval 42)
+==> 42
+
+>>> (eval "hello")
+==> "hello"
+
+>>> (eval #t)
+... ;;; Basic expressions.
+==> #t
+
+>>> (eval '(+ 1 2))
+==> 3
+
+>>> (eval '(* 3 4))
+==> 12
+
+>>> (eval '(if #t 'yes 'no))
+... ;;; Let bindings inside eval.
+==> yes
+
+>>> (eval '(let ((x 5)) (* x x)))
+... ;;; Definitions persist into the global environment.
+==> 25
+
+>>> (eval '(define xx 99)) xx
+... ;;; Calling a previously defined procedure.
+==> 99
+
+>>> (define (double x) (* x 2)) (eval '(double 21))
+... ;;; Nested eval.
+==> 42
+
+>>> (eval '(eval '(+ 100 1)))
+... ;;; Deep tail recursion through eval: each iteration tail-calls loop via
+... ;;; eval.  Without CEK-level eval dispatch this would blow Python stack.
+==> 101
+
+>>> (define (loop n) (if (zero? n) 'done (eval (list 'loop (- n 1))))) (loop 100000)
+... ;;; Shape errors inside the evaluated datum surface normally.  The
+... ;;; position points at the source location of the offending datum
+... ;;; inside the quote, since positioned NIL carries the opening '('.
+==> done
+
+>>> (eval '())
+%%% line 1, col 8: empty list () is not a valid expression; use (quote ()) for the empty list
+%%% (eval '())
+%%%        ^
+>>> (interaction-environment)
+==> #<environment>
+
+>>> (eval '(+ 1 2) (interaction-environment))
+... ;;; eval against the interaction-environment sees globals.
+==> 3
+
+>>> (define eval-test-x 11) (eval 'eval-test-x (interaction-environment))
+... ;;; eval against the interaction-environment can install globals.
+==> 11
+
+>>> (eval '(define eval-test-y 22) (interaction-environment)) eval-test-y
+... ;;; (environment ...) builds a fresh frozen env from the named libraries.
+==> 22
+
+>>> (environment '(scheme base))
+==> #<environment>
+
+>>> (eval '(+ 10 20) (environment '(scheme base)))
+... ;;; Multiple library specs unite their exports.  The arithmetic comes
+... ;;; from (scheme base), force/make-promise from (scheme lazy).
+==> 30
+
+>>> (eval '(force (make-promise (+ 1 2))) (environment '(scheme base) '(scheme lazy)))
+... ;;; The environment from (environment ...) is frozen: defining errors.
+==> 3
+
+>>> (eval '(define z 1) (environment '(scheme base)))
+%%% SchemeTypeError: line 1, col 16: cannot define 'z' in a frozen environment
+%%% (eval '(define z 1) (environment '(scheme base)))
+%%%                ^
+>>> (eval '(set! cons 1) (environment '(scheme base)))
+%%% SchemeTypeError: line 1, col 14: set! on 'cons' in a frozen environment
+%%% (eval '(set! cons 1) (environment '(scheme base)))
+%%%              ^
+>>> (eval '(+ 1 2) 'not-an-env)
+%%% SchemeTypeError: line 1, col 1: eval: second argument must be an environment
+%%% (eval '(+ 1 2) 'not-an-env)
+%%% ^
+>>> (eval '(+ 1 2) 42)
+%%% SchemeTypeError: line 1, col 1: eval: second argument must be an environment
+%%% (eval '(+ 1 2) 42)
+%%% ^
+
+>>> (call-with-values (lambda () (values '(+ 1 2))) eval)
+... ; eval reached through a re-entering (consumer) path is an error
+%%% SchemeTypeError: line 1, col 1: eval: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values '(+ 1 2))) eval)
+%%% ^
+
+>>> (environment '(no such lib))
+%%% SchemeTypeError: line 1, col 1: environment: library not found: (no such lib)
+%%% (environment '(no such lib))
+%%% ^
+
+>>> (environment 5)
+... ; environment spec that is not a list is an error
+%%% SchemeTypeError: line 1, col 1: environment: argument must be a library-name list
+%%% (environment 5)
+%%% ^
+
+>>> (eval '(quote ok) (environment))
+... ;;; Deep tail recursion through eval also works with an env-spec arg.
+==> ok
+
+>>> (define (loop2 n) (if (zero? n) 'done (eval (list 'loop2 (- n 1)) (interaction-environment)))) (loop2 100000)
+... ;;; -------- error (R7RS 6.11) --------
+==> done
+
+>>> (error "oops")
+%%% SchemeUserError: line 1, col 1: oops
+%%% (error "oops")
+%%% ^
+>>> (error "bad input:" 42)
+%%% SchemeUserError: line 1, col 1: bad input: 42
+%%% (error "bad input:" 42)
+%%% ^
+>>> (error "wrong" 1 'two "three")
+%%% SchemeUserError: line 1, col 1: wrong 1 two "three"
+%%% (error "wrong" 1 'two "three")
+%%% ^
+>>> (error 42)
+%%% SchemeTypeError: line 1, col 1: error: first argument must be a string
+%%% (error 42)
+%%% ^
+>>> (define (sqrt-safe x) (if (negative? x) (error "sqrt of negative:" x) 'ok)) (sqrt-safe -1)
+%%% SchemeUserError: line 1, col 41: sqrt of negative: -1
+%%% (define (sqrt-safe x) (if (negative? x) (error "sqrt of negative:" x) 'ok)) (sqrt-safe -1)
+%%%                                         ^
+%%%   at line 1, col 77: sqrt-safe
+%%% (define (sqrt-safe x) (if (negative? x) (error "sqrt of negative:" x) 'ok)) (sqrt-safe -1)
+%%%                                                                             ^
+
+>>> (error-object-irritants 5)
+... ; error-object-irritants on a non-error-object is an error
+%%% SchemeTypeError: line 1, col 1: error-object-irritants: not an error object
+%%% (error-object-irritants 5)
+%%% ^
+
+... ; ==========================================================
+... ; runtime
+... ; ==========================================================
+>>> (inexact? (runtime))
+==> #t
+
+>>> (>= (runtime) 0)
+==> #t
+
+>>> (number? (runtime))
+==> #t
+
+>>> (runtime 1)
+%%% SchemeArityError: line 1, col 1: runtime: 1 argument provided; 0 expected
+%%% (runtime 1)
+%%% ^
+
+;;; ==========================================================
+;;; trace / untrace
+;;; ==========================================================
+
+;;; (trace) with no args returns the set of traced names (empty at start)
+>>> (trace)
+==> ()
+
+>>> (define (double x) (* x 2))
+==>
+
+;;; (trace f) registers f and returns the updated set
+>>> (trace double)
+==> (double)
+
+;;; calling a traced function prints enter and exit lines
+>>> (double 5)
+ 0: (double 5)
+ 0: double returned 10
+==> 10
+
+;;; (untrace f) removes f and returns the updated set
+>>> (untrace double)
+==> ()
+
+;;; after untracing, no output
+>>> (double 7)
+==> 14
+
+;;; recursive function: trace shows nested calls
+>>> (define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))
+==>
+
+>>> (trace fact)
+==> (fact)
+
+>>> (fact 3)
+ 0: (fact 3)
+ 1:   (fact 2)
+ 2:     (fact 1)
+ 3:       (fact 0)
+ 3:       fact returned 1
+ 2:     fact returned 1
+ 1:   fact returned 2
+ 0: fact returned 6
+==> 6
+
+;;; (untrace) with no args clears all
+>>> (untrace)
+==> ()
+
+>>> (trace)
+==> ()
+
+;;; type errors
+>>> (trace 42)
+%%% SchemeTypeError: line 1, col 1: trace: arguments must be symbols
+%%% (trace 42)
+%%% ^
+
+>>> (untrace 42)
+%%% SchemeTypeError: line 1, col 1: untrace: arguments must be symbols
+%%% (untrace 42)
+%%% ^
+
+;;; ==========================================================
+;;; record-system internal primitives (%-prefixed; emitted by
+;;; define-record-type but directly callable) — error paths
+;;; ==========================================================
+
+>>> (%make-record-type 5 '())
+... ; %make-record-type with a non-symbol name is an error
+%%% SchemeTypeError: line 1, col 1: %make-record-type: first argument must be a symbol
+%%% (%make-record-type 5 '())
+%%% ^
+
+>>> (%make-record-type 'p '(a 5 c))
+... ; %make-record-type with a non-symbol field name is an error
+%%% SchemeTypeError: line 1, col 1: %make-record-type: field names must be symbols
+%%% (%make-record-type 'p '(a 5 c))
+%%% ^
+
+>>> (%make-record-type 'p '(a . b))
+... ; %make-record-type field names must be a proper list
+%%% SchemeTypeError: line 1, col 1: %make-record-type: field names must be a proper list
+%%% (%make-record-type 'p '(a . b))
+%%% ^
+
+>>> (%make-record 5 '())
+... ; %make-record first argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %make-record: first argument must be a record type
+%%% (%make-record 5 '())
+%%% ^
+
+>>> (%make-record (%make-record-type 'p '(a)) '(1 . 2))
+... ; %make-record field values must be a proper list
+%%% SchemeTypeError: line 1, col 1: %make-record: field values must be a proper list
+%%% (%make-record (%make-record-type 'p '(a)) '(1 . 2))
+%%% ^
+
+>>> (%record-of-type? 5 5)
+... ; %record-of-type? second argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %record-of-type?: second argument must be a record type
+%%% (%record-of-type? 5 5)
+%%% ^
+
+>>> (%record-ref 5 5 0)
+... ; %record-ref second argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %record-ref: second argument must be a record type
+%%% (%record-ref 5 5 0)
+%%% ^
+
+>>> (%record-ref 5 (%make-record-type 'p '(a)) 0)
+... ; %record-ref record is not of the expected type
+%%% SchemeTypeError: line 1, col 1: %record-ref: record is not of the expected type p
+%%% (%record-ref 5 (%make-record-type 'p '(a)) 0)
+%%% ^
+
+>>> (let ((t (%make-record-type 'p '(a)))) (%record-ref (%make-record t '(1)) t 'x))
+... ; %record-ref index must be an integer
+%%% SchemeTypeError: line 1, col 40: %record-ref: index must be an integer
+%%% (let ((t (%make-record-type 'p '(a)))) (%record-ref (%make-record t '(1)) t 'x))
+%%%                                        ^
+
+>>> (%make-record-accessor 5 0 'a)
+... ; %make-record-accessor first argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %make-record-accessor: first argument must be a record type
+%%% (%make-record-accessor 5 0 'a)
+%%% ^
+
+>>> (%make-record-accessor (%make-record-type 'p '(a)) 'x 'a)
+... ; %make-record-accessor index must be an integer
+%%% SchemeTypeError: line 1, col 1: %make-record-accessor: index must be an integer
+%%% (%make-record-accessor (%make-record-type 'p '(a)) 'x 'a)
+%%% ^
+
+>>> (%make-record-accessor (%make-record-type 'p '(a)) 0 5)
+... ; %make-record-accessor name must be a symbol
+%%% SchemeTypeError: line 1, col 1: %make-record-accessor: name must be a symbol
+%%% (%make-record-accessor (%make-record-type 'p '(a)) 0 5)
+%%% ^
+
+>>> (%make-record-mutator 5 0 'a)
+... ; %make-record-mutator first argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %make-record-mutator: first argument must be a record type
+%%% (%make-record-mutator 5 0 'a)
+%%% ^
+
+>>> (%make-record-mutator (%make-record-type 'p '(a)) 'x 'a)
+... ; %make-record-mutator index must be an integer
+%%% SchemeTypeError: line 1, col 1: %make-record-mutator: index must be an integer
+%%% (%make-record-mutator (%make-record-type 'p '(a)) 'x 'a)
+%%% ^
+
+>>> (%make-record-mutator (%make-record-type 'p '(a)) 0 5)
+... ; %make-record-mutator name must be a symbol
+%%% SchemeTypeError: line 1, col 1: %make-record-mutator: name must be a symbol
+%%% (%make-record-mutator (%make-record-type 'p '(a)) 0 5)
+%%% ^
+
+>>> (%record-set! 5 5 0 9)
+... ; %record-set! second argument must be a record type
+%%% SchemeTypeError: line 1, col 1: %record-set!: second argument must be a record type
+%%% (%record-set! 5 5 0 9)
+%%% ^
+
+>>> (%record-set! 5 (%make-record-type 'p '(a)) 0 9)
+... ; %record-set! record is not of the expected type
+%%% SchemeTypeError: line 1, col 1: %record-set!: record is not of the expected type p
+%%% (%record-set! 5 (%make-record-type 'p '(a)) 0 9)
+%%% ^
+
+>>> (let ((t (%make-record-type 'p '(a)))) (%record-set! (%make-record t '(1)) t 'x 9))
+... ; %record-set! index must be an integer
+%%% SchemeTypeError: line 1, col 40: %record-set!: index must be an integer
+%%% (let ((t (%make-record-type 'p '(a)))) (%record-set! (%make-record t '(1)) t 'x 9))
+%%%                                        ^
+
+>>> (apply (%make-record-mutator (%make-record-type 'p '(a)) 0 'set-a!) '(5 9))
+... ; applying a record mutator to a non-record of its type is an error
+%%% SchemeTypeError: line 1, col 1: set-a!: first argument is not a p
+%%% (apply (%make-record-mutator (%make-record-type 'p '(a)) 0 'set-a!) '(5 9))
+%%% ^
+
+>>> (call-with-values (lambda () (values 1 2)) 5)
+... ; a consumer that is not a procedure is an error
+%%% SchemeTypeError: line 1, col 1: expected a procedure
+%%% (call-with-values (lambda () (values 1 2)) 5)
+%%% ^
+
+;;; ==========================================================
+;;; parameters — re-entering-path error paths
+;;; ==========================================================
+
+>>> (call-with-values (lambda () (values 0)) make-parameter)
+... ; make-parameter reached through a re-entering (consumer) path is an error
+%%% SchemeTypeError: line 1, col 1: make-parameter: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 0)) make-parameter)
+%%% ^
+
+>>> (call-with-values (lambda () (values 0 0 0)) %with-parameters)
+... ; %with-parameters reached through a re-entering (consumer) path is an error
+%%% SchemeTypeError: line 1, col 1: %with-parameters: cannot be called through a re-entering path in this implementation
+%%% (call-with-values (lambda () (values 0 0 0)) %with-parameters)
+%%% ^
+
+;;; ==========================================================
+;;; null-environment / scheme-report-environment / load
+;;; ==========================================================
+
+>>> (null-environment 'x)
+... ; null-environment version must be an integer
+%%% SchemeTypeError: line 1, col 1: null-environment: version must be an integer
+%%% (null-environment 'x)
+%%% ^
+
+>>> (null-environment 99)
+... ; null-environment only supports version 5
+%%% SchemeTypeError: line 1, col 1: null-environment: unsupported version (only 5 is supported)
+%%% (null-environment 99)
+%%% ^
+
+>>> (scheme-report-environment 'x)
+... ; scheme-report-environment version must be an integer
+%%% SchemeTypeError: line 1, col 1: scheme-report-environment: version must be an integer
+%%% (scheme-report-environment 'x)
+%%% ^
+
+>>> (scheme-report-environment 99)
+... ; scheme-report-environment only supports version 5
+%%% SchemeTypeError: line 1, col 1: scheme-report-environment: unsupported version (only 5 is supported)
+%%% (scheme-report-environment 99)
+%%% ^
+
+>>> (load 5)
+... ; load filename must be a string
+%%% SchemeTypeError: line 1, col 1: load: filename must be a string
+%%% (load 5)
+%%% ^
+
+>>> (load "x" 5)
+... ; load second argument must be an environment specifier
+%%% SchemeTypeError: line 1, col 1: load: second argument must be an environment specifier
+%%% (load "x" 5)
+%%% ^

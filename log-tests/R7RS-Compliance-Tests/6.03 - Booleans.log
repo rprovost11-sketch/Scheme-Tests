@@ -1,0 +1,582 @@
+; Section 6.3 - Booleans
+;
+; Boolean values: #t (true) and #f (false).
+; #true and #false are alternate spellings.
+;
+; (boolean? obj)      — #t only for #t and #f
+; (not obj)           — #t if obj is #f, #f otherwise
+; (boolean=? b1 b2 ...)  — #t if all arguments are the same boolean value
+;
+; Note: In Scheme, #f is the only false value.  Every other object,
+; including 0, '(), and "", is treated as true in conditional contexts.
+
+; ==========================================================================
+; boolean? — true only for boolean values
+; ==========================================================================
+
+>>> (boolean? #t)
+
+==> #t
+
+>>> (boolean? #f)
+
+==> #t
+
+>>> (boolean? #true)
+
+==> #t
+
+>>> (boolean? #false)
+
+==> #t
+
+>>> (boolean? 0)
+
+==> #f
+
+>>> (boolean? 1)
+
+==> #f
+
+>>> (boolean? '())
+
+==> #f
+
+>>> (boolean? "")
+
+==> #f
+
+>>> (boolean? 'true)
+
+==> #f
+
+>>> (boolean? 'false)
+
+==> #f
+
+>>> (boolean? '(#t))
+
+==> #f
+
+>>> (boolean? #\t)
+
+==> #f
+
+>>> (boolean? (lambda () #t))
+
+==> #f
+
+; ==========================================================================
+; #true and #false are the same as #t and #f
+; ==========================================================================
+
+>>> (eq? #true #t)
+
+==> #t
+
+>>> (eq? #false #f)
+
+==> #t
+
+>>> (boolean? #true)
+
+==> #t
+
+>>> (boolean? #false)
+
+==> #t
+
+>>> (if #true 'yes 'no)
+
+==> yes
+
+>>> (if #false 'yes 'no)
+
+==> no
+
+; ==========================================================================
+; not — logical negation
+; ==========================================================================
+
+>>> (not #f)
+
+==> #t
+
+>>> (not #t)
+
+==> #f
+
+; not returns #f for every value except #f
+
+>>> (not 0)
+
+==> #f
+
+>>> (not 1)
+
+==> #f
+
+>>> (not '())
+
+==> #f
+
+>>> (not "")
+
+==> #f
+
+>>> (not "hello")
+
+==> #f
+
+>>> (not 'foo)
+
+==> #f
+
+>>> (not '(1 2 3))
+
+==> #f
+
+>>> (not #\a)
+
+==> #f
+
+>>> (not (lambda (x) x))
+
+==> #f
+
+>>> (not #(1 2))
+
+==> #f
+
+>>> (not (cons 1 2))
+
+==> #f
+
+; Double negation
+
+>>> (not (not #t))
+
+==> #t
+
+>>> (not (not #f))
+
+==> #f
+
+>>> (not (not 42))
+
+==> #t
+
+>>> (not (not '()))
+
+==> #t
+
+; ==========================================================================
+; not — used in conditions
+; ==========================================================================
+
+>>> (if (not #f) 'yes 'no)
+
+==> yes
+
+>>> (if (not #t) 'yes 'no)
+
+==> no
+
+>>> (if (not (= 1 2)) 'not-equal 'equal)
+
+==> not-equal
+
+; not of a non-empty-list test takes the then-branch.  (The list must be
+; non-empty: (null? '()) is #t, so (not (null? '())) is #f -> 'null.)
+>>> (if (not (null? '(1))) 'non-null 'null)
+
+==> non-null
+
+>>> (if (not (null? '(a b))) 'non-null 'null)
+
+==> non-null
+
+; ==========================================================================
+; boolean=? — all arguments must be the same boolean value
+; ==========================================================================
+
+>>> (boolean=? #t #t)
+
+==> #t
+
+>>> (boolean=? #f #f)
+
+==> #t
+
+>>> (boolean=? #t #f)
+
+==> #f
+
+>>> (boolean=? #f #t)
+
+==> #f
+
+; Multi-argument
+
+>>> (boolean=? #t #t #t)
+
+==> #t
+
+>>> (boolean=? #f #f #f)
+
+==> #t
+
+>>> (boolean=? #t #t #f)
+
+==> #f
+
+>>> (boolean=? #f #f #t)
+
+==> #f
+
+>>> (boolean=? #t #t #t #t)
+
+==> #t
+
+>>> (boolean=? #f #f #f #f)
+
+==> #t
+
+; ==========================================================================
+; boolean=? with computed values
+; ==========================================================================
+
+>>> (boolean=? (= 1 1) (< 0 1))
+
+==> #t
+
+>>> (boolean=? (= 1 2) (> 0 1))
+
+==> #t
+
+>>> (boolean=? (= 1 1) (= 1 2))
+
+==> #f
+
+>>> (boolean=? (null? '()) (zero? 0))
+
+==> #t
+
+>>> (boolean=? (null? '(1)) (zero? 1))
+
+==> #t
+
+; ==========================================================================
+; Boolean values are self-evaluating
+; ==========================================================================
+
+>>> #t
+
+==> #t
+
+>>> #f
+
+==> #f
+
+>>> '#t
+
+==> #t
+
+>>> '#f
+
+==> #f
+
+>>> (quote #t)
+
+==> #t
+
+>>> (quote #f)
+
+==> #f
+
+; ==========================================================================
+; Boolean operations built from not
+; ==========================================================================
+
+; and-like behavior
+
+>>> (if (and (not (= 1 2)) (not (null? '(1)))) 'pass 'fail)
+
+==> pass
+
+; nor
+
+>>> (define (nor . args)
+...   (not (apply boolean=? #t (map (lambda (x) (if x #t #f)) args))))
+... 
+... ; ==========================================================================
+... ; #f is the only false value — all others are true
+... ; ==========================================================================
+
+>>> (if 0 'true 'false)
+
+==> true
+
+>>> (if '() 'true 'false)
+
+==> true
+
+>>> (if "" 'true 'false)
+
+==> true
+
+>>> (if 0.0 'true 'false)
+
+==> true
+
+>>> (if #\null 'true 'false)
+
+==> true
+
+>>> (if '(#f) 'true 'false)
+
+==> true
+
+>>> (if '#(#f) 'true 'false)
+
+==> true
+
+; Only #f is false
+
+>>> (if #f 'true 'false)
+
+==> false
+
+; ==========================================================================
+; Boolean in data structures
+; ==========================================================================
+
+>>> (list #t #f #t)
+
+==> (#t #f #t)
+
+>>> (car '(#t #f))
+
+==> #t
+
+>>> (cadr '(#t #f))
+
+==> #f
+
+>>> (vector #t #f #t)
+
+==> #(#t #f #t)
+
+>>> (vector-ref (vector #t #f) 1)
+
+==> #f
+
+; ==========================================================================
+; Boolean predicates from other sections work with booleans
+; ==========================================================================
+
+>>> (eqv? #t #t)
+
+==> #t
+
+>>> (eqv? #f #f)
+
+==> #t
+
+>>> (eqv? #t #f)
+
+==> #f
+
+>>> (equal? #t #t)
+
+==> #t
+
+>>> (eq? #t #t)
+
+==> #t
+
+>>> (eq? #f #f)
+
+==> #t
+
+; ==========================================================================
+; not returns a boolean (not the original truthy value)
+; ==========================================================================
+
+>>> (boolean? (not #t))
+
+==> #t
+
+>>> (boolean? (not #f))
+
+==> #t
+
+>>> (boolean? (not 42))
+
+==> #t
+
+>>> (boolean? (not '()))
+
+==> #t
+
+; ==========================================================================
+; Boolean as argument and return value
+; ==========================================================================
+
+>>> (define (my-not b) (if b #f #t))
+
+>>> (my-not #t)
+
+==> #f
+
+>>> (my-not #f)
+
+==> #t
+
+>>> (my-not 0)
+
+==> #f
+
+>>> (define (both? a b) (if a (if b #t #f) #f))
+
+>>> (both? #t #t)
+
+==> #t
+
+>>> (both? #t #f)
+
+==> #f
+
+>>> (both? #f #t)
+
+==> #f
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ===
+; boolean=? returns an actual boolean and accepts long argument lists
+; ===
+
+>>> (boolean? (boolean=? #t #t))
+
+==> #t
+
+>>> (boolean? (boolean=? #t #f))
+
+==> #t
+
+>>> (boolean=? #t #t #t #t #t)
+
+==> #t
+
+>>> (boolean=? #t #t #t #f #t)
+
+==> #f
+
+>>> (boolean=? #f #f #f #f #f #f)
+
+==> #t
+
+; ===
+; boolean=? compares boolean VALUE, not truthiness — only #t and #f are
+; valid arguments (it is an error to pass non-booleans)
+; ===
+
+>>> (boolean=? 1 1)
+
+%%% %any-error%
+
+>>> (boolean=? #t 1)
+
+%%% %any-error%
+
+>>> (boolean=? '() '())
+
+%%% %any-error%
+
+; ===
+; not always yields one of the two boolean objects
+; ===
+
+>>> (eq? (not #f) #t)
+
+==> #t
+
+>>> (eq? (not 42) #f)
+
+==> #t
+
+>>> (eq? (not '()) #f)
+
+==> #t
+
+; ===
+; #true / #false spellings are interchangeable with #t / #f everywhere
+; ===
+
+>>> (boolean=? #true #t)
+
+==> #t
+
+>>> (boolean=? #false #f)
+
+==> #t
+
+>>> (not #true)
+
+==> #f
+
+>>> (not #false)
+
+==> #t
+
+>>> (eqv? #true #t)
+
+==> #t
+
+>>> (eqv? #false #f)
+
+==> #t
+
+>>> #true
+... ; R7RS 6.3: #true and #false are alternate written constants that, like
+... ; #t and #f, are self-evaluating (evaluate to themselves unquoted).
+
+==> #t
+
+>>> #false
+
+==> #f
+
+>>> (eq? #f '())
+... ; R7RS 6.3 Note: Scheme distinguishes #f, the empty list, and the symbol nil
+... ; from one another (unlike some Lisps); neither '() nor 'nil is eq? to #f.
+
+==> #f
+
+>>> (eq? #f 'nil)
+
+==> #f
+
+>>> (not 'nil)
+
+==> #f
+
+; ==========================================================================
+; R7RS section 6.3 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (not 3)
+
+==> #f
+
+>>> (not (list 3))
+
+==> #f
+
+>>> (not (list))
+
+==> #f
+

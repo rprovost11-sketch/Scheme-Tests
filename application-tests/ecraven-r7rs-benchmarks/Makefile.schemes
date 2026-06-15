@@ -1,0 +1,194 @@
+all: results.Bigloo results.Bones results.Chez results.Chibi results.Chicken results.Cyclone results.Femtolisp results.GambitC results.Gauche results.Gerbil results.Guile results.IronScheme results.Kawa results.Larceny results.Loko results.MIT results.Mosh results.Picrin results.Racket results.S7 results.S9fES results.Sagittarius results.Stalin results.STklos results.TR7 results.Ypsilon
+## not relevant?
+# results.Petite-Chez results.ChickenCSI
+## too slow / too little memory
+# results.TinyScheme
+## not sure this can be made to work, it doesn't have read, begin, ...
+# results.Owl-Lisp
+## not packaged
+# results.Foment
+## does not build correctly
+#  results.Scheme48
+# results.SISC results.Vicare results.RScheme results.Rhizome
+
+results.STklos:
+	./bench stklos all
+
+results.TR7:
+	./bench tr7 all
+
+results.S7:
+	./bench s7 all
+
+results.SISC:
+	./bench sisc all
+
+results.Gerbil:
+	./bench gerbil all
+
+results.Femtolisp:
+	./bench femtolisp all
+
+results.Foment:
+	./bench foment all
+
+results.S9fES:
+	./bench s9fes all
+
+results.Bigloo:
+	./bench bigloo all
+
+results.Bones:
+	./bench bones all
+
+results.Chez:
+	./bench chez all
+
+results.Chibi:
+	./bench chibi all
+
+results.Chicken:
+	./bench chicken all
+
+results.ChickenCSI:
+	./bench chickencsi all
+
+results.Cyclone:
+	./bench cyclone all
+
+results.GambitC:
+	./bench gambitc all
+
+results.Gauche:
+	./bench gauche all
+
+results.Guile:
+	./bench guile all
+
+results.IronScheme:
+	./bench ironscheme all
+
+results.Kawa:
+	./bench kawa all
+
+results.Larceny:
+	./bench larceny all
+
+results.Loko:
+	./bench loko all
+
+results.MIT:
+	./bench mit all
+
+results.Mosh:
+	./bench mosh all
+
+results.Owl-Lisp:
+	./bench owllisp all
+
+results.Petite-Chez:
+	./bench petite-chez all
+
+results.Picrin:
+	./bench picrin all
+
+results.Racket:
+	./bench racket all
+
+results.Rhizome:
+	./bench rhizome all
+
+results.Rscheme:
+	./bench rscheme all
+
+results.Sagittarius:
+	./bench sagittarius all
+
+results.Stalin:
+	./bench stalin all
+
+results.Scheme48:
+	./bench scheme48 all
+
+results.TinyScheme:
+	./bench tinyscheme all
+
+# results.Vicare:
+# 	./bench vicare all
+
+results.Ypsilon:
+	./bench ypsilon all
+
+bigloo: results.Bigloo
+
+bones: results.Bones
+
+chez: results.Chez
+
+chibi: results.Chibi
+
+chicken: results.Chicken
+
+chickencsi: results.ChickenCSI
+
+foment: results.Foment
+
+gambitc: results.GambitC
+
+gauche: results.Gauche
+
+guile: results.Guile
+
+guile3: results.Guile3
+
+ironscheme: results.IronScheme
+
+kawa: results.Kawa
+
+larceny: results.Larceny
+
+loko: results.Loko
+
+mit: results.MIT
+
+mosh: results.Mosh
+
+petite-chez: results.Petite-Chez
+
+picrin: results.Picrin
+
+racket: results.Racket
+
+rhizome: results.Rhizome
+
+rscheme: results.RScheme
+
+s7: results.S7
+
+s9fes: results.S9fES
+
+sagittarius: results.Sagittarius
+
+scheme48: results.Scheme48
+
+stalin: results.Stalin
+
+tinyscheme: results.TinyScheme
+
+vicare: results.Vicare
+
+ypsilon: results.Ypsilon
+
+cyclone: results.Cyclone
+
+femtolisp: results.Femtolisp
+
+gerbil: results.Gerbil
+
+sisc: results.SISC
+
+owllisp: results.Owl-Lisp
+
+tr7: results.TR7
+
+stklos: results.STklos

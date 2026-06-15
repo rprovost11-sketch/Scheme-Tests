@@ -1,0 +1,1234 @@
+
+****************************
+Benchmarking Gerbil on Fri 16 Jan 16:04:22 CET 2026 under Linux h4nex 6.16.8-arch3-1 #1 SMP PREEMPT_DYNAMIC Mon, 22 Sep 2025 22:08:35 +0000 x86_64 GNU/Linux
+
+Testing browse under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/browse.scm /tmp/r7rs-benchmarks/Gerbil/browse.exe
+/tmp/gxc.1768575864.292342/scheme__base-impl.scm:
+/tmp/gxc.1768575864.292342/browse.scm:
+/tmp/r7rs-benchmarks/Gerbil/browse.exe__exe.scm:
+/tmp/gxc.1768575864.292342/scheme__base-impl.c:
+/tmp/gxc.1768575864.292342/browse.c:
+/tmp/r7rs-benchmarks/Gerbil/browse.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/browse.exe__exe_.c:
+Running...
+Running browse:2000
+Elapsed time: 4.251446 seconds (4.251) for browse:2000
++!CSVLINE!+gerbil-v0.18.1+gambitc,browse:2000,4.251446
+
+real	0m4.295s
+user	0m4.233s
+sys	0m0.027s
+
+Testing deriv under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/deriv.scm /tmp/r7rs-benchmarks/Gerbil/deriv.exe
+/tmp/gxc.1768575871.6601734/scheme__base-impl.scm:
+/tmp/gxc.1768575871.6601734/deriv.scm:
+/tmp/r7rs-benchmarks/Gerbil/deriv.exe__exe.scm:
+/tmp/gxc.1768575871.6601734/scheme__base-impl.c:
+/tmp/gxc.1768575871.6601734/deriv.c:
+/tmp/r7rs-benchmarks/Gerbil/deriv.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/deriv.exe__exe_.c:
+Running...
+Running deriv:10000000
+Elapsed time: 11.977594 seconds (11.978) for deriv:10000000
++!CSVLINE!+gerbil-v0.18.1+gambitc,deriv:10000000,11.977594
+
+real	0m12.009s
+user	0m11.841s
+sys	0m0.054s
+
+Testing destruc under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/destruc.scm /tmp/r7rs-benchmarks/Gerbil/destruc.exe
+/tmp/gxc.1768575886.3721457/scheme__base-impl.scm:
+/tmp/gxc.1768575886.3721457/destruc.scm:
+/tmp/r7rs-benchmarks/Gerbil/destruc.exe__exe.scm:
+/tmp/gxc.1768575886.3721457/scheme__base-impl.c:
+/tmp/gxc.1768575886.3721457/destruc.c:
+/tmp/r7rs-benchmarks/Gerbil/destruc.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/destruc.exe__exe_.c:
+Running...
+Running destruc:600:50:4000
+Elapsed time: 5.973975 seconds (5.974) for destruc:600:50:4000
++!CSVLINE!+gerbil-v0.18.1+gambitc,destruc:600:50:4000,5.973975
+
+real	0m6.008s
+user	0m5.941s
+sys	0m0.032s
+
+Testing diviter under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/diviter.scm /tmp/r7rs-benchmarks/Gerbil/diviter.exe
+/tmp/gxc.1768575895.1907365/scheme__base-impl.scm:
+/tmp/gxc.1768575895.1907365/diviter.scm:
+/tmp/r7rs-benchmarks/Gerbil/diviter.exe__exe.scm:
+/tmp/gxc.1768575895.1907365/scheme__base-impl.c:
+/tmp/gxc.1768575895.1907365/diviter.c:
+/tmp/r7rs-benchmarks/Gerbil/diviter.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/diviter.exe__exe_.c:
+Running...
+Running diviter:1000:1000000
+Elapsed time: 11.775557 seconds (11.776) for diviter:1000:1000000
++!CSVLINE!+gerbil-v0.18.1+gambitc,diviter:1000:1000000,11.775557
+
+real	0m11.807s
+user	0m11.665s
+sys	0m0.051s
+
+Testing divrec under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/divrec.scm /tmp/r7rs-benchmarks/Gerbil/divrec.exe
+/tmp/gxc.1768575909.6561472/scheme__base-impl.scm:
+/tmp/gxc.1768575909.6561472/divrec.scm:
+/tmp/r7rs-benchmarks/Gerbil/divrec.exe__exe.scm:
+/tmp/gxc.1768575909.6561472/scheme__base-impl.c:
+/tmp/gxc.1768575909.6561472/divrec.c:
+/tmp/r7rs-benchmarks/Gerbil/divrec.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/divrec.exe__exe_.c:
+Running...
+Running divrec:1000:1000000
+Elapsed time: 13.132564 seconds (13.133) for divrec:1000:1000000
++!CSVLINE!+gerbil-v0.18.1+gambitc,divrec:1000:1000000,13.132564
+
+real	0m13.164s
+user	0m13.031s
+sys	0m0.035s
+
+Testing puzzle under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/puzzle.scm /tmp/r7rs-benchmarks/Gerbil/puzzle.exe
+/tmp/gxc.1768575925.4669638/scheme__base-impl.scm:
+/tmp/gxc.1768575925.4669638/puzzle.scm:
+/tmp/r7rs-benchmarks/Gerbil/puzzle.exe__exe.scm:
+/tmp/gxc.1768575925.4669638/scheme__base-impl.c:
+/tmp/gxc.1768575925.4669638/puzzle.c:
+/tmp/r7rs-benchmarks/Gerbil/puzzle.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/puzzle.exe__exe_.c:
+Running...
+Running puzzle:1000
+Elapsed time: 4.443387 seconds (4.443) for puzzle:1000
++!CSVLINE!+gerbil-v0.18.1+gambitc,puzzle:1000,4.443387
+
+real	0m4.475s
+user	0m4.454s
+sys	0m0.012s
+
+Testing triangl under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/triangl.scm /tmp/r7rs-benchmarks/Gerbil/triangl.exe
+/tmp/gxc.1768575933.0225108/scheme__base-impl.scm:
+/tmp/gxc.1768575933.0225108/triangl.scm:
+/tmp/r7rs-benchmarks/Gerbil/triangl.exe__exe.scm:
+/tmp/gxc.1768575933.0225108/scheme__base-impl.c:
+/tmp/gxc.1768575933.0225108/triangl.c:
+/tmp/r7rs-benchmarks/Gerbil/triangl.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/triangl.exe__exe_.c:
+Running...
+Running triangl:22:1:50
+Elapsed time: 2.336832 seconds (2.337) for triangl:22:1:50
++!CSVLINE!+gerbil-v0.18.1+gambitc,triangl:22:1:50,2.336832
+
+real	0m2.368s
+user	0m2.352s
+sys	0m0.012s
+
+Testing tak under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/tak.scm /tmp/r7rs-benchmarks/Gerbil/tak.exe
+/tmp/gxc.1768575938.1141298/scheme__base-impl.scm:
+/tmp/gxc.1768575938.1141298/tak.scm:
+/tmp/r7rs-benchmarks/Gerbil/tak.exe__exe.scm:
+/tmp/gxc.1768575938.1141298/scheme__base-impl.c:
+/tmp/gxc.1768575938.1141298/tak.c:
+/tmp/r7rs-benchmarks/Gerbil/tak.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/tak.exe__exe_.c:
+Running...
+Running tak:40:20:11:1
+Elapsed time: 2.159823 seconds (2.16) for tak:40:20:11:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,tak:40:20:11:1,2.159823
+
+real	0m2.192s
+user	0m2.175s
+sys	0m0.014s
+
+Testing takl under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/takl.scm /tmp/r7rs-benchmarks/Gerbil/takl.exe
+/tmp/gxc.1768575942.9226239/scheme__base-impl.scm:
+/tmp/gxc.1768575942.9226239/takl.scm:
+/tmp/r7rs-benchmarks/Gerbil/takl.exe__exe.scm:
+/tmp/gxc.1768575942.9226239/scheme__base-impl.c:
+/tmp/gxc.1768575942.9226239/takl.c:
+/tmp/r7rs-benchmarks/Gerbil/takl.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/takl.exe__exe_.c:
+Running...
+Running takl:40:20:12:1
+Elapsed time: 3.273014 seconds (3.273) for takl:40:20:12:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,takl:40:20:12:1,3.273014
+
+real	0m3.305s
+user	0m3.288s
+sys	0m0.012s
+
+Testing ntakl under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/ntakl.scm /tmp/r7rs-benchmarks/Gerbil/ntakl.exe
+/tmp/gxc.1768575948.9005246/scheme__base-impl.scm:
+/tmp/gxc.1768575948.9005246/ntakl.scm:
+/tmp/r7rs-benchmarks/Gerbil/ntakl.exe__exe.scm:
+/tmp/gxc.1768575948.9005246/scheme__base-impl.c:
+/tmp/gxc.1768575948.9005246/ntakl.c:
+/tmp/r7rs-benchmarks/Gerbil/ntakl.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/ntakl.exe__exe_.c:
+Running...
+Running ntakl:40:20:12:1
+Elapsed time: 2.775832 seconds (2.776) for ntakl:40:20:12:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,ntakl:40:20:12:1,2.775832
+
+real	0m2.809s
+user	0m2.789s
+sys	0m0.014s
+
+Testing cpstak under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/cpstak.scm /tmp/r7rs-benchmarks/Gerbil/cpstak.exe
+/tmp/gxc.1768575954.3811018/scheme__base-impl.scm:
+/tmp/gxc.1768575954.3811018/cpstak.scm:
+/tmp/r7rs-benchmarks/Gerbil/cpstak.exe__exe.scm:
+/tmp/gxc.1768575954.3811018/scheme__base-impl.c:
+/tmp/gxc.1768575954.3811018/cpstak.c:
+/tmp/r7rs-benchmarks/Gerbil/cpstak.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/cpstak.exe__exe_.c:
+Running...
+Running cpstak:40:20:11:1
+Elapsed time: 28.379746 seconds (28.38) for cpstak:40:20:11:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,cpstak:40:20:11:1,28.379746
+
+real	0m28.412s
+user	0m28.092s
+sys	0m0.096s
+
+Testing ctak under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/ctak.scm /tmp/r7rs-benchmarks/Gerbil/ctak.exe
+/tmp/gxc.1768575985.4454014/scheme__base-impl.scm:
+/tmp/gxc.1768575985.4454014/ctak.scm:
+/tmp/r7rs-benchmarks/Gerbil/ctak.exe__exe.scm:
+/tmp/gxc.1768575985.4454014/scheme__base-impl.c:
+/tmp/gxc.1768575985.4454014/ctak.c:
+/tmp/r7rs-benchmarks/Gerbil/ctak.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/ctak.exe__exe_.c:
+Running...
+Running ctak:32:16:8:1
+Elapsed time: 7.698503 seconds (7.699) for ctak:32:16:8:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,ctak:32:16:8:1,7.698503
+
+real	0m7.730s
+user	0m7.638s
+sys	0m0.038s
+
+Testing fib under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/fib.scm /tmp/r7rs-benchmarks/Gerbil/fib.exe
+/tmp/gxc.1768575995.815779/scheme__base-impl.scm:
+/tmp/gxc.1768575995.815779/fib.scm:
+/tmp/r7rs-benchmarks/Gerbil/fib.exe__exe.scm:
+/tmp/gxc.1768575995.815779/scheme__base-impl.c:
+/tmp/gxc.1768575995.815779/fib.c:
+/tmp/r7rs-benchmarks/Gerbil/fib.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/fib.exe__exe_.c:
+Running...
+Running fib:40:5
+Elapsed time: 4.338171 seconds (4.338) for fib:40:5
++!CSVLINE!+gerbil-v0.18.1+gambitc,fib:40:5,4.338171
+
+real	0m4.370s
+user	0m4.352s
+sys	0m0.011s
+
+Testing fibc under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/fibc.scm /tmp/r7rs-benchmarks/Gerbil/fibc.exe
+/tmp/gxc.1768576002.7957108/scheme__base-impl.scm:
+/tmp/gxc.1768576002.7957108/fibc.scm:
+/tmp/r7rs-benchmarks/Gerbil/fibc.exe__exe.scm:
+/tmp/gxc.1768576002.7957108/scheme__base-impl.c:
+/tmp/gxc.1768576002.7957108/fibc.c:
+/tmp/r7rs-benchmarks/Gerbil/fibc.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/fibc.exe__exe_.c:
+Running...
+Running fibc:30:10
+Elapsed time: 4.052287 seconds (4.052) for fibc:30:10
++!CSVLINE!+gerbil-v0.18.1+gambitc,fibc:30:10,4.052287
+
+real	0m4.084s
+user	0m4.039s
+sys	0m0.020s
+
+Testing fibfp under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/fibfp.scm /tmp/r7rs-benchmarks/Gerbil/fibfp.exe
+/tmp/gxc.1768576009.5293248/scheme__base-impl.scm:
+/tmp/gxc.1768576009.5293248/fibfp.scm:
+/tmp/r7rs-benchmarks/Gerbil/fibfp.exe__exe.scm:
+/tmp/gxc.1768576009.5293248/scheme__base-impl.c:
+/tmp/gxc.1768576009.5293248/fibfp.c:
+/tmp/r7rs-benchmarks/Gerbil/fibfp.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/fibfp.exe__exe_.c:
+Running...
+Running fibfp:35.:10
+Elapsed time: 7.376412 seconds (7.376) for fibfp:35.:10
++!CSVLINE!+gerbil-v0.18.1+gambitc,fibfp:35.:10,7.376412
+
+real	0m7.408s
+user	0m7.328s
+sys	0m0.023s
+
+Testing sum under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/sum.scm /tmp/r7rs-benchmarks/Gerbil/sum.exe
+/tmp/gxc.1768576019.6218026/scheme__base-impl.scm:
+/tmp/gxc.1768576019.6218026/sum.scm:
+/tmp/r7rs-benchmarks/Gerbil/sum.exe__exe.scm:
+/tmp/gxc.1768576019.6218026/scheme__base-impl.c:
+/tmp/gxc.1768576019.6218026/sum.c:
+/tmp/r7rs-benchmarks/Gerbil/sum.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/sum.exe__exe_.c:
+Running...
+Running sum:10000:200000
+Elapsed time: 2.431459 seconds (2.431) for sum:10000:200000
++!CSVLINE!+gerbil-v0.18.1+gambitc,sum:10000:200000,2.431459
+
+real	0m2.469s
+user	0m2.449s
+sys	0m0.015s
+
+Testing sumfp under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/sumfp.scm /tmp/r7rs-benchmarks/Gerbil/sumfp.exe
+/tmp/gxc.1768576024.758526/scheme__base-impl.scm:
+/tmp/gxc.1768576024.758526/sumfp.scm:
+/tmp/r7rs-benchmarks/Gerbil/sumfp.exe__exe.scm:
+/tmp/gxc.1768576024.758526/scheme__base-impl.c:
+/tmp/gxc.1768576024.758526/sumfp.c:
+/tmp/r7rs-benchmarks/Gerbil/sumfp.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/sumfp.exe__exe_.c:
+Running...
+Running sumfp:1000000.:500
+Elapsed time: 15.616928 seconds (15.617) for sumfp:1000000.:500
++!CSVLINE!+gerbil-v0.18.1+gambitc,sumfp:1000000.:500,15.616928
+
+real	0m15.651s
+user	0m15.479s
+sys	0m0.047s
+
+Testing fft under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/fft.scm /tmp/r7rs-benchmarks/Gerbil/fft.exe
+/tmp/gxc.1768576043.057331/scheme__base-impl.scm:
+/tmp/gxc.1768576043.057331/fft.scm:
+/tmp/r7rs-benchmarks/Gerbil/fft.exe__exe.scm:
+/tmp/gxc.1768576043.057331/scheme__base-impl.c:
+/tmp/gxc.1768576043.057331/fft.c:
+/tmp/r7rs-benchmarks/Gerbil/fft.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/fft.exe__exe_.c:
+Running...
+Running fft:65536:100
+Elapsed time: 5.376072 seconds (5.376) for fft:65536:100
++!CSVLINE!+gerbil-v0.18.1+gambitc,fft:65536:100,5.376072
+
+real	0m5.408s
+user	0m5.350s
+sys	0m0.022s
+
+Testing mbrot under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/mbrot.scm /tmp/r7rs-benchmarks/Gerbil/mbrot.exe
+/tmp/gxc.1768576051.6231709/scheme__base-impl.scm:
+/tmp/gxc.1768576051.6231709/mbrot.scm:
+/tmp/r7rs-benchmarks/Gerbil/mbrot.exe__exe.scm:
+/tmp/gxc.1768576051.6231709/scheme__base-impl.c:
+/tmp/gxc.1768576051.6231709/mbrot.c:
+/tmp/r7rs-benchmarks/Gerbil/mbrot.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/mbrot.exe__exe_.c:
+Running...
+Running mbrot:75:1000
+Elapsed time: 21.944579 seconds (21.945) for mbrot:75:1000
++!CSVLINE!+gerbil-v0.18.1+gambitc,mbrot:75:1000,21.944579
+
+real	0m21.977s
+user	0m21.692s
+sys	0m0.083s
+
+Testing mbrotZ under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/mbrotZ.scm /tmp/r7rs-benchmarks/Gerbil/mbrotZ.exe
+/tmp/gxc.1768576076.440933/scheme__base-impl.scm:
+/tmp/gxc.1768576076.440933/mbrotZ.scm:
+/tmp/r7rs-benchmarks/Gerbil/mbrotZ.exe__exe.scm:
+/tmp/gxc.1768576076.440933/scheme__base-impl.c:
+/tmp/gxc.1768576076.440933/mbrotZ.c:
+/tmp/r7rs-benchmarks/Gerbil/mbrotZ.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/mbrotZ.exe__exe_.c:
+Running...
+Running mbrotZ:75:1000
+Elapsed time: 34.420529 seconds (34.421) for mbrotZ:75:1000
++!CSVLINE!+gerbil-v0.18.1+gambitc,mbrotZ:75:1000,34.420529
+
+real	0m34.452s
+user	0m34.129s
+sys	0m0.093s
+
+Testing nucleic under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/nucleic.scm /tmp/r7rs-benchmarks/Gerbil/nucleic.exe
+/tmp/gxc.1768576113.8172247/scheme__base-impl.scm:
+/tmp/gxc.1768576113.8172247/nucleic.scm:
+/tmp/r7rs-benchmarks/Gerbil/nucleic.exe__exe.scm:
+/tmp/gxc.1768576113.8172247/scheme__base-impl.c:
+/tmp/gxc.1768576113.8172247/nucleic.c:
+/tmp/r7rs-benchmarks/Gerbil/nucleic.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/nucleic.exe__exe_.c:
+Running...
+Running nucleic:50
+Elapsed time: 6.430934 seconds (6.431) for nucleic:50
++!CSVLINE!+gerbil-v0.18.1+gambitc,nucleic:50,6.430934
+
+real	0m6.464s
+user	0m6.387s
+sys	0m0.031s
+
+Testing pi under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/pi.scm /tmp/r7rs-benchmarks/Gerbil/pi.exe
+/tmp/gxc.1768576127.9616585/scheme__base-impl.scm:
+/tmp/gxc.1768576127.9616585/pi.scm:
+/tmp/r7rs-benchmarks/Gerbil/pi.exe__exe.scm:
+/tmp/gxc.1768576127.9616585/scheme__base-impl.c:
+/tmp/gxc.1768576127.9616585/pi.c:
+/tmp/r7rs-benchmarks/Gerbil/pi.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/pi.exe__exe_.c:
+Running...
+Running pi:50:500:50:100
+Elapsed time: 1.083916 seconds (1.084) for pi:50:500:50:100
++!CSVLINE!+gerbil-v0.18.1+gambitc,pi:50:500:50:100,1.083916
+
+real	0m1.116s
+user	0m1.095s
+sys	0m0.017s
+
+Testing pnpoly under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/pnpoly.scm /tmp/r7rs-benchmarks/Gerbil/pnpoly.exe
+/tmp/gxc.1768576132.5543513/scheme__base-impl.scm:
+/tmp/gxc.1768576132.5543513/pnpoly.scm:
+/tmp/r7rs-benchmarks/Gerbil/pnpoly.exe__exe.scm:
+/tmp/gxc.1768576132.5543513/scheme__base-impl.c:
+/tmp/gxc.1768576132.5543513/pnpoly.c:
+/tmp/r7rs-benchmarks/Gerbil/pnpoly.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/pnpoly.exe__exe_.c:
+Running...
+Running pnpoly:1000000
+Elapsed time: 7.175108 seconds (7.175) for pnpoly:1000000
++!CSVLINE!+gerbil-v0.18.1+gambitc,pnpoly:1000000,7.175108
+
+real	0m7.208s
+user	0m7.143s
+sys	0m0.024s
+
+Testing ray under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/ray.scm /tmp/r7rs-benchmarks/Gerbil/ray.exe
+/tmp/gxc.1768576142.637723/scheme__base-impl.scm:
+/tmp/gxc.1768576142.637723/ray.scm:
+/tmp/r7rs-benchmarks/Gerbil/ray.exe__exe.scm:
+/tmp/gxc.1768576142.637723/scheme__base-impl.c:
+/tmp/gxc.1768576142.637723/ray.c:
+/tmp/r7rs-benchmarks/Gerbil/ray.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/ray.exe__exe_.c:
+Running...
+Running ray:50
+Elapsed time: 8.229559 seconds (8.23) for ray:50
++!CSVLINE!+gerbil-v0.18.1+gambitc,ray:50,8.229559
+
+real	0m8.261s
+user	0m8.134s
+sys	0m0.066s
+
+Testing simplex under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/simplex.scm /tmp/r7rs-benchmarks/Gerbil/simplex.exe
+/tmp/gxc.1768576154.2765882/scheme__base-impl.scm:
+/tmp/gxc.1768576154.2765882/simplex.scm:
+/tmp/r7rs-benchmarks/Gerbil/simplex.exe__exe.scm:
+/tmp/gxc.1768576154.2765882/scheme__base-impl.c:
+/tmp/gxc.1768576154.2765882/simplex.c:
+/tmp/r7rs-benchmarks/Gerbil/simplex.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/simplex.exe__exe_.c:
+Running...
+Running simplex:1000000
+Elapsed time: 6.133002 seconds (6.133) for simplex:1000000
++!CSVLINE!+gerbil-v0.18.1+gambitc,simplex:1000000,6.133002
+
+real	0m6.165s
+user	0m6.100s
+sys	0m0.028s
+
+Testing ack under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/ack.scm /tmp/r7rs-benchmarks/Gerbil/ack.exe
+/tmp/gxc.1768576164.3763244/scheme__base-impl.scm:
+/tmp/gxc.1768576164.3763244/ack.scm:
+/tmp/r7rs-benchmarks/Gerbil/ack.exe__exe.scm:
+/tmp/gxc.1768576164.3763244/scheme__base-impl.c:
+/tmp/gxc.1768576164.3763244/ack.c:
+/tmp/r7rs-benchmarks/Gerbil/ack.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/ack.exe__exe_.c:
+Running...
+Running ack:3:12:2
+Elapsed time: 3.239182 seconds (3.239) for ack:3:12:2
++!CSVLINE!+gerbil-v0.18.1+gambitc,ack:3:12:2,3.239182
+
+real	0m3.272s
+user	0m3.241s
+sys	0m0.017s
+
+Testing array1 under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/array1.scm /tmp/r7rs-benchmarks/Gerbil/array1.exe
+/tmp/gxc.1768576170.3221433/scheme__base-impl.scm:
+/tmp/gxc.1768576170.3221433/array1.scm:
+/tmp/r7rs-benchmarks/Gerbil/array1.exe__exe.scm:
+/tmp/gxc.1768576170.3221433/scheme__base-impl.c:
+/tmp/gxc.1768576170.3221433/array1.c:
+/tmp/r7rs-benchmarks/Gerbil/array1.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/array1.exe__exe_.c:
+Running...
+Running array1:1000000:500
+Elapsed time: 4.799791 seconds (4.8) for array1:1000000:500
++!CSVLINE!+gerbil-v0.18.1+gambitc,array1:1000000:500,4.799791
+
+real	0m4.833s
+user	0m3.786s
+sys	0m1.015s
+
+Testing string under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/string.scm /tmp/r7rs-benchmarks/Gerbil/string.exe
+/tmp/gxc.1768576177.8423712/scheme__base-impl.scm:
+/tmp/gxc.1768576177.8423712/string.scm:
+/tmp/r7rs-benchmarks/Gerbil/string.exe__exe.scm:
+/tmp/gxc.1768576177.8423712/scheme__base-impl.c:
+/tmp/gxc.1768576177.8423712/string.c:
+/tmp/r7rs-benchmarks/Gerbil/string.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/string.exe__exe_.c:
+Running...
+Running string:500000:100
+Elapsed time: 6.324649 seconds (6.325) for string:500000:100
++!CSVLINE!+gerbil-v0.18.1+gambitc,string:500000:100,6.324649
+
+real	0m6.356s
+user	0m4.136s
+sys	0m2.163s
+
+Testing sum1 under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/sum1.scm /tmp/r7rs-benchmarks/Gerbil/sum1.exe
+/tmp/gxc.1768576186.8413765/scheme__base-impl.scm:
+/tmp/gxc.1768576186.8413765/sum1.scm:
+/tmp/r7rs-benchmarks/Gerbil/sum1.exe__exe.scm:
+/tmp/gxc.1768576186.8413765/scheme__base-impl.c:
+/tmp/gxc.1768576186.8413765/sum1.c:
+/tmp/r7rs-benchmarks/Gerbil/sum1.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/sum1.exe__exe_.c:
+Running...
+Running sum1:25
+Elapsed time: 1.060268 seconds (1.06) for sum1:25
++!CSVLINE!+gerbil-v0.18.1+gambitc,sum1:25,1.060268
+
+real	0m1.091s
+user	0m1.059s
+sys	0m0.026s
+
+Testing cat under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/cat.scm /tmp/r7rs-benchmarks/Gerbil/cat.exe
+/tmp/gxc.1768576190.5609303/scheme__base-impl.scm:
+/tmp/gxc.1768576190.5609303/cat.scm:
+/tmp/r7rs-benchmarks/Gerbil/cat.exe__exe.scm:
+/tmp/gxc.1768576190.5609303/scheme__base-impl.c:
+/tmp/gxc.1768576190.5609303/cat.c:
+/tmp/r7rs-benchmarks/Gerbil/cat.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/cat.exe__exe_.c:
+Running...
+Running cat:50
+Elapsed time: 2.138116 seconds (2.138) for cat:50
++!CSVLINE!+gerbil-v0.18.1+gambitc,cat:50,2.138116
+
+real	0m2.170s
+user	0m1.645s
+sys	0m0.519s
+
+Testing tail under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/tail.scm /tmp/r7rs-benchmarks/Gerbil/tail.exe
+/tmp/gxc.1768576195.3821557/scheme__base-impl.scm:
+/tmp/gxc.1768576195.3821557/tail.scm:
+/tmp/r7rs-benchmarks/Gerbil/tail.exe__exe.scm:
+/tmp/gxc.1768576195.3821557/scheme__base-impl.c:
+/tmp/gxc.1768576195.3821557/tail.c:
+/tmp/r7rs-benchmarks/Gerbil/tail.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/tail.exe__exe_.c:
+Running...
+Running tail:50
+Elapsed time: 2.837748 seconds (2.838) for tail:50
++!CSVLINE!+gerbil-v0.18.1+gambitc,tail:50,2.837748
+
+real	0m2.871s
+user	0m2.147s
+sys	0m0.710s
+
+Testing wc under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/wc.scm /tmp/r7rs-benchmarks/Gerbil/wc.exe
+/tmp/gxc.1768576200.9061508/scheme__base-impl.scm:
+/tmp/gxc.1768576200.9061508/wc.scm:
+/tmp/r7rs-benchmarks/Gerbil/wc.exe__exe.scm:
+/tmp/gxc.1768576200.9061508/scheme__base-impl.c:
+/tmp/gxc.1768576200.9061508/wc.c:
+/tmp/r7rs-benchmarks/Gerbil/wc.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/wc.exe__exe_.c:
+Running...
+Running wc:inputs/bib:50
+Elapsed time: 1.527426 seconds (1.527) for wc:inputs/bib:50
++!CSVLINE!+gerbil-v0.18.1+gambitc,wc:inputs/bib:50,1.527426
+
+real	0m1.559s
+user	0m1.477s
+sys	0m0.079s
+
+Testing read1 under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/read1.scm /tmp/r7rs-benchmarks/Gerbil/read1.exe
+/tmp/gxc.1768576205.1498067/scheme__base-impl.scm:
+/tmp/gxc.1768576205.1498067/read1.scm:
+/tmp/r7rs-benchmarks/Gerbil/read1.exe__exe.scm:
+/tmp/gxc.1768576205.1498067/scheme__base-impl.c:
+/tmp/gxc.1768576205.1498067/read1.c:
+/tmp/r7rs-benchmarks/Gerbil/read1.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/read1.exe__exe_.c:
+Running...
+Running read1:2500
+Elapsed time: 1.580369 seconds (1.58) for read1:2500
++!CSVLINE!+gerbil-v0.18.1+gambitc,read1:2500,1.580369
+
+real	0m1.613s
+user	0m1.553s
+sys	0m0.052s
+
+Testing compiler under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/compiler.scm /tmp/r7rs-benchmarks/Gerbil/compiler.exe
+/tmp/gxc.1768576210.2601678/scheme__base-impl.scm:
+/tmp/gxc.1768576210.2601678/compiler.scm:
+/tmp/r7rs-benchmarks/Gerbil/compiler.exe__exe.scm:
+/tmp/gxc.1768576210.2601678/scheme__base-impl.c:
+/tmp/gxc.1768576210.2601678/compiler.c:
+/tmp/r7rs-benchmarks/Gerbil/compiler.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/compiler.exe__exe_.c:
+Running...
+Running compiler:2000
+Elapsed time: 4.869098 seconds (4.869) for compiler:2000
++!CSVLINE!+gerbil-v0.18.1+gambitc,compiler:2000,4.869098
+
+real	0m4.902s
+user	0m4.838s
+sys	0m0.029s
+
+Testing conform under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/conform.scm /tmp/r7rs-benchmarks/Gerbil/conform.exe
+/tmp/gxc.1768576338.8331451/scheme__base-impl.scm:
+/tmp/gxc.1768576338.8331451/conform.scm:
+/tmp/r7rs-benchmarks/Gerbil/conform.exe__exe.scm:
+/tmp/gxc.1768576338.8331451/scheme__base-impl.c:
+/tmp/gxc.1768576338.8331451/conform.c:
+/tmp/r7rs-benchmarks/Gerbil/conform.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/conform.exe__exe_.c:
+Running...
+Running conform:500
+Elapsed time: 5.01018 seconds (5.01) for conform:500
++!CSVLINE!+gerbil-v0.18.1+gambitc,conform:500,5.01018
+
+real	0m5.042s
+user	0m5.002s
+sys	0m0.016s
+
+Testing dynamic under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/dynamic.scm /tmp/r7rs-benchmarks/Gerbil/dynamic.exe
+/tmp/gxc.1768576347.5820322/scheme__base-impl.scm:
+/tmp/gxc.1768576347.5820322/dynamic.scm:
+/tmp/r7rs-benchmarks/Gerbil/dynamic.exe__exe.scm:
+/tmp/gxc.1768576347.5820322/scheme__base-impl.c:
+/tmp/gxc.1768576347.5820322/dynamic.c:
+/tmp/r7rs-benchmarks/Gerbil/dynamic.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/dynamic.exe__exe_.c:
+Running...
+Running dynamic:500
+Elapsed time: 5.756889 seconds (5.757) for dynamic:500
++!CSVLINE!+gerbil-v0.18.1+gambitc,dynamic:500,5.756889
+
+real	0m5.791s
+user	0m5.492s
+sys	0m0.249s
+
+Testing earley under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/earley.scm /tmp/r7rs-benchmarks/Gerbil/earley.exe
+/tmp/gxc.1768576361.8044238/scheme__base-impl.scm:
+/tmp/gxc.1768576361.8044238/earley.scm:
+/tmp/r7rs-benchmarks/Gerbil/earley.exe__exe.scm:
+/tmp/gxc.1768576361.8044238/scheme__base-impl.c:
+/tmp/gxc.1768576361.8044238/earley.c:
+/tmp/r7rs-benchmarks/Gerbil/earley.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/earley.exe__exe_.c:
+Running...
+Running earley:1
+Elapsed time: 3.6153 seconds (3.615) for earley:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,earley:1,3.6153
+
+real	0m3.751s
+user	0m2.969s
+sys	0m0.760s
+
+Testing graphs under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/graphs.scm /tmp/r7rs-benchmarks/Gerbil/graphs.exe
+/tmp/gxc.1768576369.8128047/scheme__base-impl.scm:
+/tmp/gxc.1768576369.8128047/graphs.scm:
+/tmp/r7rs-benchmarks/Gerbil/graphs.exe__exe.scm:
+/tmp/gxc.1768576369.8128047/scheme__base-impl.c:
+/tmp/gxc.1768576369.8128047/graphs.c:
+/tmp/r7rs-benchmarks/Gerbil/graphs.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/graphs.exe__exe_.c:
+Running...
+Running graphs:7:3
+Elapsed time: 10.651728 seconds (10.652) for graphs:7:3
++!CSVLINE!+gerbil-v0.18.1+gambitc,graphs:7:3,10.651728
+
+real	0m10.688s
+user	0m10.493s
+sys	0m0.124s
+
+Testing lattice under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/lattice.scm /tmp/r7rs-benchmarks/Gerbil/lattice.exe
+/tmp/gxc.1768576383.8090718/scheme__base-impl.scm:
+/tmp/gxc.1768576383.8090718/lattice.scm:
+/tmp/r7rs-benchmarks/Gerbil/lattice.exe__exe.scm:
+/tmp/gxc.1768576383.8090718/scheme__base-impl.c:
+/tmp/gxc.1768576383.8090718/lattice.c:
+/tmp/r7rs-benchmarks/Gerbil/lattice.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/lattice.exe__exe_.c:
+Running...
+Running lattice:44:10
+Elapsed time: 5.884814 seconds (5.885) for lattice:44:10
++!CSVLINE!+gerbil-v0.18.1+gambitc,lattice:44:10,5.884814
+
+real	0m5.916s
+user	0m5.875s
+sys	0m0.021s
+
+Testing matrix under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/matrix.scm /tmp/r7rs-benchmarks/Gerbil/matrix.exe
+/tmp/gxc.1768576392.6700385/scheme__base-impl.scm:
+/tmp/gxc.1768576392.6700385/matrix.scm:
+/tmp/r7rs-benchmarks/Gerbil/matrix.exe__exe.scm:
+/tmp/gxc.1768576392.6700385/scheme__base-impl.c:
+/tmp/gxc.1768576392.6700385/matrix.c:
+/tmp/r7rs-benchmarks/Gerbil/matrix.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/matrix.exe__exe_.c:
+Running...
+Running matrix:5:5:2500
+Elapsed time: 5.733426 seconds (5.733) for matrix:5:5:2500
++!CSVLINE!+gerbil-v0.18.1+gambitc,matrix:5:5:2500,5.733426
+
+real	0m5.768s
+user	0m5.701s
+sys	0m0.029s
+
+Testing maze under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/maze.scm /tmp/r7rs-benchmarks/Gerbil/maze.exe
+/tmp/gxc.1768576402.4319654/scheme__base-impl.scm:
+/tmp/gxc.1768576402.4319654/maze.scm:
+/tmp/r7rs-benchmarks/Gerbil/maze.exe__exe.scm:
+/tmp/gxc.1768576402.4319654/scheme__base-impl.c:
+/tmp/gxc.1768576402.4319654/maze.c:
+/tmp/r7rs-benchmarks/Gerbil/maze.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/maze.exe__exe_.c:
+Running...
+Running maze:20:7:10000
+Elapsed time: 1.678581 seconds (1.679) for maze:20:7:10000
++!CSVLINE!+gerbil-v0.18.1+gambitc,maze:20:7:10000,1.678581
+
+real	0m1.713s
+user	0m1.674s
+sys	0m0.026s
+
+Testing mazefun under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/mazefun.scm /tmp/r7rs-benchmarks/Gerbil/mazefun.exe
+/tmp/gxc.1768576408.623297/scheme__base-impl.scm:
+/tmp/gxc.1768576408.623297/mazefun.scm:
+/tmp/r7rs-benchmarks/Gerbil/mazefun.exe__exe.scm:
+/tmp/gxc.1768576408.623297/scheme__base-impl.c:
+/tmp/gxc.1768576408.623297/mazefun.c:
+/tmp/r7rs-benchmarks/Gerbil/mazefun.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/mazefun.exe__exe_.c:
+Running...
+Running mazefun:11:11:10000
+Elapsed time: 7.476977 seconds (7.477) for mazefun:11:11:10000
++!CSVLINE!+gerbil-v0.18.1+gambitc,mazefun:11:11:10000,7.476977
+
+real	0m7.511s
+user	0m7.441s
+sys	0m0.022s
+
+Testing nqueens under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/nqueens.scm /tmp/r7rs-benchmarks/Gerbil/nqueens.exe
+/tmp/gxc.1768576419.1883183/scheme__base-impl.scm:
+/tmp/gxc.1768576419.1883183/nqueens.scm:
+/tmp/r7rs-benchmarks/Gerbil/nqueens.exe__exe.scm:
+/tmp/gxc.1768576419.1883183/scheme__base-impl.c:
+/tmp/gxc.1768576419.1883183/nqueens.c:
+/tmp/r7rs-benchmarks/Gerbil/nqueens.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/nqueens.exe__exe_.c:
+Running...
+Running nqueens:13:10
+Elapsed time: 12.614613 seconds (12.615) for nqueens:13:10
++!CSVLINE!+gerbil-v0.18.1+gambitc,nqueens:13:10,12.614613
+
+real	0m12.647s
+user	0m12.553s
+sys	0m0.031s
+
+Testing paraffins under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/paraffins.scm /tmp/r7rs-benchmarks/Gerbil/paraffins.exe
+/tmp/gxc.1768576434.5742433/scheme__base-impl.scm:
+/tmp/gxc.1768576434.5742433/paraffins.scm:
+/tmp/r7rs-benchmarks/Gerbil/paraffins.exe__exe.scm:
+/tmp/gxc.1768576434.5742433/scheme__base-impl.c:
+/tmp/gxc.1768576434.5742433/paraffins.c:
+/tmp/r7rs-benchmarks/Gerbil/paraffins.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/paraffins.exe__exe_.c:
+Running...
+Running paraffins:23:10
+Elapsed time: 3.296891 seconds (3.297) for paraffins:23:10
++!CSVLINE!+gerbil-v0.18.1+gambitc,paraffins:23:10,3.296891
+
+real	0m3.380s
+user	0m2.604s
+sys	0m0.752s
+
+Testing parsing under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/parsing.scm /tmp/r7rs-benchmarks/Gerbil/parsing.exe
+/tmp/gxc.1768576441.362216/scheme__base-impl.scm:
+/tmp/gxc.1768576441.362216/parsing.scm:
+/tmp/r7rs-benchmarks/Gerbil/parsing.exe__exe.scm:
+/tmp/gxc.1768576441.362216/scheme__base-impl.c:
+/tmp/gxc.1768576441.362216/parsing.c:
+/tmp/r7rs-benchmarks/Gerbil/parsing.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/parsing.exe__exe_.c:
+Running...
+Running parsing:2500
+Elapsed time: 2.543404 seconds (2.543) for parsing:2500
++!CSVLINE!+gerbil-v0.18.1+gambitc,parsing:2500,2.543404
+
+real	0m2.575s
+user	0m2.554s
+sys	0m0.012s
+
+Testing peval under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/peval.scm /tmp/r7rs-benchmarks/Gerbil/peval.exe
+/tmp/gxc.1768576447.4724708/scheme__base-impl.scm:
+/tmp/gxc.1768576447.4724708/peval.scm:
+/tmp/r7rs-benchmarks/Gerbil/peval.exe__exe.scm:
+/tmp/gxc.1768576447.4724708/scheme__base-impl.c:
+/tmp/gxc.1768576447.4724708/peval.c:
+/tmp/r7rs-benchmarks/Gerbil/peval.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/peval.exe__exe_.c:
+Running...
+Running peval:2000
+Elapsed time: 4.94887 seconds (4.949) for peval:2000
++!CSVLINE!+gerbil-v0.18.1+gambitc,peval:2000,4.94887
+
+real	0m4.983s
+user	0m4.933s
+sys	0m0.016s
+
+Testing primes under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/primes.scm /tmp/r7rs-benchmarks/Gerbil/primes.exe
+/tmp/gxc.1768576456.5072708/scheme__base-impl.scm:
+/tmp/gxc.1768576456.5072708/primes.scm:
+/tmp/r7rs-benchmarks/Gerbil/primes.exe__exe.scm:
+/tmp/gxc.1768576456.5072708/scheme__base-impl.c:
+/tmp/gxc.1768576456.5072708/primes.c:
+/tmp/r7rs-benchmarks/Gerbil/primes.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/primes.exe__exe_.c:
+Running...
+Running primes:1000:10000
+Elapsed time: 4.165951 seconds (4.166) for primes:1000:10000
++!CSVLINE!+gerbil-v0.18.1+gambitc,primes:1000:10000,4.165951
+
+real	0m4.197s
+user	0m4.139s
+sys	0m0.027s
+
+Testing quicksort under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/quicksort.scm /tmp/r7rs-benchmarks/Gerbil/quicksort.exe
+/tmp/gxc.1768576463.3340566/scheme__base-impl.scm:
+/tmp/gxc.1768576463.3340566/quicksort.scm:
+/tmp/r7rs-benchmarks/Gerbil/quicksort.exe__exe.scm:
+/tmp/gxc.1768576463.3340566/scheme__base-impl.c:
+/tmp/gxc.1768576463.3340566/quicksort.c:
+/tmp/r7rs-benchmarks/Gerbil/quicksort.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/quicksort.exe__exe_.c:
+Running...
+Running quicksort:10000:2500
+Elapsed time: 4.489279 seconds (4.489) for quicksort:10000:2500
++!CSVLINE!+gerbil-v0.18.1+gambitc,quicksort:10000:2500,4.489279
+
+real	0m4.527s
+user	0m4.425s
+sys	0m0.091s
+
+Testing scheme under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/scheme.scm /tmp/r7rs-benchmarks/Gerbil/scheme.exe
+/tmp/gxc.1768576470.978109/scheme__base-impl.scm:
+/tmp/gxc.1768576470.978109/scheme.scm:
+/tmp/r7rs-benchmarks/Gerbil/scheme.exe__exe.scm:
+/tmp/gxc.1768576470.978109/scheme__base-impl.c:
+/tmp/gxc.1768576470.978109/scheme.c:
+/tmp/r7rs-benchmarks/Gerbil/scheme.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/scheme.exe__exe_.c:
+Running...
+Running scheme:100000
+Elapsed time: 5.42688 seconds (5.427) for scheme:100000
++!CSVLINE!+gerbil-v0.18.1+gambitc,scheme:100000,5.42688
+
+real	0m5.459s
+user	0m5.411s
+sys	0m0.015s
+
+Testing slatex under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/slatex.scm /tmp/r7rs-benchmarks/Gerbil/slatex.exe
+/tmp/gxc.1768576481.965341/scheme__base-impl.scm:
+/tmp/gxc.1768576481.965341/slatex.scm:
+/tmp/r7rs-benchmarks/Gerbil/slatex.exe__exe.scm:
+/tmp/gxc.1768576481.965341/scheme__base-impl.c:
+/tmp/gxc.1768576481.965341/slatex.c:
+/tmp/r7rs-benchmarks/Gerbil/slatex.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/slatex.exe__exe_.c:
+Running...
+Running slatex:500
+Elapsed time: 5.888343 seconds (5.888) for slatex:500
++!CSVLINE!+gerbil-v0.18.1+gambitc,slatex:500,5.888343
+
+real	0m5.921s
+user	0m3.692s
+sys	0m2.148s
+
+Testing chudnovsky under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/chudnovsky.scm /tmp/r7rs-benchmarks/Gerbil/chudnovsky.exe
+/tmp/gxc.1768576496.2324178/scheme__base-impl.scm:
+/tmp/gxc.1768576496.2324178/chudnovsky.scm:
+/tmp/r7rs-benchmarks/Gerbil/chudnovsky.exe__exe.scm:
+/tmp/gxc.1768576496.2324178/scheme__base-impl.c:
+/tmp/gxc.1768576496.2324178/chudnovsky.c:
+/tmp/r7rs-benchmarks/Gerbil/chudnovsky.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/chudnovsky.exe__exe_.c:
+Running...
+Running chudnovsky:50:500:50:1000
+Elapsed time: .498058 seconds (.498) for chudnovsky:50:500:50:1000
++!CSVLINE!+gerbil-v0.18.1+gambitc,chudnovsky:50:500:50:1000,.498058
+
+real	0m0.529s
+user	0m0.513s
+sys	0m0.014s
+
+Testing nboyer under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/nboyer.scm /tmp/r7rs-benchmarks/Gerbil/nboyer.exe
+/tmp/gxc.1768576499.755853/scheme__base-impl.scm:
+/tmp/gxc.1768576499.755853/nboyer.scm:
+/tmp/r7rs-benchmarks/Gerbil/nboyer.exe__exe.scm:
+/tmp/gxc.1768576499.755853/scheme__base-impl.c:
+/tmp/gxc.1768576499.755853/nboyer.c:
+/tmp/r7rs-benchmarks/Gerbil/nboyer.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/nboyer.exe__exe_.c:
+Running...
+Running nboyer:5:1
+Elapsed time: 3.163162 seconds (3.163) for nboyer:5:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,nboyer:5:1,3.163162
+
+real	0m3.237s
+user	0m2.815s
+sys	0m0.395s
+
+Testing sboyer under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/sboyer.scm /tmp/r7rs-benchmarks/Gerbil/sboyer.exe
+/tmp/gxc.1768576506.078036/scheme__base-impl.scm:
+/tmp/gxc.1768576506.078036/sboyer.scm:
+/tmp/r7rs-benchmarks/Gerbil/sboyer.exe__exe.scm:
+/tmp/gxc.1768576506.078036/scheme__base-impl.c:
+/tmp/gxc.1768576506.078036/sboyer.c:
+/tmp/r7rs-benchmarks/Gerbil/sboyer.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/sboyer.exe__exe_.c:
+Running...
+Running sboyer:5:1
+Elapsed time: 1.3842 seconds (1.384) for sboyer:5:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,sboyer:5:1,1.3842
+
+real	0m1.426s
+user	0m1.311s
+sys	0m0.103s
+
+Testing gcbench under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/gcbench.scm /tmp/r7rs-benchmarks/Gerbil/gcbench.exe
+/tmp/gxc.1768576510.5868678/scheme__base-impl.scm:
+/tmp/gxc.1768576510.5868678/gcbench.scm:
+/tmp/r7rs-benchmarks/Gerbil/gcbench.exe__exe.scm:
+/tmp/gxc.1768576510.5868678/scheme__base-impl.c:
+/tmp/gxc.1768576510.5868678/gcbench.c:
+/tmp/r7rs-benchmarks/Gerbil/gcbench.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/gcbench.exe__exe_.c:
+Running...
+The garbage collector should touch about 128 megabytes of heap storage.
+The use of more or less memory will skew the results.
+Running gcbench:20:1
+Garbage Collector Test
+ Stretching memory with a binary tree of depth 20
+ Total memory available= ???????? bytes  Free memory= ???????? bytes
+GCBench: Main
+ Creating a long-lived binary tree of depth 18
+ Creating a long-lived array of 2097148 inexact reals
+ Total memory available= ???????? bytes  Free memory= ???????? bytes
+Creating 135300 trees of depth 4
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 33026 trees of depth 6
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 8208 trees of depth 8
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 2048 trees of depth 10
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 512 trees of depth 12
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 128 trees of depth 14
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 32 trees of depth 16
+GCBench: Top down construction
+GCBench: Bottom up construction
+Creating 8 trees of depth 18
+GCBench: Top down construction
+GCBench: Bottom up construction
+ Total memory available= ???????? bytes  Free memory= ???????? bytes
+Elapsed time: 2.874506 seconds (2.875) for gcbench:20:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,gcbench:20:1,2.874506
+
+real	0m2.916s
+user	0m2.777s
+sys	0m0.121s
+
+Testing mperm under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/mperm.scm /tmp/r7rs-benchmarks/Gerbil/mperm.exe
+/tmp/gxc.1768576516.3652127/scheme__base-impl.scm:
+/tmp/gxc.1768576516.3652127/mperm.scm:
+/tmp/r7rs-benchmarks/Gerbil/mperm.exe__exe.scm:
+/tmp/gxc.1768576516.3652127/scheme__base-impl.c:
+/tmp/gxc.1768576516.3652127/mperm.c:
+/tmp/r7rs-benchmarks/Gerbil/mperm.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/mperm.exe__exe_.c:
+Running...
+Running mperm:20:10:2:1
+Elapsed time: 6.203168 seconds (6.203) for mperm:20:10:2:1
++!CSVLINE!+gerbil-v0.18.1+gambitc,mperm:20:10:2:1,6.203168
+
+real	0m6.733s
+user	0m5.727s
+sys	0m0.966s
+
+Testing equal under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/equal.scm /tmp/r7rs-benchmarks/Gerbil/equal.exe
+/tmp/gxc.1768576526.0364435/scheme__base-impl.scm:
+/tmp/gxc.1768576526.0364435/equal.scm:
+/tmp/r7rs-benchmarks/Gerbil/equal.exe__exe.scm:
+/tmp/gxc.1768576526.0364435/scheme__base-impl.c:
+/tmp/gxc.1768576526.0364435/equal.c:
+/tmp/r7rs-benchmarks/Gerbil/equal.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/equal.exe__exe_.c:
+Running...
+Running equal:100:100:8:1000:2000:5000
+Elapsed time: .46103 seconds (.461) for equal:100:100:8:1000:2000:5000
++!CSVLINE!+gerbil-v0.18.1+gambitc,equal:100:100:8:1000:2000:5000,.46103
+
+real	0m0.493s
+user	0m0.443s
+sys	0m0.048s
+
+Testing bv2string under Gerbil
+Including prelude /home/nex/src/r7rs-benchmarks/src/Gerbil-prelude.scm
+Including postlude /home/nex/src/r7rs-benchmarks/src/Gerbil-postlude.scm
+Compiling...
+gerbil_comp /tmp/r7rs-benchmarks/Gerbil/bv2string.scm /tmp/r7rs-benchmarks/Gerbil/bv2string.exe
+/tmp/gxc.1768576529.4571195/scheme__base-impl.scm:
+/tmp/gxc.1768576529.4571195/bv2string.scm:
+/tmp/r7rs-benchmarks/Gerbil/bv2string.exe__exe.scm:
+/tmp/gxc.1768576529.4571195/scheme__base-impl.c:
+/tmp/gxc.1768576529.4571195/bv2string.c:
+/tmp/r7rs-benchmarks/Gerbil/bv2string.exe__exe.c:
+/tmp/r7rs-benchmarks/Gerbil/bv2string.exe__exe_.c:
+Running...
+Running bv2string:1000:1000:100
+Elapsed time: 1.675863 seconds (1.676) for bv2string:1000:1000:100
++!CSVLINE!+gerbil-v0.18.1+gambitc,bv2string:1000:1000:100,1.675863
+
+real	0m1.711s
+user	0m1.374s
+sys	0m0.299s

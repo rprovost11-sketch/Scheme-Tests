@@ -1,0 +1,423 @@
+; Section 3.5 - Proper Tail Recursion
+;
+; R7RS requires implementations to be properly tail-recursive: a tail call
+; must not consume unbounded stack space regardless of how many active tail
+; calls are in progress.  The spec enumerates the syntactic positions that
+; are tail positions; we test each one.
+;
+; This file uses two complementary strategies:
+;
+;   PART 1 - PROOF (fast, machine-independent).  %continuation-depth is an
+;     internal probe returning the live continuation-stack (K) length.  A
+;     proper tail loop runs in CONSTANT continuation space, so the depth
+;     measured at the base case is independent of the iteration count; a
+;     non-tail loop's depth grows with the count.  Each form below asserts
+;     that invariant at small N.  This is the real correctness gate -- it
+;     proves bounded space directly, on any machine, in milliseconds.  (On a
+;     CEK machine broken TCO is heap/memory exhaustion at a fuzzy, RAM-
+;     dependent point, NOT a clean overflow, so a multi-million iteration
+;     count is an unreliable proof -- see Part 2.)  The tests assert the
+;     INVARIANT (constant vs. growing), not absolute depths, which differ by
+;     framing across implementations.
+;
+;   PART 2 - SOAK (optional scale, %MAX_TCO_ITER_COUNT%).  A few loops run to
+;     %MAX_TCO_ITER_COUNT% (bound by the test runner; default 100000, raise
+;     with `]compliance -I:5M`).  These cover value correctness at scale and
+;     the forms whose per-iteration state lives OFF the K stack (parameterize
+;     -> dynamic extent, guard -> handler stack, call/cc -> captured
+;     continuations), where a leak shows only as memory growth, not as K
+;     depth.  A high count is a per-machine memory soak, not a portable proof.
+
+; ==========================================================================
+; PART 1 - Bounded-space proof via %continuation-depth
+; ==========================================================================
+
+>>> (integer? (%continuation-depth))
+
+==> #t
+
+; Sensitivity: a non-tail loop's depth MUST grow with N.  If this ever fails,
+; the probe is blind and every constant-depth assertion below is worthless.
+
+>>> (define (kd-nontail n)
+...   (if (= n 0) (%continuation-depth) (+ 0 (kd-nontail (- n 1)))))
+
+>>> (> (kd-nontail 2000) (kd-nontail 1))
+
+==> #t
+
+; --- Self tail call (also covers lambda body and if-alternate position) ---
+
+>>> (define (kd-self n)
+...   (if (= n 0) (%continuation-depth) (kd-self (- n 1))))
+
+>>> (= (kd-self 1) (kd-self 10000))
+
+==> #t
+
+; --- Tail call in if consequent ---
+
+>>> (define (kd-if-conseq n)
+...   (if (> n 0) (kd-if-conseq (- n 1)) (%continuation-depth)))
+
+>>> (= (kd-if-conseq 1) (kd-if-conseq 10000))
+
+==> #t
+
+; --- Nested if - both levels in tail position ---
+
+>>> (define (kd-nested-if n)
+...   (if (> n 0)
+...       (if (even? n) (kd-nested-if (- n 2)) (kd-nested-if (- n 1)))
+...       (%continuation-depth)))
+
+>>> (= (kd-nested-if 1) (kd-nested-if 10000))
+
+==> #t
+
+; --- Mutual tail calls ---
+
+>>> (define (kd-even n)
+...   (if (= n 0) (%continuation-depth) (kd-odd (- n 1))))
+
+>>> (define (kd-odd n)
+...   (if (= n 0) (%continuation-depth) (kd-even (- n 1))))
+
+>>> (= (kd-even 2) (kd-even 10000))
+
+==> #t
+
+; --- Tail call in cond clause body ---
+
+>>> (define (kd-cond n)
+...   (cond ((= n 0) (%continuation-depth))
+...         (else    (kd-cond (- n 1)))))
+
+>>> (= (kd-cond 1) (kd-cond 10000))
+
+==> #t
+
+; --- Tail call in cond => clause (procedure applied to the test value) ---
+
+>>> (define (kd-cond-arrow n)
+...   (cond ((= n 0) (%continuation-depth))
+...         ((- n 1) => kd-cond-arrow)))
+
+>>> (= (kd-cond-arrow 1) (kd-cond-arrow 10000))
+
+==> #t
+
+; --- Tail call in case clause body ---
+
+>>> (define (kd-case n)
+...   (case n
+...     ((0) (%continuation-depth))
+...     (else (kd-case (- n 1)))))
+
+>>> (= (kd-case 1) (kd-case 10000))
+
+==> #t
+
+; --- Tail call in and (last expression) ---
+
+>>> (define (kd-and n)
+...   (if (= n 0) (%continuation-depth) (and #t (kd-and (- n 1)))))
+
+>>> (= (kd-and 1) (kd-and 10000))
+
+==> #t
+
+; --- Tail call in or (last expression) ---
+
+>>> (define (kd-or n)
+...   (if (= n 0) (%continuation-depth) (or #f (kd-or (- n 1)))))
+
+>>> (= (kd-or 1) (kd-or 10000))
+
+==> #t
+
+; --- Tail call in when (last body expression) ---
+
+>>> (define (kd-when n)
+...   (if (= n 0) (%continuation-depth) (when #t (kd-when (- n 1)))))
+
+>>> (= (kd-when 1) (kd-when 10000))
+
+==> #t
+
+; --- Tail call in unless (last body expression) ---
+
+>>> (define (kd-unless n)
+...   (if (= n 0) (%continuation-depth) (unless #f (kd-unless (- n 1)))))
+
+>>> (= (kd-unless 1) (kd-unless 10000))
+
+==> #t
+
+; --- Tail call in begin (last expression) ---
+
+>>> (define (kd-begin n)
+...   (if (= n 0) (%continuation-depth) (begin (kd-begin (- n 1)))))
+
+>>> (= (kd-begin 1) (kd-begin 10000))
+
+==> #t
+
+; --- Tail call in let body ---
+
+>>> (define (kd-let n)
+...   (if (= n 0) (%continuation-depth) (let ((m (- n 1))) (kd-let m))))
+
+>>> (= (kd-let 1) (kd-let 10000))
+
+==> #t
+
+; --- Tail call in let* body ---
+
+>>> (define (kd-let* n)
+...   (if (= n 0) (%continuation-depth) (let* ((a (- n 1)) (b a)) (kd-let* b))))
+
+>>> (= (kd-let* 1) (kd-let* 10000))
+
+==> #t
+
+; --- Tail call in letrec body (and letrec*, which shares the code path) ---
+
+>>> (define (kd-letrec n)
+...   (letrec ((go (lambda (k)
+...                  (if (= k 0) (%continuation-depth) (go (- k 1))))))
+...     (go n)))
+
+>>> (= (kd-letrec 1) (kd-letrec 10000))
+
+==> #t
+
+; --- Named let - the idiomatic Scheme loop ---
+
+>>> (define (kd-named n)
+...   (let loop ((k n))
+...     (if (= k 0) (%continuation-depth) (loop (- k 1)))))
+
+>>> (= (kd-named 1) (kd-named 10000))
+
+==> #t
+
+; --- Tail position in do (result expression after the iteration) ---
+
+>>> (define (kd-do n)
+...   (do ((k n (- k 1))) ((= k 0) (%continuation-depth))))
+
+>>> (= (kd-do 1) (kd-do 10000))
+
+==> #t
+
+; --- Tail call in let-values body ---
+
+>>> (define (kd-let-values n)
+...   (if (= n 0)
+...       (%continuation-depth)
+...       (let-values (((a) (values (- n 1)))) (kd-let-values a))))
+
+>>> (= (kd-let-values 1) (kd-let-values 10000))
+
+==> #t
+
+; --- Tail call in let*-values body ---
+
+>>> (define (kd-let*-values n)
+...   (if (= n 0)
+...       (%continuation-depth)
+...       (let*-values (((a) (values (- n 1))) ((b) (values a)))
+...         (kd-let*-values b))))
+
+>>> (= (kd-let*-values 1) (kd-let*-values 10000))
+
+==> #t
+
+; --- Tail call in let-syntax body ---
+
+>>> (define (kd-let-syntax n)
+...   (if (= n 0)
+...       (%continuation-depth)
+...       (let-syntax ((dec (syntax-rules () ((dec x) (- x 1)))))
+...         (kd-let-syntax (dec n)))))
+
+>>> (= (kd-let-syntax 1) (kd-let-syntax 10000))
+
+==> #t
+
+; --- Tail call in letrec-syntax body ---
+
+>>> (define (kd-letrec-syntax n)
+...   (if (= n 0)
+...       (%continuation-depth)
+...       (letrec-syntax ((dec (syntax-rules () ((dec x) (- x 1)))))
+...         (kd-letrec-syntax (dec n)))))
+
+>>> (= (kd-letrec-syntax 1) (kd-letrec-syntax 10000))
+
+==> #t
+
+; --- Tail call in parameterize body ---
+
+>>> (define kd-p (make-parameter 0))
+
+>>> (define (kd-param n)
+...   (if (= n 0)
+...       (%continuation-depth)
+...       (parameterize ((kd-p n)) (kd-param (- n 1)))))
+
+>>> (= (kd-param 1) (kd-param 10000))
+
+==> #t
+
+; --- Tail call in guard body (no exception raised) ---
+
+>>> (define (kd-guard n)
+...   (if (= n 0)
+...       (%continuation-depth)
+...       (guard (exn (#t 'error)) (kd-guard (- n 1)))))
+
+>>> (= (kd-guard 1) (kd-guard 10000))
+
+==> #t
+
+; --- Tail call in case-lambda clause body ---
+
+>>> (define kd-cl
+...   (case-lambda
+...     ((n) (if (= n 0) (%continuation-depth) (kd-cl (- n 1))))))
+
+>>> (= (kd-cl 1) (kd-cl 10000))
+
+==> #t
+
+; --- apply must call its first argument via a tail call (R7RS 3.5) ---
+
+>>> (define (kd-apply n)
+...   (if (= n 0) (%continuation-depth) (apply kd-apply (list (- n 1)))))
+
+>>> (= (kd-apply 1) (kd-apply 10000))
+
+==> #t
+
+; --- call/cc must call its first argument via a tail call (R7RS 3.5) ---
+
+>>> (define (kd-callcc n)
+...   (if (= n 0)
+...       (%continuation-depth)
+...       (call-with-current-continuation (lambda (k) (kd-callcc (- n 1))))))
+
+>>> (= (kd-callcc 1) (kd-callcc 10000))
+
+==> #t
+
+; --- call-with-values must call its consumer via a tail call (R7RS 3.5) ---
+
+>>> (define (kd-cwv n)
+...   (if (= n 0)
+...       (%continuation-depth)
+...       (call-with-values (lambda () (values (- n 1))) kd-cwv)))
+
+>>> (= (kd-cwv 1) (kd-cwv 10000))
+
+==> #t
+
+; --- Tail call as the final expression after internal definitions ---
+
+>>> (define (kd-after-defs n)
+...   (define limit 0)
+...   (define (step k) (- k 1))
+...   (if (= n limit) (%continuation-depth) (kd-after-defs (step n))))
+
+>>> (= (kd-after-defs 1) (kd-after-defs 10000))
+
+==> #t
+
+; ==========================================================================
+; PART 2 - Soak / scale tests (run to %MAX_TCO_ITER_COUNT%)
+;
+; Default 100000; raise with `]compliance -I:5M` for an occasional memory
+; soak.  Value-returning tests compare against a closed form so the expected
+; output is independent of the iteration count.
+; ==========================================================================
+
+; --- Self tail recursion terminates at scale ---
+
+>>> (define (soak-self n)
+...   (if (= n 0) 'done (soak-self (- n 1))))
+
+>>> (soak-self %MAX_TCO_ITER_COUNT%)
+
+==> done
+
+; --- Mutual recursion at scale - result matches the builtin parity ---
+
+>>> (define (soak-even n) (if (= n 0) #t (soak-odd (- n 1))))
+
+>>> (define (soak-odd n) (if (= n 0) #f (soak-even (- n 1))))
+
+>>> (eq? (soak-even %MAX_TCO_ITER_COUNT%) (even? %MAX_TCO_ITER_COUNT%))
+
+==> #t
+
+; --- Accumulator value correctness at scale (sum 1..N = N(N+1)/2) ---
+
+>>> (define (soak-sum n acc)
+...   (if (= n 0) acc (soak-sum (- n 1) (+ acc n))))
+
+>>> (= (soak-sum %MAX_TCO_ITER_COUNT% 0)
+...    (/ (* %MAX_TCO_ITER_COUNT% (+ %MAX_TCO_ITER_COUNT% 1)) 2))
+
+==> #t
+
+; --- parameterize soak: the dynamic extent must not leak per iteration ---
+
+>>> (define soak-p (make-parameter 0))
+
+>>> (define (soak-param n)
+...   (if (= n 0) 'done (parameterize ((soak-p n)) (soak-param (- n 1)))))
+
+>>> (soak-param %MAX_TCO_ITER_COUNT%)
+
+==> done
+
+; --- guard soak: the handler stack must not leak per iteration ---
+
+>>> (define (soak-guard n)
+...   (if (= n 0) 'done (guard (exn (#t 'error)) (soak-guard (- n 1)))))
+
+>>> (soak-guard %MAX_TCO_ITER_COUNT%)
+
+==> done
+
+; --- call/cc soak: a continuation captured (and dropped) each iteration ---
+
+>>> (define (soak-callcc n)
+...   (if (= n 0)
+...       'done
+...       (call-with-current-continuation (lambda (k) (soak-callcc (- n 1))))))
+
+>>> (soak-callcc %MAX_TCO_ITER_COUNT%)
+
+==> done
+
+; --- apply soak (R7RS-required tail call) ---
+
+>>> (define (soak-apply n)
+...   (if (= n 0) 'done (apply soak-apply (list (- n 1)))))
+
+>>> (soak-apply %MAX_TCO_ITER_COUNT%)
+
+==> done
+
+; --- call-with-values soak (R7RS-required tail call) ---
+
+>>> (define (soak-cwv n)
+...   (if (= n 0)
+...       'done
+...       (call-with-values (lambda () (values (- n 1))) soak-cwv)))
+
+>>> (soak-cwv %MAX_TCO_ITER_COUNT%)
+
+==> done

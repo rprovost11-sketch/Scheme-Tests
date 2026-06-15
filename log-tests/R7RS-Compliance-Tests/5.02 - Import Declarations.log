@@ -1,0 +1,616 @@
+; Section 5.2 - Import Declarations
+;
+; (import <import-set> ...)
+;
+; An import declaration makes bindings from a library available in the
+; current environment.  Multiple import sets may appear in one import form.
+;
+; Import set forms:
+;   <library-name>
+;     — imports all exported identifiers from the library
+;   (only <import-set> <identifier> ...)
+;     — imports only the listed identifiers
+;   (except <import-set> <identifier> ...)
+;     — imports all identifiers except the listed ones
+;   (prefix <import-set> <symbol>)
+;     — imports all identifiers, each prefixed with <symbol>
+;   (rename <import-set> (<id1> <id2>) ...)
+;     — imports all, but renames each <id1> to <id2>
+;
+; R7RS standard libraries (all have the form (scheme <name>)):
+;   (scheme base)         — core language
+;   (scheme case-lambda)  — case-lambda
+;   (scheme char)         — character procedures
+;   (scheme complex)      — complex number procedures
+;   (scheme cxr)          — caar, cadr, ... cdddr
+;   (scheme eval)         — eval, environment
+;   (scheme file)         — file I/O
+;   (scheme inexact)      — inexact math (sin, cos, sqrt, ...)
+;   (scheme lazy)         — delay, force, make-promise
+;   (scheme load)         — load
+;   (scheme process-context) — command-line, exit, get-environment-variable
+;   (scheme r5rs)         — R5RS compatibility environment
+;   (scheme read)         — read
+;   (scheme repl)         — interaction-environment
+;   (scheme time)         — current-second, current-jiffy, jiffies-per-second
+;   (scheme write)        — write, display, newline, ...
+;
+; Note: In a REPL session (scheme base) bindings are typically pre-imported.
+; These tests focus on the import modifier forms (prefix, rename, only,
+; except) which create verifiably new or restricted bindings.
+
+; ==========================================================================
+; Basic import — standard library
+; ==========================================================================
+
+>>> (import (scheme base))
+... 
+... ; No error; base bindings available (already were, but re-import is harmless)
+
+>>> (+ 1 2)
+
+==> 3
+
+>>> (car '(a b c))
+
+==> a
+
+; ==========================================================================
+; import (scheme write) — write/display procedures
+; ==========================================================================
+
+>>> (import (scheme write))
+
+>>> (procedure? write)
+
+==> #t
+
+>>> (procedure? display)
+
+==> #t
+
+>>> (procedure? newline)
+
+==> #t
+
+; ==========================================================================
+; import (scheme char) — character classification
+; ==========================================================================
+
+>>> (import (scheme char))
+
+>>> (char-alphabetic? #\a)
+
+==> #t
+
+>>> (char-numeric? #\5)
+
+==> #t
+
+>>> (char-upcase #\a)
+
+==> #\A
+
+>>> (char-downcase #\Z)
+
+==> #\z
+
+; ==========================================================================
+; import (scheme inexact) — transcendental functions
+; ==========================================================================
+
+>>> (import (scheme inexact))
+
+>>> (procedure? sqrt)
+
+==> #t
+
+>>> (procedure? sin)
+
+==> #t
+
+>>> (procedure? exp)
+
+==> #t
+
+; sqrt of an exact perfect square is exact (R7RS 6.2.6); verified against Chez.
+>>> (exact? (sqrt 4))
+
+==> #t
+
+>>> (< (abs (- (sqrt 2.0) 1.4142135623730951)) 1e-10)
+
+==> #t
+
+; ==========================================================================
+; import (scheme complex) — complex number procedures
+; ==========================================================================
+
+>>> (import (scheme complex))
+
+>>> (procedure? make-rectangular)
+
+==> #t
+
+>>> (procedure? real-part)
+
+==> #t
+
+>>> (procedure? imag-part)
+
+==> #t
+
+; ==========================================================================
+; import (scheme cxr) — extended car/cdr compositions
+; ==========================================================================
+
+>>> (import (scheme cxr))
+
+>>> (caaar '(((1 2) 3) 4))
+
+==> 1
+
+>>> (cddr '(1 2 3 4))
+
+==> (3 4)
+
+>>> (caddr '(1 2 3))
+
+==> 3
+
+>>> (cadddr '(1 2 3 4))
+
+==> 4
+
+; ==========================================================================
+; import (scheme lazy) — delay/force
+; ==========================================================================
+
+>>> (import (scheme lazy))
+
+>>> (procedure? make-promise)
+
+==> #t
+
+>>> (promise? (delay 1))
+
+==> #t
+
+>>> (force (delay (+ 1 2)))
+
+==> 3
+
+; ==========================================================================
+; import (scheme time) — current time procedures
+; ==========================================================================
+
+>>> (import (scheme time))
+
+>>> (procedure? current-second)
+
+==> #t
+
+>>> (procedure? current-jiffy)
+
+==> #t
+
+>>> (procedure? jiffies-per-second)
+
+==> #t
+
+>>> (integer? (jiffies-per-second))
+
+==> #t
+
+>>> (real? (current-second))
+
+==> #t
+
+; ==========================================================================
+; import (scheme eval) — eval and environment procedures
+; ==========================================================================
+
+>>> (import (scheme eval))
+
+>>> (procedure? eval)
+
+==> #t
+
+>>> (procedure? environment)
+
+==> #t
+
+>>> (eval '(+ 1 2) (environment '(scheme base)))
+
+==> 3
+
+>>> (eval '(* 6 7) (environment '(scheme base)))
+
+==> 42
+
+; ==========================================================================
+; import (scheme read) — read procedure
+; ==========================================================================
+
+>>> (import (scheme read))
+
+>>> (procedure? read)
+
+==> #t
+
+; ==========================================================================
+; import (scheme repl) — interaction-environment
+; ==========================================================================
+
+>>> (import (scheme repl))
+
+>>> (procedure? interaction-environment)
+
+==> #t
+
+; ==========================================================================
+; import (scheme case-lambda) — case-lambda
+; ==========================================================================
+
+>>> (import (scheme case-lambda))
+
+>>> (define cl-proc
+...   (case-lambda
+...     ((x) (* x x))
+...     ((x y) (+ x y))))
+
+>>> (cl-proc 5)
+
+==> 25
+
+>>> (cl-proc 3 4)
+
+==> 7
+
+; ==========================================================================
+; prefix — all imported names get a prefix
+; ==========================================================================
+
+>>> (import (prefix (scheme base) base:))
+
+>>> (base:car '(1 2 3))
+
+==> 1
+
+>>> (base:cdr '(1 2 3))
+
+==> (2 3)
+
+>>> (base:+ 10 20)
+
+==> 30
+
+>>> (base:null? '())
+
+==> #t
+
+>>> (base:cons 1 '(2 3))
+
+==> (1 2 3)
+
+; ==========================================================================
+; prefix — prefix is just a symbol prefix on the name
+; ==========================================================================
+
+>>> (import (prefix (scheme char) ch:))
+
+>>> (ch:char-alphabetic? #\a)
+
+==> #t
+
+>>> (ch:char-upcase #\b)
+
+==> #\B
+
+; ==========================================================================
+; rename — specific identifiers renamed
+; ==========================================================================
+
+>>> (import (rename (scheme base)
+...                 (car first)
+...                 (cdr rest)
+...                 (cons prepend)))
+
+>>> (first '(a b c))
+
+==> a
+
+>>> (rest '(a b c))
+
+==> (b c)
+
+>>> (prepend 'x '(y z))
+
+==> (x y z)
+
+; ==========================================================================
+; rename — original names still accessible (rename doesn't remove them)
+; ==========================================================================
+
+; rename imports all names; the renamed ones get new aliases.
+; The original names are also still imported (unless used with only/except).
+
+>>> (car '(1 2 3))
+
+==> 1
+
+; ==========================================================================
+; rename — multiple renames in one import set
+; ==========================================================================
+
+>>> (import (rename (scheme base)
+...                 (+ add)
+...                 (- sub)
+...                 (* mul)
+...                 (/ div)))
+
+>>> (add 3 4)
+
+==> 7
+
+>>> (sub 10 3)
+
+==> 7
+
+>>> (mul 6 7)
+
+==> 42
+
+>>> (div 10 2)
+
+==> 5
+
+; ==========================================================================
+; only — import a restricted set of names
+; ==========================================================================
+
+>>> (import (only (scheme base) + - * /))
+
+>>> (+ 1 2)
+
+==> 3
+
+>>> (* 3 4)
+
+==> 12
+
+; ==========================================================================
+; only — single identifier
+; ==========================================================================
+
+>>> (import (only (scheme base) list))
+
+>>> (list 1 2 3)
+
+==> (1 2 3)
+
+; ==========================================================================
+; except — import all but listed names
+; ==========================================================================
+
+>>> (import (except (scheme base) error))
+
+>>> (+ 1 2)
+
+==> 3
+
+>>> (car '(a b))
+
+==> a
+
+; ==========================================================================
+; Combining modifiers — prefix on only
+; ==========================================================================
+
+>>> (import (prefix (only (scheme base) car cdr cons) p:))
+
+>>> (p:car '(1 2 3))
+
+==> 1
+
+>>> (p:cdr '(1 2 3))
+
+==> (2 3)
+
+>>> (p:cons 0 '(1 2 3))
+
+==> (0 1 2 3)
+
+; ==========================================================================
+; Combining modifiers — rename on only
+; ==========================================================================
+
+>>> (import (rename (only (scheme base) car cdr)
+...                 (car hd)
+...                 (cdr tl)))
+
+>>> (hd '(10 20 30))
+
+==> 10
+
+>>> (tl '(10 20 30))
+
+==> (20 30)
+
+; ==========================================================================
+; Combining modifiers — only on prefix
+; ==========================================================================
+
+>>> (import (only (prefix (scheme base) z:) z:+ z:*))
+
+>>> (z:+ 5 6)
+
+==> 11
+
+>>> (z:* 5 6)
+
+==> 30
+
+; ==========================================================================
+; Multiple import sets in one import form
+; ==========================================================================
+
+>>> (import (scheme base) (scheme write) (scheme char))
+... 
+... ; All bindings from all three libraries now available (or still available).
+
+>>> (char-whitespace? #\space)
+
+==> #t
+
+; ==========================================================================
+; import — library names are lists of symbols/integers
+; ==========================================================================
+
+; Standard library names use symbol lists.
+; No integer suffixes in standard R7RS; SRFI names may use integers.
+; Confirm that basic name structure is supported.
+
+>>> (import (scheme base))
+
+>>> (boolean? #t)
+
+==> #t
+
+; ==========================================================================
+; Error: importing a name not exported by the library
+; ==========================================================================
+
+>>> (import (only (scheme base) nonexistent-name-xyz))
+
+%%% %any-error%
+
+; ==========================================================================
+; Error: importing a nonexistent library
+; ==========================================================================
+
+>>> (import (scheme nonexistent-library-xyz))
+
+%%% %any-error%
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === except — listed names removed, others remain usable
+
+>>> (import (except (scheme base) car cdr))
+
+>>> (cons 1 2)
+
+==> (1 . 2)
+
+>>> (+ 10 20)
+
+==> 30
+
+; === prefix applied to except
+
+>>> (import (prefix (except (scheme base) error) e2:))
+
+>>> (e2:+ 4 5)
+
+==> 9
+
+>>> (e2:list 1 2 3)
+
+==> (1 2 3)
+
+; === rename applied to except
+
+>>> (import (rename (except (scheme base) error)
+...                 (cons pair-up)
+...                 (list make-list*)))
+
+>>> (pair-up 'a 'b)
+
+==> (a . b)
+
+>>> (make-list* 1 2 3)
+
+==> (1 2 3)
+
+; === prefix applied to rename — rename happens first, then prefix added
+
+>>> (import (prefix (rename (scheme base) (car head) (cdr tail)) g:))
+
+>>> (g:head '(1 2 3))
+
+==> 1
+
+>>> (g:tail '(1 2 3))
+
+==> (2 3)
+
+; === only with several modifiers stacked: only over rename over only
+
+>>> (import (only (rename (only (scheme base) car cdr cons)
+...                       (car a-car) (cdr a-cdr))
+...               a-car a-cdr))
+
+>>> (a-car '(7 8 9))
+
+==> 7
+
+>>> (a-cdr '(7 8 9))
+
+==> (8 9)
+
+; === multiple import sets, each with a different modifier, in one form
+
+>>> (import (prefix (only (scheme base) +) m:)
+...         (rename (only (scheme base) *) (* times)))
+
+>>> (m:+ 2 3)
+
+==> 5
+
+>>> (times 4 5)
+
+==> 20
+
+; === only restricting to a single name still imports just that one
+
+>>> (import (only (scheme base) reverse))
+
+>>> (reverse '(1 2 3))
+
+==> (3 2 1)
+
+; === import (scheme base) provides 'features' / cond-expand support names
+; 'features' returns a list (R7RS 6.14); confirm it is a procedure here.
+
+>>> (import (scheme base))
+
+>>> (procedure? vector-for-each)
+
+==> #t
+
+>>> (procedure? list-copy)
+
+==> #t
+
+; === Error: rename of a name not exported by the library
+
+>>> (import (rename (scheme base) (nonexistent-xyz alias-xyz)))
+
+%%% %any-error%
+
+; === Error: prefix over only with a name not exported
+
+>>> (import (prefix (only (scheme base) nonexistent-abc) bad:))
+
+%%% %any-error%
+
+>>> (import (except (scheme base) nonexistent-zzz))
+... ; R7RS 5.2: excepting (or renaming) an identifier that is not in the
+... ; original import set "is an error" -- undefined behavior, so signaling is
+... ; optional; %optional-error% accepts either outcome.
+
+%%% %optional-error%
+

@@ -1,0 +1,43 @@
+;;; ============================================================
+;;; 04-gc
+;;; garbage-collector bugs observable from Scheme
+;;; ============================================================
+;;;
+;;; Regression tripwires for the garbage collector (Scheme-observable only).  Each entry is pinned to a specific
+;;; bug that was fixed -- this is NOT feature coverage.  Only Scheme-
+;;; observable, non-spec regressions belong here; spec deviations go in
+;;; R7RS-Compliance-Tests/, internal-only bugs in undercarriage gc_test.cpp.
+;;; See 00-conventions.md for the full routing rule.
+;;;
+;;; HOW TO ADD A REGRESSION
+;;;   - Append to the END of this file.  Tests run top-to-bottom; keep them
+;;;     in chronological order (oldest bug first) so the file reads as a
+;;;     timeline for this subsystem.
+;;;   - Precede each case with a provenance comment so it stays meaningful:
+;;;        ; REG <yyyy-mm-dd> -- <commit-or-issue> -- <one line: what broke>
+;;;        ; Symptom: <what the user saw before the fix>
+;;;   - Keep the reproducer MINIMAL, then give the expected result:
+;;;        >>> (expression)
+;;;        ==> expected             ; or:  %%% %any-error%
+;;;
+; REG 2026-06-07 -- iterative GC mark -- deep car-nested structures overflowed
+;   the C stack during collection (cppscheme2 only).
+; Symptom: traversing a deeply car-nested structure (e.g. a chain of one-element
+;   lists) crashed with a C stack overflow at ~8k-16k depth, non-deterministically
+;   (it depended on when a GC happened to fire), because the mark phase recursed
+;   on each cons's car.  mark is now driven by an explicit worklist, so mark depth
+;   lives on the heap.  pyScheme never had this (no moving GC tracing the data).
+
+>>> (define (build n) (if (= n 0) '() (list (build (- n 1)))))
+==>
+
+>>> (define leaves 0)
+==>
+
+>>> (define (walk n)
+...   (if (pair? n) (for-each walk n) (set! leaves (+ leaves 1))))
+==>
+
+>>> (begin (walk (build 30000)) leaves)
+... ; a 30000-deep car-nested walk completes; pre-fix this overflowed the C stack
+==> 1

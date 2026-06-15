@@ -1,0 +1,555 @@
+; Section 4.1.2 - Literal Expressions
+;
+; (quote <datum>) evaluates to <datum> without evaluating it.
+; '<datum> is an abbreviation for (quote <datum>).
+; Booleans, numbers, characters, strings, vectors, and bytevectors
+; are self-evaluating: they evaluate to themselves without quoting.
+; Quoted data is immutable.
+
+; ==========================================================================
+; quote — symbols
+; ==========================================================================
+
+>>> (quote hello)
+
+==> hello
+
+>>> (quote foo)
+
+==> foo
+
+>>> 'hello
+
+==> hello
+
+>>> (equal? (quote hello) 'hello)
+
+==> #t
+
+; Quoting prevents evaluation — the symbol is not looked up as a variable
+
+>>> (define x 42)
+
+>>> (quote x)
+
+==> x
+
+>>> 'x
+
+==> x
+
+; quote itself can be quoted
+
+>>> (quote quote)
+
+==> quote
+
+>>> 'quote
+
+==> quote
+
+; ==========================================================================
+; quote — lists and pairs
+; ==========================================================================
+
+>>> '(1 2 3)
+
+==> (1 2 3)
+
+>>> (quote (1 2 3))
+
+==> (1 2 3)
+
+>>> '(a b c)
+
+==> (a b c)
+
+>>> '(1 . 2)
+
+==> (1 . 2)
+
+>>> '(1 2 . 3)
+
+==> (1 2 . 3)
+
+>>> '()
+
+==> ()
+
+>>> '((1 2) (3 4))
+
+==> ((1 2) (3 4))
+
+>>> '(a (b c) (d (e f)))
+
+==> (a (b c) (d (e f)))
+
+; A quoted list containing expressions — the expressions are not evaluated
+
+>>> '(+ 1 2)
+
+==> (+ 1 2)
+
+>>> '(define x 99)
+
+==> (define x 99)
+
+>>> '(if #t 'yes 'no)
+
+==> (if #t (quote yes) (quote no))
+
+; ==========================================================================
+; quote — vectors and other compound data
+; ==========================================================================
+
+>>> '#(1 2 3)
+
+==> #(1 2 3)
+
+>>> '#()
+
+==> #()
+
+>>> '#(a b c)
+
+==> #(a b c)
+
+>>> '#(1 (2 3) #t)
+
+==> #(1 (2 3) #t)
+
+; ==========================================================================
+; ' abbreviation is identical to (quote ...)
+; ==========================================================================
+
+>>> (equal? 'hello (quote hello))
+
+==> #t
+
+>>> (equal? '(1 2 3) (quote (1 2 3)))
+
+==> #t
+
+>>> (eq? 'foo (quote foo))
+
+==> #t
+
+; ==========================================================================
+; Nested quotes
+; ''x = (quote (quote x))  which evaluates to (quote x)
+; ==========================================================================
+
+>>> ''x
+
+==> (quote x)
+
+>>> '''x
+
+==> (quote (quote x))
+
+>>> (car ''x)
+
+==> quote
+
+>>> (cadr ''x)
+
+==> x
+
+; ==========================================================================
+; Self-evaluating constants — no quote needed
+; ==========================================================================
+
+; Booleans
+
+>>> #t
+
+==> #t
+
+>>> #f
+
+==> #f
+
+; Exact integers
+
+>>> 0
+
+==> 0
+
+>>> 42
+
+==> 42
+
+>>> -1
+
+==> -1
+
+>>> 1000000000000
+
+==> 1000000000000
+
+; Inexact numbers
+
+>>> 3.14
+
+==> 3.14
+
+>>> -2.5
+
+==> -2.5
+
+>>> 0.0
+
+==> 0.0
+
+; Exact rationals
+
+>>> 1/3
+
+==> 1/3
+
+>>> 22/7
+
+==> 22/7
+
+>>> -3/4
+
+==> -3/4
+
+; Characters
+
+>>> #\a
+
+==> #\a
+
+>>> #\space
+
+==> #\space
+
+>>> #\newline
+
+==> #\newline
+
+; Strings
+
+>>> "hello"
+
+==> "hello"
+
+>>> ""
+
+==> ""
+
+>>> "hello world"
+
+==> "hello world"
+
+; Vectors — self-evaluating
+
+>>> #(1 2 3)
+
+==> #(1 2 3)
+
+>>> #()
+
+==> #()
+
+; Bytevectors — self-evaluating
+
+>>> #u8(1 2 3)
+
+==> #u8(1 2 3)
+
+>>> #u8()
+
+==> #u8()
+
+; ==========================================================================
+; Self-evaluating constants quoted are the same value
+; ==========================================================================
+
+>>> (eqv? 42 '42)
+
+==> #t
+
+>>> (eqv? #t '#t)
+
+==> #t
+
+>>> (eqv? #\a '#\a)
+
+==> #t
+
+>>> (equal? "hello" '"hello")
+
+==> #t
+
+>>> (equal? #(1 2 3) '#(1 2 3))
+
+==> #t
+
+; ==========================================================================
+; Quoted data is immutable — mutating it is an error
+; ==========================================================================
+
+>>> (set-car! '(1 2 3) 99)
+
+%%% %any-error%
+
+>>> (string-set! "hello" 0 #\H)
+
+%%% %any-error%
+
+>>> (vector-set! '#(1 2 3) 0 99)
+
+%%% %any-error%
+
+; ==========================================================================
+; Multiple evaluations of the same quoted literal return the same object
+; R7RS: it is an error to mutate a quoted constant; the same literal
+; expression may or may not return the same object across evaluations,
+; but implementations typically share them.
+; ==========================================================================
+
+>>> (eq? 'foo 'foo)
+
+==> #t
+
+>>> (eq? '() '())
+
+==> #t
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; ==========================================================================
+; quote of a quote form — '(quote a) is the two-element list (quote a)
+; (R7RS §4.1.2: '(quote a)  ==>  (quote a))
+; ==========================================================================
+
+>>> '(quote a)
+
+==> (quote a)
+
+>>> (quote (quote a))
+
+==> (quote a)
+
+>>> (length '(quote a))
+
+==> 2
+
+>>> (car '(quote a))
+
+==> quote
+
+>>> (cadr '(quote a))
+
+==> a
+
+; ==========================================================================
+; Datum literals: numbers/strings/chars appear unevaluated inside a
+; quoted list
+; ==========================================================================
+
+>>> '(1 "two" #\3 #t #f)
+
+==> (1 "two" #\3 #t #f)
+
+>>> (car '(1 "two" #\3))
+
+==> 1
+
+>>> (cadr '(1 "two" #\3))
+
+==> "two"
+
+>>> (caddr '(1 "two" #\3))
+
+==> #\3
+
+; A quoted list whose elements are themselves boolean/number literals
+
+>>> '(#t #f #t)
+
+==> (#t #f #t)
+
+; ==========================================================================
+; Deeply nested quoted structure, including dotted pairs within lists
+; and vectors within lists
+; ==========================================================================
+
+>>> '((a . b) (c . d))
+
+==> ((a . b) (c . d))
+
+>>> '(1 #(2 3) (4 . 5))
+
+==> (1 #(2 3) (4 . 5))
+
+>>> '#((1 2) (3 4))
+
+==> #((1 2) (3 4))
+
+; ==========================================================================
+; A self-evaluating constant and its quoted form denote the same datum
+; ==========================================================================
+
+>>> (equal? 1/3 '1/3)
+
+==> #t
+
+>>> (equal? #u8(64 65) '#u8(64 65))
+
+==> #t
+
+>>> (equal? -2.5 '-2.5)
+
+==> #t
+
+; ==========================================================================
+; quote does not evaluate — operator symbols stay symbols
+; ==========================================================================
+
+>>> (symbol? (car '(+ 1 2)))
+
+==> #t
+
+>>> (eq? (car '(set! x 1)) 'set!)
+
+==> #t
+
+
+; ===
+; Spec example: a vector literal with a symbol and a number
+; (R7RS §4.1.2:  (quote #(a 10))  ==>  #(a 10))
+; ===
+
+>>> (quote #(a 10))
+
+==> #(a 10)
+
+>>> '#(a 10)
+
+==> #(a 10)
+
+; ===
+; quote yields the datum unchanged: a quoted number/string is the very
+; same value as the unquoted self-evaluating constant
+; ===
+
+>>> (quote 145932)
+
+==> 145932
+
+>>> (eqv? (quote 145932) 145932)
+
+==> #t
+
+>>> (equal? (quote "abc") "abc")
+
+==> #t
+
+; ===
+; Symbols inside a quoted vector are not evaluated
+; ===
+
+>>> (symbol? (vector-ref '#(a b c) 0))
+
+==> #t
+
+>>> (vector-ref '#(a b c) 2)
+
+==> c
+
+; ===
+; A nested-quote datum: the car of ''a is the symbol quote, and the
+; whole datum has length 2
+; ===
+
+>>> (pair? ''a)
+
+==> #t
+
+>>> (length ''a)
+
+==> 2
+
+; ===
+; Boolean and empty-list literals: quoted form equals unquoted form
+; ===
+
+>>> (eq? (quote #t) #t)
+
+==> #t
+
+>>> (eq? (quote ()) '())
+
+==> #t
+
+; ===
+; Spec examples §4.1.2: (quote #(a b c)) ==> #(a b c) and
+; (quote (+ 1 2)) ==> (+ 1 2) — the keyword (quote ...) form on a
+; vector constant and on a list of unevaluated operator/operands
+; ===
+
+>>> (quote #(a b c))
+
+==> #(a b c)
+
+>>> (quote (+ 1 2))
+
+==> (+ 1 2)
+
+>>> (equal? (quote #(a b c)) '#(a b c))
+
+==> #t
+
+>>> (equal? (quote (+ 1 2)) '(+ 1 2))
+
+==> #t
+
+; ===
+; Spec abbreviation examples §4.1.2: 'a ==> a and '() ==> () shown via
+; equivalence of the abbreviation and keyword forms
+; ===
+
+>>> (eq? 'a (quote a))
+
+==> #t
+; ==========================================================================
+; R7RS section 4.1.2 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> 'a
+
+==> a
+
+>>> '#(a b c)
+
+==> #(a b c)
+
+>>> ''a
+
+==> (quote a)
+
+>>> '145932
+
+==> 145932
+
+>>> 145932
+
+==> 145932
+
+>>> '"abc"
+
+==> "abc"
+
+>>> "abc"
+
+==> "abc"
+
+>>> '#t
+
+==> #t
+

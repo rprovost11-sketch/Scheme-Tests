@@ -1,0 +1,518 @@
+; Section 4.2.8 - Quasiquotation
+;
+; (quasiquote <template>)   abbreviated: `<template>
+; (unquote <expr>)          abbreviated: ,<expr>
+; (unquote-splicing <expr>) abbreviated: ,@<expr>
+;
+; A quasiquote template is like quote except:
+;   - (unquote <expr>) evaluates <expr> and inserts the result
+;   - (unquote-splicing <expr>) evaluates <expr> (must be a list) and
+;     splices the elements into the surrounding list
+;
+; Quasiquotes may be nested; each level of nesting requires a matching
+; level of unquoting.
+;
+; unquote and unquote-splicing are errors outside of a quasiquote.
+
+; ==========================================================================
+; Basic quasiquote — no unquoting (same as quote)
+; ==========================================================================
+
+>>> `42
+
+==> 42
+
+>>> `hello
+
+==> hello
+
+>>> `#t
+
+==> #t
+
+>>> `(1 2 3)
+
+==> (1 2 3)
+
+>>> `(a b c)
+
+==> (a b c)
+
+>>> `()
+
+==> ()
+
+; ==========================================================================
+; unquote — inserts evaluated expression
+; ==========================================================================
+
+>>> (define x 42)
+
+>>> `(a ,x c)
+
+==> (a 42 c)
+
+>>> `(,x ,x)
+
+==> (42 42)
+
+>>> `,(+ 1 2)
+
+==> 3
+
+>>> `(1 ,(+ 1 1) 3)
+
+==> (1 2 3)
+
+>>> `(a ,(list 1 2) b)
+
+==> (a (1 2) b)
+
+; ==========================================================================
+; unquote — in various positions
+; ==========================================================================
+
+; As the sole element
+>>> `(,x)
+
+==> (42)
+
+; As first element
+>>> `(,x b c)
+
+==> (42 b c)
+
+; As last element
+>>> `(a b ,x)
+
+==> (a b 42)
+
+; In dotted pair
+>>> `(a . ,x)
+
+==> (a . 42)
+
+>>> `(,x . ,x)
+
+==> (42 . 42)
+
+; ==========================================================================
+; unquote — expression can be any expression
+; ==========================================================================
+
+>>> `(result ,(if #t 'yes 'no))
+
+==> (result yes)
+
+>>> `(sum ,(apply + '(1 2 3 4 5)))
+
+==> (sum 15)
+
+>>> (define (double n) (* n 2))
+
+>>> `(doubled ,(double 21))
+
+==> (doubled 42)
+
+>>> `(,(car '(a b c)) ,(cadr '(a b c)))
+
+==> (a b)
+
+; ==========================================================================
+; unquote-splicing — splices list elements
+; ==========================================================================
+
+>>> (define lst '(1 2 3))
+
+>>> `(a ,@lst b)
+
+==> (a 1 2 3 b)
+
+>>> `(,@lst)
+
+==> (1 2 3)
+
+>>> `(,@lst ,@lst)
+
+==> (1 2 3 1 2 3)
+
+>>> `(0 ,@lst 4)
+
+==> (0 1 2 3 4)
+
+; ==========================================================================
+; unquote-splicing — empty list splices nothing
+; ==========================================================================
+
+>>> `(a ,@'() b)
+
+==> (a b)
+
+>>> `(,@'())
+
+==> ()
+
+>>> `(,@'() ,@'() ,@'())
+
+==> ()
+
+; ==========================================================================
+; unquote-splicing — expression must produce a list
+; ==========================================================================
+
+>>> `(,@(list 1 2 3))
+
+==> (1 2 3)
+
+>>> `(,@(map (lambda (x) (* x x)) '(1 2 3 4)))
+
+==> (1 4 9 16)
+
+>>> `(,@(filter odd? '(1 2 3 4 5)))
+
+==> (1 3 5)
+
+; ==========================================================================
+; unquote-splicing — at the end of a list
+; ==========================================================================
+
+>>> `(a b ,@'(c d))
+
+==> (a b c d)
+
+>>> `(a ,@(cdr '(x b c)))
+
+==> (a b c)
+
+; ==========================================================================
+; Mixing unquote and unquote-splicing
+; ==========================================================================
+
+>>> (define head 0)
+
+>>> (define tail '(1 2 3))
+
+>>> `(,head ,@tail 4)
+
+==> (0 1 2 3 4)
+
+>>> `(,@tail ,head)
+
+==> (1 2 3 0)
+
+>>> `(,@(list head) ,@tail)
+
+==> (0 1 2 3)
+
+; ==========================================================================
+; Quasiquote in various data positions
+; ==========================================================================
+
+; Inside a vector
+>>> `#(1 ,(+ 1 1) 3)
+
+==> #(1 2 3)
+
+>>> (define v-val 99)
+
+>>> `#(a ,v-val c)
+
+==> #(a 99 c)
+
+>>> `#(,@'(1 2 3))
+
+==> #(1 2 3)
+
+; ==========================================================================
+; Nested quasiquote — one level of nesting
+; ==========================================================================
+
+; Inside a nested quasiquote, a single unquote refers to the inner level.
+; A double unquote (,, or ,(unquote ...)) escapes both levels.
+
+>>> `(a `(b ,(+ 1 2)) c)
+
+==> (a (quasiquote (b (unquote (+ 1 2)))) c)
+
+; The inner quasiquote is not evaluated — it's data at the outer level.
+
+>>> `(outer `(inner ,,x))
+
+==> (outer (quasiquote (inner (unquote 42))))
+
+; ==========================================================================
+; Nested quasiquote — used to generate quasiquote expressions
+; ==========================================================================
+
+; A common use: generating code that contains quasiquote.
+; At two levels deep, ,, unquotes through both levels.
+
+>>> (let ((name 'foo))
+...   `(define ,name (lambda (x) `(,',name ,x))))
+
+==> (define foo (lambda (x) (quasiquote ((unquote (quote foo)) (unquote x)))))
+
+; ==========================================================================
+; Quasiquote — practical: building expressions
+; ==========================================================================
+
+>>> (define (make-add a b) `(+ ,a ,b))
+
+>>> (make-add 1 2)
+
+==> (+ 1 2)
+
+>>> (make-add 'x '(* 3 4))
+
+==> (+ x (* 3 4))
+
+>>> (define (make-let var val body)
+...   `(let ((,var ,val)) ,body))
+
+>>> (make-let 'x 42 '(+ x 1))
+
+==> (let ((x 42)) (+ x 1))
+
+>>> (define (make-cond-clause test expr)
+...   `(,test ,expr))
+
+>>> (make-cond-clause '(> x 0) 'positive)
+
+==> ((> x 0) positive)
+
+; ==========================================================================
+; Quasiquote — building lists with splice
+; ==========================================================================
+
+>>> (define (prepend-all items lst)
+...   `(,@items ,@lst))
+
+>>> (prepend-all '(a b) '(c d e))
+
+==> (a b c d e)
+
+>>> (define (surround item lst)
+...   `(,item ,@lst ,item))
+
+>>> (surround 'x '(1 2 3))
+
+==> (x 1 2 3 x)
+
+; ==========================================================================
+; Quasiquote — result is a fresh list each time
+; ==========================================================================
+
+>>> (define (make-list-expr)
+...   `(1 2 3))
+
+>>> (define r1 (make-list-expr))
+
+>>> (define r2 (make-list-expr))
+
+>>> (equal? r1 r2)
+
+==> #t
+
+; ==========================================================================
+; Quasiquote with unquote at top level
+; ==========================================================================
+
+>>> (define top 77)
+
+>>> `,top
+
+==> 77
+
+>>> `,@'(1 2 3)
+
+==> 1 or ==> (1 2 3)
+
+; unquote-splicing at the top level (not inside a list) is implementation-
+; defined; some implementations return the first element or the whole list.
+; Behavior here is unspecified by R7RS — we do not require a specific result.
+
+; ==========================================================================
+; Error: unquote outside quasiquote
+; ==========================================================================
+
+>>> ,x
+
+%%% %any-error%
+
+>>> (unquote x)
+
+%%% %any-error%
+
+; ==========================================================================
+; Error: unquote-splicing outside quasiquote
+; ==========================================================================
+
+>>> ,@'(1 2 3)
+
+%%% %any-error%
+
+>>> (unquote-splicing '(1 2 3))
+
+%%% %any-error%
+
+; ==========================================================================
+; Error: unquote-splicing with non-list
+; ==========================================================================
+
+>>> `(a ,@42 b)
+
+%%% %any-error%
+
+>>> `(a ,@#t b)
+
+%%% %any-error%
+
+; ==========================================================================
+; Quasiquote abbreviation equivalence
+; ==========================================================================
+
+; Backtick is exactly equivalent to (quasiquote ...)
+
+>>> (equal? '(quasiquote (a b c)) ''(a b c))
+
+==> #f
+
+>>> (equal? (quasiquote (1 2 3)) `(1 2 3))
+
+==> #t
+
+>>> (equal? `(a ,(+ 1 2) c)
+...         (quasiquote (a (unquote (+ 1 2)) c)))
+
+==> #t
+
+; ==========================================================================
+; Quasiquote — deeply nested list construction
+; ==========================================================================
+
+>>> (define (tree left right)
+...   `(node ,left ,right))
+
+>>> (tree 1 2)
+
+==> (node 1 2)
+
+>>> (tree (tree 1 2) (tree 3 4))
+
+==> (node (node 1 2) (node 3 4))
+
+>>> (tree (tree (tree 1 2) 3) (tree 4 (tree 5 6)))
+
+==> (node (node (node 1 2) 3) (node 4 (node 5 6)))
+
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === nested quasiquote: inner unquote-splicing preserved as data at outer level ===
+
+>>> `(a `(b ,@(c d)) e)
+
+==> (a (quasiquote (b (unquote-splicing (c d)))) e)
+
+; === nested quasiquote: only the deeper-level unquote is evaluated ===
+
+>>> (define nq 7)
+
+>>> `(1 `(2 ,(+ 1 ,nq)))
+
+==> (1 (quasiquote (2 (unquote (+ 1 7)))))
+
+; === unquote-splicing into a dotted-tail position via final splice ===
+
+>>> `(a ,@(list 1 2 3))
+
+==> (a 1 2 3)
+
+; === unquote producing a list is NOT spliced (stays nested) ===
+
+>>> `(a ,(list 1 2 3) b)
+
+==> (a (1 2 3) b)
+
+; === unquote-splicing mid-vector ===
+
+>>> `#(0 ,@(list 1 2) 3)
+
+==> #(0 1 2 3)
+
+; === multiple unquote-splicing combined with literals in a vector ===
+
+>>> `#(,@(list 1 2) x ,@(list 3 4))
+
+==> #(1 2 x 3 4)
+
+; === unquote of nested expression inside splice argument ===
+
+>>> (define qa 2)
+
+>>> `(start ,@(map (lambda (n) (* n qa)) (quote (1 2 3))) end)
+
+==> (start 2 4 6 end)
+
+; === quasiquote with both dotted unquote tail and leading splice ===
+
+>>> `(,@(list 1 2) . ,(+ 1 2))
+
+==> (1 2 . 3)
+
+; === empty splice between elements yields adjacency ===
+
+>>> `(a ,@(quote ()) b ,@(quote ()) c)
+
+==> (a b c)
+
+; === quasiquoted symbol that looks like a keyword stays a symbol ===
+
+>>> `else
+
+==> else
+
+; === equivalence: ,@ abbreviation equals (unquote-splicing ...) inside qq ===
+
+>>> (equal? `(1 ,@(list 2 3) 4)
+...         (quasiquote (1 (unquote-splicing (list 2 3)) 4)))
+
+==> #t
+; ==========================================================================
+; R7RS section 4.2.8 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> `(list ,(+ 1 2) 4)
+
+==> (list 3 4)
+
+>>> (let ((name 'a)) `(list ,name ',name))
+
+==> (list a (quote a))
+
+>>> `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b)
+
+==> (a 3 4 5 6 b)
+
+>>> `((foo ,(- 10 3)) ,@(cdr '(c)) . ,(car '(cons)))
+
+==> ((foo 7) . cons)
+
+>>> `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8)
+
+==> #(10 5 2 4 3 8)
+
+>>> (quasiquote (list (unquote (+ 1 2)) 4))
+
+==> (list 3 4)
+
+>>> `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)
+
+==> (a (quasiquote (b (unquote (+ 1 2)) (unquote (foo 4 d)) e)) f)
+
+>>> (let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))
+
+==> (a (quasiquote (b (unquote x) (unquote (quote y)) d)) e)
+

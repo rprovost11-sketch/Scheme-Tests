@@ -1,0 +1,939 @@
+; Section 6.7 - Strings
+;
+; Strings are mutable sequences of characters indexed from 0.
+; String literals are written with double quotes; escape sequences:
+;   \" \\ \a \b \t \n \r \| \xNN;
+;
+; (string? obj)
+; (make-string k)          — k unspecified chars
+; (make-string k char)     — k copies of char
+; (string char ...)        — string from char arguments
+; (string-length str)      — number of characters
+; (string-ref str k)       — character at index k
+; (string-set! str k char) — set character at index k
+; (string=? s1 s2 ...)     (string<? ...)  (string>? ...)  etc.
+; (string-ci=? ...)        case-insensitive comparisons
+; (substring str start end)
+; (string-append str ...)
+; (string->list str)       (string->list str start end)
+; (list->string lst)
+; (string-copy str)        (string-copy str start) (string-copy str start end)
+; (string-copy! to at from) (string-copy! to at from start end)
+; (string-fill! str char)  (string-fill! str char start end)
+; (string-upcase str)      (string-downcase str)  (string-foldcase str)
+; (string-for-each proc str ...)
+
+; ==========================================================================
+; string? — true only for strings
+; ==========================================================================
+
+>>> (string? "hello")
+
+==> #t
+
+>>> (string? "")
+
+==> #t
+
+>>> (string? "a")
+
+==> #t
+
+>>> (string? #\a)
+
+==> #f
+
+>>> (string? 'hello)
+
+==> #f
+
+>>> (string? 42)
+
+==> #f
+
+>>> (string? '("a"))
+
+==> #f
+
+>>> (string? #t)
+
+==> #f
+
+; ==========================================================================
+; make-string
+; ==========================================================================
+
+>>> (string-length (make-string 0))
+
+==> 0
+
+>>> (string-length (make-string 5))
+
+==> 5
+
+>>> (make-string 3 #\a)
+
+==> "aaa"
+
+>>> (make-string 5 #\x)
+
+==> "xxxxx"
+
+>>> (make-string 0 #\z)
+
+==> ""
+
+>>> (make-string 1 #\space)
+
+==> " "
+
+; ==========================================================================
+; string — from character arguments
+; ==========================================================================
+
+>>> (string)
+
+==> ""
+
+>>> (string #\a)
+
+==> "a"
+
+>>> (string #\h #\e #\l #\l #\o)
+
+==> "hello"
+
+>>> (string #\space)
+
+==> " "
+
+>>> (string #\A #\B #\C)
+
+==> "ABC"
+
+; ==========================================================================
+; string-length
+; ==========================================================================
+
+>>> (string-length "")
+
+==> 0
+
+>>> (string-length "a")
+
+==> 1
+
+>>> (string-length "hello")
+
+==> 5
+
+>>> (string-length "hello world")
+
+==> 11
+
+>>> (string-length (make-string 100 #\x))
+
+==> 100
+
+; ==========================================================================
+; string-ref — character at index
+; ==========================================================================
+
+>>> (string-ref "hello" 0)
+
+==> #\h
+
+>>> (string-ref "hello" 1)
+
+==> #\e
+
+>>> (string-ref "hello" 4)
+
+==> #\o
+
+>>> (string-ref "abc" 2)
+
+==> #\c
+
+>>> (string-ref "a" 0)
+
+==> #\a
+
+; Error: out of range
+
+>>> (string-ref "hello" 5)
+
+%%% %any-error%
+
+>>> (string-ref "hello" -1)
+
+%%% %any-error%
+
+>>> (string-ref "" 0)
+
+%%% %any-error%
+
+; ==========================================================================
+; string-set! — mutate a character
+; ==========================================================================
+
+>>> (define s (string-copy "hello"))
+
+>>> (string-set! s 0 #\H)
+
+>>> s
+
+==> "Hello"
+
+>>> (string-set! s 4 #\!)
+
+>>> s
+
+==> "Hell!"
+
+>>> (define t (make-string 3 #\a))
+
+>>> (string-set! t 1 #\b)
+
+>>> t
+
+==> "aba"
+
+; Error: out of range
+
+>>> (string-set! (string-copy "hi") 2 #\x)
+
+%%% %any-error%
+
+; ==========================================================================
+; string=? — equality (case-sensitive)
+; ==========================================================================
+
+>>> (string=? "hello" "hello")
+
+==> #t
+
+>>> (string=? "hello" "world")
+
+==> #f
+
+>>> (string=? "" "")
+
+==> #t
+
+>>> (string=? "a" "A")
+
+==> #f
+
+; Multi-argument
+
+>>> (string=? "abc" "abc" "abc")
+
+==> #t
+
+>>> (string=? "abc" "abc" "xyz")
+
+==> #f
+
+; ==========================================================================
+; string<? string>? string<=? string>=? — lexicographic order
+; ==========================================================================
+
+>>> (string<? "abc" "abd")
+
+==> #t
+
+>>> (string<? "abc" "abc")
+
+==> #f
+
+>>> (string<? "abc" "abcd")
+
+==> #t
+
+>>> (string<? "b" "a")
+
+==> #f
+
+>>> (string<? "abc" "abd" "abe")
+
+==> #t
+
+>>> (string<? "abc" "abd" "abd")
+
+==> #f
+
+>>> (string>? "abd" "abc")
+
+==> #t
+
+>>> (string>? "abc" "abc")
+
+==> #f
+
+>>> (string<=? "abc" "abc")
+
+==> #t
+
+>>> (string<=? "abc" "abd")
+
+==> #t
+
+>>> (string<=? "abd" "abc")
+
+==> #f
+
+>>> (string>=? "abc" "abc")
+
+==> #t
+
+>>> (string>=? "abd" "abc")
+
+==> #t
+
+>>> (string>=? "abc" "abd")
+
+==> #f
+
+; Empty string comparisons
+
+>>> (string<? "" "a")
+
+==> #t
+
+>>> (string<? "a" "")
+
+==> #f
+
+>>> (string=? "" "")
+
+==> #t
+
+; ==========================================================================
+; string-ci=?, string-ci<?, etc. — case-insensitive
+; ==========================================================================
+
+>>> (string-ci=? "Hello" "hello")
+
+==> #t
+
+>>> (string-ci=? "HELLO" "hello")
+
+==> #t
+
+>>> (string-ci=? "hello" "world")
+
+==> #f
+
+>>> (string-ci<? "abc" "ABD")
+
+==> #t
+
+>>> (string-ci<? "ABD" "abc")
+
+==> #f
+
+>>> (string-ci>? "ABC" "abd")
+
+==> #f
+
+>>> (string-ci<=? "abc" "ABC")
+
+==> #t
+
+>>> (string-ci>=? "ABC" "abc")
+
+==> #t
+
+>>> (string-ci=? "Hello" "HELLO" "hello")
+
+==> #t
+
+; ==========================================================================
+; substring
+; ==========================================================================
+
+>>> (substring "hello" 0 5)
+
+==> "hello"
+
+>>> (substring "hello" 1 4)
+
+==> "ell"
+
+>>> (substring "hello" 0 0)
+
+==> ""
+
+>>> (substring "hello" 5 5)
+
+==> ""
+
+>>> (substring "hello" 0 1)
+
+==> "h"
+
+>>> (substring "hello" 4 5)
+
+==> "o"
+
+>>> (substring "abcdef" 2 5)
+
+==> "cde"
+
+; Error: invalid range
+
+>>> (substring "hello" 3 2)
+
+%%% %any-error%
+
+>>> (substring "hello" 0 6)
+
+%%% %any-error%
+
+; ==========================================================================
+; string-append
+; ==========================================================================
+
+>>> (string-append "hello" " " "world")
+
+==> "hello world"
+
+>>> (string-append "abc" "def")
+
+==> "abcdef"
+
+>>> (string-append "" "hello")
+
+==> "hello"
+
+>>> (string-append "hello" "")
+
+==> "hello"
+
+>>> (string-append)
+
+==> ""
+
+>>> (string-append "a")
+
+==> "a"
+
+>>> (string-append "a" "b" "c" "d")
+
+==> "abcd"
+
+; ==========================================================================
+; string->list
+; ==========================================================================
+
+>>> (string->list "")
+
+==> ()
+
+>>> (string->list "a")
+
+==> (#\a)
+
+>>> (string->list "hello")
+
+==> (#\h #\e #\l #\l #\o)
+
+; With start and end
+
+>>> (string->list "hello" 1 4)
+
+==> (#\e #\l #\l)
+
+>>> (string->list "hello" 0 1)
+
+==> (#\h)
+
+>>> (string->list "hello" 2 2)
+
+==> ()
+
+; ==========================================================================
+; list->string
+; ==========================================================================
+
+>>> (list->string '())
+
+==> ""
+
+>>> (list->string '(#\a))
+
+==> "a"
+
+>>> (list->string '(#\h #\e #\l #\l #\o))
+
+==> "hello"
+
+>>> (list->string '(#\A #\B #\C))
+
+==> "ABC"
+
+; Roundtrip
+
+>>> (string=? "hello" (list->string (string->list "hello")))
+
+==> #t
+
+>>> (equal? '(#\a #\b #\c) (string->list (list->string '(#\a #\b #\c))))
+
+==> #t
+
+; ==========================================================================
+; string-copy
+; ==========================================================================
+
+>>> (define orig "hello")
+
+>>> (define copy1 (string-copy orig))
+
+>>> (string=? orig copy1)
+
+==> #t
+
+>>> (eq? orig copy1)
+
+==> #f
+
+; With start
+
+>>> (string-copy "hello" 1)
+
+==> "ello"
+
+>>> (string-copy "hello" 0)
+
+==> "hello"
+
+>>> (string-copy "hello" 5)
+
+==> ""
+
+; With start and end
+
+>>> (string-copy "hello" 1 4)
+
+==> "ell"
+
+>>> (string-copy "hello" 0 3)
+
+==> "hel"
+
+>>> (string-copy "hello" 2 2)
+
+==> ""
+
+; ==========================================================================
+; string-copy! — copy into a target string
+; ==========================================================================
+
+>>> (define target (string-copy "xxxxx"))
+
+>>> (string-copy! target 1 "abc")
+
+>>> target
+
+==> "xabcx"
+
+>>> (define t2 (string-copy "-----"))
+
+>>> (string-copy! t2 0 "hello")
+
+>>> t2
+
+==> "hello"
+
+>>> (define t3 (string-copy "xxxxx"))
+
+>>> (string-copy! t3 2 "abcde" 1 3)
+
+>>> t3
+
+==> "xxbcx"
+
+; ==========================================================================
+; string-fill!
+; ==========================================================================
+
+>>> (define sf (string-copy "hello"))
+
+>>> (string-fill! sf #\x)
+
+>>> sf
+
+==> "xxxxx"
+
+>>> (define sf2 (string-copy "hello"))
+
+>>> (string-fill! sf2 #\- 1 4)
+
+>>> sf2
+
+==> "h---o"
+
+>>> (define sf3 (make-string 4 #\a))
+
+>>> (string-fill! sf3 #\b 0 2)
+
+>>> sf3
+
+==> "bbaa"
+
+; ==========================================================================
+; string-upcase, string-downcase, string-foldcase
+; ==========================================================================
+
+>>> (string-upcase "hello")
+
+==> "HELLO"
+
+>>> (string-upcase "Hello World")
+
+==> "HELLO WORLD"
+
+>>> (string-upcase "abc123")
+
+==> "ABC123"
+
+>>> (string-upcase "")
+
+==> ""
+
+>>> (string-downcase "HELLO")
+
+==> "hello"
+
+>>> (string-downcase "Hello World")
+
+==> "hello world"
+
+>>> (string-downcase "ABC123")
+
+==> "abc123"
+
+>>> (string-downcase "")
+
+==> ""
+
+>>> (string-foldcase "Hello")
+
+==> "hello"
+
+>>> (string-foldcase "WORLD")
+
+==> "world"
+
+>>> (string-foldcase "hello")
+
+==> "hello"
+
+; foldcase is consistent with string-ci=?
+
+>>> (string=? (string-foldcase "Hello") (string-foldcase "HELLO"))
+
+==> #t
+
+; ==========================================================================
+; string-for-each
+; ==========================================================================
+
+>>> (define chars-seen '())
+
+>>> (string-for-each
+...   (lambda (c) (set! chars-seen (cons c chars-seen)))
+...   "hello")
+
+>>> (reverse chars-seen)
+
+==> (#\h #\e #\l #\l #\o)
+
+; Multiple strings (parallel iteration)
+
+>>> (define pairs '())
+
+>>> (string-for-each
+...   (lambda (a b) (set! pairs (cons (list a b) pairs)))
+...   "abc"
+...   "xyz")
+
+>>> (reverse pairs)
+
+==> ((#\a #\x) (#\b #\y) (#\c #\z))
+
+; String-for-each returns unspecified
+
+>>> (if #t 'ok)
+
+==> ok
+
+; ==========================================================================
+; String escape sequences
+; ==========================================================================
+
+>>> (string-length "\n")
+
+==> 1
+
+>>> (string-ref "\n" 0)
+
+==> #\newline
+
+>>> (string-ref "\t" 0)
+
+==> #\tab
+
+>>> (string-ref "\r" 0)
+
+==> #\return
+
+>>> (string-ref "\a" 0)
+
+==> #\alarm
+
+>>> (string-ref "\b" 0)
+
+==> #\backspace
+
+>>> (string-ref "\"" 0)
+
+==> #\"
+
+>>> (string-ref "\\" 0)
+
+==> #\\
+
+>>> (string-ref "\x41;" 0)
+
+==> #\A
+
+>>> (string-ref "\x61;" 0)
+
+==> #\a
+
+; ==========================================================================
+; Strings in data structures
+; ==========================================================================
+
+>>> (list "a" "b" "c")
+
+==> ("a" "b" "c")
+
+>>> (vector "hello" "world")
+
+==> #("hello" "world")
+
+>>> (map string-length '("" "a" "hello" "world!"))
+
+==> (0 1 5 6)
+
+>>> (map string-upcase '("hello" "world"))
+
+==> ("HELLO" "WORLD")
+
+; ==========================================================================
+; String comparison — sorting by string<?
+; ==========================================================================
+
+>>> (string<? "apple" "banana")
+
+==> #t
+
+>>> (string<? "apple" "apricot")
+
+==> #t
+
+>>> (string<? "apricot" "apple")
+
+==> #f
+
+; ==========================================================================
+; Error cases
+; ==========================================================================
+
+>>> (string-length 42)
+
+%%% %any-error%
+
+>>> (string-ref 42 0)
+
+%%% %any-error%
+
+>>> (substring "hello" -1 3)
+
+%%% %any-error%
+
+>>> (list->string '(#\a 42 #\c))
+
+%%% %any-error%
+
+; ==========================================================================
+; ADDITIONAL R7RS COMPLIANCE TESTS
+; ==========================================================================
+
+; === string-map — single string ===
+; string-map applies proc element-wise and returns a new string.
+
+>>> (string-map char-upcase "hello")
+
+==> "HELLO"
+
+>>> (string-map char-downcase "HELLO")
+
+==> "hello"
+
+>>> (string-map char-foldcase "AbdEgH")
+
+==> "abdegh"
+
+>>> (string-map (lambda (c) c) "")
+
+==> ""
+
+>>> (string-map (lambda (c) #\*) "abc")
+
+==> "***"
+
+; string-map returns a new string; original is unchanged.
+
+>>> (define sm-orig "abc")
+
+>>> (define sm-result (string-map char-upcase sm-orig))
+
+>>> sm-result
+
+==> "ABC"
+
+>>> sm-orig
+
+==> "abc"
+
+; === string-map — multiple strings (parallel, stops at shortest) ===
+
+>>> (string-map
+...   (lambda (c k)
+...     ((if (eqv? k #\u) char-upcase char-downcase) c))
+...   "studlycaps xxx"
+...   "ululululul")
+
+==> "StUdLyCaPs"
+
+; Two strings of equal length
+
+>>> (string-map (lambda (a b) (if (char<? a b) a b)) "abc" "cba")
+
+==> "aba"
+
+; Unequal length: terminates when the shortest string runs out
+
+>>> (string-map (lambda (a b) a) "abcde" "xy")
+
+==> "ab"
+
+>>> (string-map (lambda (a b) b) "ab" "xyzwv")
+
+==> "xy"
+
+; === string comparison — multi-argument (3+) and transitivity ===
+; These predicates are required to be transitive.
+
+>>> (string=? "a" "a" "a" "a")
+
+==> #t
+
+>>> (string<? "a" "b" "c" "d")
+
+==> #t
+
+>>> (string<? "a" "b" "b" "d")
+
+==> #f
+
+>>> (string<=? "a" "a" "b" "b")
+
+==> #t
+
+>>> (string>? "d" "c" "b" "a")
+
+==> #t
+
+>>> (string>=? "c" "c" "b" "a")
+
+==> #t
+
+>>> (string-ci<? "a" "B" "c")
+
+==> #t
+
+>>> (string-ci>? "C" "b" "A")
+
+==> #t
+
+; === string comparison — length differences and prefixes ===
+
+>>> (string<? "abc" "abcd")
+
+==> #t
+
+>>> (string>? "abcd" "abc")
+
+==> #t
+
+>>> (string<? "Z" "a")
+
+==> #t
+
+; === string comparison — type error on non-string argument ===
+
+>>> (string=? "abc" 42)
+
+%%% %any-error%
+
+>>> (string<? "abc" 'abc)
+
+%%% %any-error%
+
+; === substring equivalent to string-copy ===
+
+>>> (substring "hello" 1 4)
+
+==> "ell"
+
+>>> (string=? (substring "hello" 1 4) (string-copy "hello" 1 4))
+
+==> #t
+
+; === make-string error — negative length ===
+
+>>> (make-string -1)
+
+%%% %any-error%
+
+; === string-append type error ===
+
+>>> (string-append "abc" 42)
+
+%%% %any-error%
+
+>>> (let ((s (symbol->string 'immutable))) (string-set! s 0 #\?) s)
+... ; R7RS 6.7 / 3.4: the string returned by symbol->string is immutable, and
+... ; storing into an immutable string "is an error" -- undefined behavior, so
+... ; signaling is optional; %optional-error% accepts either outcome.
+
+%%% %optional-error%
+
+; ==========================================================================
+; R7RS section 6.7 -- worked examples from the standard (Chibi-verified).
+; ==========================================================================
+
+>>> (let () (define a "12345") (define b (string-copy "abcde")) (string-copy! b 1 a 0 2) b)
+
+==> "a12de"
+
+>>> (let () (define (g) "***") (string-set! (g) 0 #\?))
+
+%%% %optional-error%
+
