@@ -18,9 +18,13 @@
 ;;;       `define x` then `define-syntax`) must resolve to that *binding*, not a
 ;;;       snapshot copy -- so set! writes through and later mutations are seen.
 ;;;
-;;; Cases tagged [DISCRIMINATES] currently FAIL on pyScheme / cppScheme2 -- they
-;;; are the real test of a fix.  Cases tagged [guard] already pass and must KEEP
-;;; passing (regression guard against an over-eager fix).
+;;; STATUS: all 15 cases now PASS on pyScheme / cppScheme2 (Group A hygiene
+;;; complete as of v0.6.5/v0.6.6 -- A1/A3 via per-expansion marks + always-fresh
+;;; template binders, A5 via the AliasCell free-variable indirection).  Every
+;;; case is tagged [guard] and must KEEP passing (regression guard against an
+;;; over-eager change).  The cases whose comment says "(was discriminator)" are
+;;; the ones that ORIGINALLY FAILED and exposed the bugs -- the most important
+;;; to keep green.
 ;;;
 ;;; Run (file mode):  python -m pyscheme <file>   |   cppscheme2.exe <file>
 ;;; chibi runs these only from its REPL (its file compiler mishandles a
@@ -45,7 +49,7 @@
 ;;; A1 -- macro that generates a macro
 ;;; --------------------------------------------------------------------------
 
-;; [DISCRIMINATES] The inner template's 'y is foo's argument (the use-site x),
+;; [guard] (was discriminator) The inner template's 'y is foo's argument (the use-site x),
 ;; NOT the inner macro's pattern variable x.  Expected: the symbol x.
 (check "A1a/threaded-quote"
        (let ()
@@ -58,7 +62,7 @@
          (bar 1))
        'x)
 
-;; [DISCRIMINATES] Both identities visible at once: inner pattern var x = 1,
+;; [guard] (was discriminator) Both identities visible at once: inner pattern var x = 1,
 ;; threaded y = symbol x.
 (check "A1b/both-identities"
        (let ()
@@ -111,7 +115,7 @@
          (list (m1 1) (m2 2)))
        '(aaa bbb))
 
-;; [DISCRIMINATES] The generated macro introduces a binding using the threaded
+;; [guard] (was discriminator) The generated macro introduces a binding using the threaded
 ;; id; a use-site reference of the same name must NOT be captured by it.  The
 ;; (let ((y 'inner)) ...) binds the threaded y; the use-site x passed as e must
 ;; stay the outer x.  Expected: ((inner outer) outer).
@@ -131,7 +135,7 @@
 ;;; A3 -- bound-identifier=? vs free-identifier=?
 ;;; --------------------------------------------------------------------------
 
-;; [DISCRIMINATES] r7rs-tests canonical case.  m's pattern var x is substituted
+;; [guard] (was discriminator) r7rs-tests canonical case.  m's pattern var x is substituted
 ;; with the use-site k into n's first pattern; because that k carries different
 ;; marks than n's literal k, it stays a pattern variable, so (n z) matches it.
 (check "A3a/canonical"
@@ -173,7 +177,7 @@
          (m k))
        'bound=)
 
-;; [DISCRIMINATES] n has its OWN literal k (first clause), then x->k as a second
+;; [guard] (was discriminator) n has its OWN literal k (first clause), then x->k as a second
 ;; clause, then a catch-all.  The substituted k is a pattern var (different
 ;; marks than the literal k), so (n z) matches the x-clause.  Expected: var-x.
 (check "A3d/own-literal-plus-substituted"
@@ -223,7 +227,7 @@
 ;;; discriminate -- the bug is specific to def-before-macro bindings.)
 ;;; --------------------------------------------------------------------------
 
-;; [DISCRIMINATES] set! inside a template must write through to the variable,
+;; [guard] (was discriminator) set! inside a template must write through to the variable,
 ;; not to a private copy.
 (define a5-counter 0)
 (define-syntax a5-bump
@@ -231,14 +235,14 @@
 (a5-bump) (a5-bump) (a5-bump)
 (check "A5a/set-through-counter" a5-counter 3)
 
-;; [DISCRIMINATES] a template's read of a variable mutated AFTER the macro was
+;; [guard] (was discriminator) a template's read of a variable mutated AFTER the macro was
 ;; defined must see the new value, not the def-time snapshot.
 (define a5-g 10)
 (define-syntax a5-getg (syntax-rules () ((a5-getg) a5-g)))
 (set! a5-g 20)
 (check "A5b/stale-read-after-mutation" (a5-getg) 20)
 
-;; [DISCRIMINATES] macro writes, ordinary code reads.
+;; [guard] (was discriminator) macro writes, ordinary code reads.
 (define a5-h 0)
 (define-syntax a5-seth (syntax-rules () ((a5-seth v) (set! a5-h v))))
 (a5-seth 99)

@@ -14,7 +14,7 @@
 (define %ie (interaction-environment))
 (define %port
   (open-input-file
-    "D:/SWDEV/Languages/Lisp/scheme-tests/application-tests/r7rs-tests.scm"))
+    "D:/SWDEV/Languages/Lisp/scheme-tests/application-tests/Chibi-R7RS-tests/r7rs-tests.scm"))
 (define %errs 0)
 
 (let %loop ()
