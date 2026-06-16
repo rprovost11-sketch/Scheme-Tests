@@ -81,6 +81,30 @@
 
 ==> #t
 
+; floor/ceiling/truncate/round of a bignum RATIONAL: the integer result is
+; itself a bignum, so it must not be clamped to int64.  (2^100)/3 lies
+; between these two consecutive integers; round/truncate go toward floor.
+
+>>> (floor (/ (expt 2 100) 3))
+
+==> 422550200076076467165567735125
+
+>>> (ceiling (/ (expt 2 100) 3))
+
+==> 422550200076076467165567735126
+
+>>> (truncate (/ (expt 2 100) 3))
+
+==> 422550200076076467165567735125
+
+>>> (round (/ (expt 2 100) 3))
+
+==> 422550200076076467165567735125
+
+>>> (floor (/ (- 0 (expt 2 100)) 3))
+
+==> -422550200076076467165567735126
+
 ; ==========================================================================
 ; ceiling — smallest integer not smaller than x
 ; ==========================================================================
