@@ -894,6 +894,29 @@
 
 ==> 5
 
+; Bignum arguments stay exact (not collapsed to double); the original exact
+; winner is returned.  Contagion still makes the result inexact (below).
+
+>>> (max 5 1267650600228229401496703205376)
+
+==> 1267650600228229401496703205376
+
+>>> (min 5 1267650600228229401496703205376)
+
+==> 5
+
+>>> (max 1267650600228229401496703205376 1267650600228229401496703205377)
+
+==> 1267650600228229401496703205377
+
+>>> (exact? (max 5 1267650600228229401496703205376))
+
+==> #t
+
+>>> (max 5.0 1267650600228229401496703205376)
+
+==> 1.2676506002282294e+30
+
 ; Mixed exact/inexact — result is inexact if any arg is inexact
 
 >>> (max 1 2.0)
@@ -1025,6 +1048,31 @@
 ==> #t
 
 >>> (> 3 2.5 2)
+
+==> #t
+
+; === Comparison — bignum vs inexact compares exactly (no double collapse)
+; A bignum and a nearby inexact that round to the same double must NOT
+; compare equal: 2^100+1 differs from the double 2^100.0, even though both
+; round to that double.  (Formerly both collapsed to 2^100.0 and = wrongly
+; returned #t.)
+
+>>> (= (+ 1 1267650600228229401496703205376) (exact->inexact 1267650600228229401496703205376))
+
+==> #f
+
+>>> (< (exact->inexact 1267650600228229401496703205376) (+ 1 1267650600228229401496703205376))
+
+==> #t
+
+>>> (> (+ 1 1267650600228229401496703205376) (exact->inexact 1267650600228229401496703205376))
+
+==> #t
+
+; An exact value equal to its own inexact image still compares = (2^100 is
+; exactly representable as a double).
+
+>>> (= 1267650600228229401496703205376 (exact->inexact 1267650600228229401496703205376))
 
 ==> #t
 
