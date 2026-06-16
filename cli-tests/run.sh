@@ -69,6 +69,41 @@ run '' -e '(+ 1 2)' some-target.scm
 assert_rc       'argv: -e combined with a file target exits 2' 2
 assert_contains 'argv: -e + target explains the conflict' 'cannot be combined'
 
+# ---- .run report behavior -----------------------------------------------
+# Build a throwaway tests-root (one all-pass feature file, one with a
+# deliberate failure, one all-pass regression file), run two suites, and
+# inspect the runs/ dir.  The interpreter resolves paths in native (Windows)
+# form, so convert the temp dir from its MSYS path for the listener command.
+
+FIX="$(mktemp -d)"
+FIX_NATIVE="$(cygpath -m "$FIX" 2>/dev/null || printf '%s' "$FIX")"
+mkdir -p "$FIX/log-tests/feature-tests" "$FIX/log-tests/regression-tests" "$FIX/runs"
+printf '>>> (+ 1 2)\n\n==> 3\n'        > "$FIX/log-tests/feature-tests/a-allpass.log"
+printf '>>> (* 6 7)\n\n==> 999\n'      > "$FIX/log-tests/feature-tests/b-hasfail.log"
+printf '>>> (list 1 2)\n\n==> (1 2)\n' > "$FIX/log-tests/regression-tests/r-allpass.log"
+
+printf ']scheme-tests %s\n]suites feature regression\n]quit\n' "$FIX_NATIVE" \
+  | $INTERP >/dev/null 2>&1
+
+# Exactly one combined report for the whole ]suites batch (not one per suite).
+nrun=$(ls -1 "$FIX/runs/"*.run 2>/dev/null | wc -l | tr -d '[:space:]')
+if [ "$nrun" = 1 ]; then
+  ok '.run: ]suites over two suites writes exactly one combined report'
+else
+  ng '.run: one combined report per ]suites' "expected 1 .run file in runs/, found $nrun"
+fi
+
+# Assert against the report's contents.
+OUT="$(cat "$FIX/runs/"*.run 2>/dev/null)"
+assert_contains '.run: combined report has the feature section'              'suite: feature'
+assert_contains '.run: combined report has the regression section'           'suite: regression'
+assert_contains '.run: failing case is recorded with its expression'         '(* 6 7)'
+assert_contains '.run: failing case shows expected vs actual return'         'expected return: [999]'
+assert_absent   '.run: passing feature case detail omitted (failure-only)'   '(+ 1 2)'
+assert_absent   '.run: passing regression case detail omitted (failure-only)' '(list 1 2)'
+
+rm -rf "$FIX"
+
 # ---- summary ------------------------------------------------------------
 
 printf '\ncli-tests: %d passed, %d failed  [%s]\n' "$pass" "$fail" "$INTERP"

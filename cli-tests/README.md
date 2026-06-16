@@ -39,5 +39,16 @@ Exits non-zero if any check fails.
     bash run.sh "/d/SWDEV/Languages/Lisp/4CPPScheme2/build/Release/cppscheme2.exe"
 
 The two ports differ only in the program-name prefix of error/usage text
-(`pyscheme:` vs `cppscheme2:`); the harness asserts on the shared message
-content and exit codes, never the program name.
+(`pyscheme:` vs `cppscheme2:`) and the `.run` filename suffix
+(`PyScheme.run` vs `CPPScheme2.run`); the harness asserts on the shared
+message content and exit codes, never on those.
+
+The `.run`-report checks build a throwaway tests-root in a temp dir (one
+all-passing feature file, one with a deliberate failure, one all-passing
+regression file), run `]suites feature regression` against it, and inspect
+`runs/`. This needs Git Bash with `cygpath` (to hand the interpreter a
+native-form path); the temp tree is removed afterward.
+
+The whole run is deliberately cheap — a handful of process launches plus one
+tiny fixture suite, well under a second per port — so it belongs in the
+run-on-every-change bucket, not an occasional one.
