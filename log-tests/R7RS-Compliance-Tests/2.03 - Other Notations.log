@@ -2,6 +2,7 @@
 ;
 ; Covers: ( )  #( )  #u8( )  '  `  ,  ,@  .  #t #f #true #false
 ;         #\<character>  "<string>"  #b #o #d #x  #e #i
+;         exponent markers e/s/f/d/l  and  complex notation (i, I, radix-prefixed)
 ;
 ; Note: #N= and #N# datum labels are covered in 2.4.
 
@@ -1048,6 +1049,149 @@
 ==> #t
 
 ; Note: #x#iff parses as radix-16 + inexact-prefix + hex digits "ff" = 255.0
+
+
+; ==========================================================================
+; Exponent markers — e  s  f  d  l
+; R7RS 7.1.1: <exponent marker> -> e | s | f | d | l.  The marker letters
+; (short / single / float-double / long) are historical precision hints; in
+; a system with a single inexact-real type they all denote the same value.
+; The marker is case-insensitive.
+; ==========================================================================
+
+; The default 'e' marker and the s/f/d/l variants all produce the same
+; inexact real.
+
+>>> 1e3
+
+==> 1000.0
+
+>>> 1s3
+
+==> 1000.0
+
+>>> 1f3
+
+==> 1000.0
+
+>>> 1d3
+
+==> 1000.0
+
+>>> 1l3
+
+==> 1000.0
+
+>>> (= 1e3 1s3 1f3 1d3 1l3)
+
+==> #t
+
+; The marker letter is case-insensitive (1E3 = 1e3).
+
+>>> 1E3
+
+==> 1000.0
+
+>>> 1S3
+
+==> 1000.0
+
+>>> 1D3
+
+==> 1000.0
+
+; A marker may follow a decimal point and fractional digits.
+
+>>> 1.5f0
+
+==> 1.5
+
+>>> 1.5d0
+
+==> 1.5
+
+; The exponent may carry an explicit sign.
+
+>>> -1.5e2
+
+==> -150.0
+
+>>> +1.5d2
+
+==> 150.0
+
+; A number written with any exponent marker is inexact.
+
+>>> (inexact? 1s3)
+
+==> #t
+
+>>> (exact? 1e3)
+
+==> #f
+
+
+; ==========================================================================
+; Complex / imaginary number notation — i, I, and radix-prefixed
+; R7RS 7.1.1 / 6.2.5: a complex constant ends in the imaginary-unit suffix
+; i (case-insensitive, so I is also accepted).  A bare +i / -i is the
+; imaginary unit; <real>+<ureal>i is a full rectangular complex.  A radix
+; prefix (#b/#o/#x) applies to BOTH the real and imaginary parts.
+; ==========================================================================
+
+; The imaginary unit on its own.
+
+>>> +i
+
+==> 0+1i
+
+>>> -i
+
+==> 0-1i
+
+; The suffix is case-insensitive: capital I is equivalent to lowercase i.
+
+>>> +I
+
+==> 0+1i
+
+>>> -I
+
+==> 0-1i
+
+>>> 1+2i
+
+==> 1+2i
+
+>>> 1+2I
+
+==> 1+2i
+
+; A radix prefix applies to every digit group, real and imaginary alike.
+
+>>> #x1+2i
+
+==> 1+2i
+
+>>> #b101+11i
+
+==> 5+3i
+
+>>> #o7+1i
+
+==> 7+1i
+
+>>> (real-part #b101+11i)
+
+==> 5
+
+>>> (imag-part #o7+1i)
+
+==> 1
+
+>>> (real-part #x1+2i)
+
+==> 1
 
 
 ; ==========================================================================
