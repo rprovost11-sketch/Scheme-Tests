@@ -41,3 +41,38 @@
 >>> (begin (walk (build 30000)) leaves)
 ... ; a 30000-deep car-nested walk completes; pre-fix this overflowed the C stack
 ==> 1
+
+; REG 2026-06-15 -- 338fcdc -- record-mutator field store skipped the write barrier
+; Symptom: mutating a record that had been promoted to old gen so it points to a
+;   freshly-allocated (young) record created an old->young edge the minor GC never
+;   recorded; the young child was swept as unreachable and the next access read
+;   freed memory -- SIGSEGV, or "<setter>: first argument is not a <type>" once the
+;   slot was reused (cppscheme2 only; surfaced by the gcbench benchmark).  The
+;   evaluator's record-mutator apply now calls gc_write_barrier like %record-set!.
+;   Below: build a tree by churning allocation (forcing GC, promoting gc-root to
+;   old gen) and mutating old nodes to point at new ones; every node must survive.
+
+>>> (define-record-type gcnode (mk l r) gcnode? (l gl sl!) (r gr sr!))
+==>
+
+>>> (define (pop d n)
+...   (if (<= d 0)
+...       #f
+...       (let ((d (- d 1)))
+...         (sl! n (mk #f #f))
+...         (sr! n (mk #f #f))
+...         (pop d (gl n))
+...         (pop d (gr n)))))
+==>
+
+>>> (define (cnt n) (if (gcnode? n) (+ 1 (cnt (gl n)) (cnt (gr n))) 0))
+==>
+
+>>> (define gc-root (mk #f #f))
+==>
+
+>>> (begin (do ((i 0 (+ i 1))) ((>= i 8)) (let ((t (mk #f #f))) (pop 12 t)))
+...        (pop 12 gc-root)
+...        (cnt gc-root))
+... ; all 8191 nodes of the long-lived tree survive; pre-fix this crashed / under-counted
+==> 8191

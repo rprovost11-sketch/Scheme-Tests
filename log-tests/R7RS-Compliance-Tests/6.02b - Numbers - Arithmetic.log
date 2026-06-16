@@ -1047,3 +1047,54 @@
 
 ==> 2.0
 
+; ---------------------------------------------------------------------------
+; Bignum (arbitrary-precision integer) operands.  R7RS 6.2.6: these operations
+; are defined for all integers, including those too large for a fixnum.  The
+; integer-division family (quotient/remainder/modulo/floor-/truncate-) and the
+; numeric comparisons (= < > <= >=) must all work exactly on bignums.
+; (cppscheme2 once handled only int64 here -- division raised "not an integer"
+; on a bignum, and comparison collapsed bignums to double so close bignums
+; compared equal.  Fixed 2026-06-15.)
+
+>>> (quotient (expt 10 20) 3)
+
+==> 33333333333333333333
+
+>>> (remainder (expt 10 20) 3)
+
+==> 1
+
+>>> (modulo (- (expt 10 20)) 3)
+
+==> 2
+
+>>> (call-with-values (lambda () (truncate/ (expt 10 20) 3)) list)
+
+==> (33333333333333333333 1)
+
+>>> (call-with-values (lambda () (floor/ (- (expt 10 20)) 3)) list)
+
+==> (-33333333333333333334 2)
+
+>>> (= (quotient (expt 10 40) (expt 10 20)) (expt 10 20))
+
+==> #t
+
+; Comparison must be exact: close bignums are NOT equal.
+
+>>> (= (+ (expt 10 30) 1) (expt 10 30))
+
+==> #f
+
+>>> (< (expt 10 30) (+ (expt 10 30) 1))
+
+==> #t
+
+>>> (> (+ (expt 10 30) 1) (expt 10 30))
+
+==> #t
+
+>>> (<= (expt 10 30) (expt 10 30) (+ (expt 10 30) 1))
+
+==> #t
+
