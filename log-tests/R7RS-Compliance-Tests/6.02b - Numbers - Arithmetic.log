@@ -666,6 +666,17 @@
 
 ==> #t
 
+; A rational result whose reduced numerator/denominator exceeds 64 bits is
+; stored exactly as a bignum rational (not truncated or degraded to double).
+
+>>> (+ 1/9999999999 1/9999999998)
+
+==> 19999999997/99999999970000000002
+
+>>> (* 1/9999999999 1/9999999998)
+
+==> 1/99999999970000000002
+
 >>> (/ (* 7 9999999999) 9999999999)
 
 ==> 7

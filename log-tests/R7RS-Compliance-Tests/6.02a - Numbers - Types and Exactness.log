@@ -996,6 +996,21 @@
 
 ==> #t
 
+; A large integral inexact converts to an exact bignum (its exact double
+; value), not a truncated/overflowed fixnum.
+
+>>> (exact 1e30)
+
+==> 1000000000000000019884624838656
+
+>>> (exact (expt 2.0 80))
+
+==> 1208925819614629174706176
+
+>>> (exact-integer? (exact 1e30))
+
+==> #t
+
 ; === inexact — idempotent on inexact, exactness of result
 
 >>> (inexact -2)
