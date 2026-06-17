@@ -43,20 +43,32 @@ false positive, because the two ports' error chrome always differs.
 ## Running
 
     # from this directory
-    python diff.py                      # all cases in cases/
+    python diff.py                      # all cases in cases/ (cross-port only)
     python diff.py cases/06-recursive-or.scm   # one (or several) cases
     python diff.py -v                   # show stdout even for parity cases
-    python diff.py --oracle chibi       # on divergence, hint which port is wrong
+    python diff.py --oracle chibi       # add chibi as a third engine (see below)
 
 The harness path-discovers both interpreters relative to its own location
 (`../../3PyScheme`, `../../4CPPScheme2/build/Release/cppscheme2.exe`); override
 with `--py "<invocation>"` / `--cpp "<invocation>"`. Exit status is non-zero if
 any case diverges, so it gates like the cli-tests.
 
-`--oracle chibi` runs the case body through chibi-scheme on stdin (its file
-compiler mishandles a macro-generated `define-syntax` with empty literals) and
-best-effort strips REPL prompt/warning chrome. Treat its verdict as a hint, not
-gospel — hardening it is part #4c.
+## The chibi oracle (`--oracle chibi`)
+
+The bare cross-port diff cannot catch a bug **both** ports share — if they are
+wrong the same way, they still agree. `--oracle chibi` adds chibi-scheme (the
+R7RS reference) as a third engine consulted on **every** case, so:
+
+- on a cross-port **divergence**, it adjudicates *which* port is wrong;
+- on cross-port **parity**, it still checks the agreed answer against chibi — a
+  mismatch is a **`SHARED-DEVIATION`** (a bug both ports share, or a chibi
+  quirk), which the diff alone would silently pass.
+
+chibi runs each case via a driver that `eval`s the case's forms one-by-one in an
+`interaction-environment`, so the program's own output lands on clean stdout
+(no REPL prompt chrome) and chibi's file-compiler quirk with macro-generated
+`define-syntax` is sidestepped. Because chibi is a *different* implementation,
+only its **output and errored-or-not** are compared, never its error *wording*.
 
 ## The corpus (`cases/`)
 

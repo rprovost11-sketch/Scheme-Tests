@@ -45,6 +45,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CASES_DIR = os.path.join(HERE, "cases")
@@ -89,6 +90,12 @@ class Run:
             return "ERRMSG"         # both errored, but for different reasons
         return None
 
+    def matches_oracle(self, oracle):
+        """Coarse agreement with a *different* implementation: same written
+        output and same errored-or-not.  Error *messages* are not compared --
+        chibi phrases them its own way, which is not a bug in either port."""
+        return self.out == oracle.out and (self.rc != 0) == (oracle.rc != 0)
+
 
 def normalize(raw_bytes):
     """CRLF -> LF; strip trailing whitespace per line and overall."""
@@ -126,31 +133,63 @@ def run_file(argv, casefile, cwd=None):
         return Run("<TIMEOUT>", "<TIMEOUT>", -1)
 
 
+# Chibi runs each case through a DRIVER: the case's forms are read from an
+# embedded string and eval'd one-by-one in an interaction-environment, so the
+# program's own (write ...) lands on clean stdout with no REPL prompt chrome,
+# and chibi's file-compiler quirk with macro-generated define-syntax (empty
+# literals) is sidestepped -- the same eval-in-ie trick chibi_diff.py relies on.
+# An uncaught Scheme error is caught by the guard and printed as a sentinel line
+# so we can tell "errored" from "returned a value" without parsing chibi prose.
+_CHIBI_ERR = "\x1eCHIBI-ERR\x1e"
+_CHIBI_DRIVER = r'''
+(import (scheme base) (scheme write) (scheme eval) (scheme repl) (scheme read)
+        (scheme char) (scheme inexact) (scheme complex) (scheme cxr) (scheme lazy)
+        (scheme case-lambda))
+(define ie (interaction-environment))
+(define src %s)
+(define (read-all str)
+  (let ((p (open-input-string str)))
+    (let loop ((acc '()))
+      (let ((x (read p))) (if (eof-object? x) (reverse acc) (loop (cons x acc)))))))
+(define (err->string e)
+  (if (error-object? e) (error-object-message e)
+      (let ((p (open-output-string))) (write e p) (get-output-string p))))
+(guard (e (#t (write-string "%s") (write-string (err->string e))))
+  (for-each (lambda (f) (eval f ie)) (read-all src)))
+'''
+
+
 def run_chibi(casefile):
-    """Best-effort: feed the case body to chibi on stdin and strip REPL chrome
-    (its file compiler mishandles a macro-generated define-syntax with empty
-    literals, so stdin is the only reliable path -- see chibi_diff.py)."""
+    """Run the case through chibi (the R7RS reference) via the eval-in-ie
+    driver.  Returns a Run; an uncaught error becomes rc=1 with its message in
+    err_core.  None if chibi is not installed."""
     with open(casefile, "r", encoding="utf-8") as f:
-        body = f.read()
+        src = f.read()
+    lit = '"' + src.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    driver = _CHIBI_DRIVER % (lit, _CHIBI_ERR)
+    fd, path = tempfile.mkstemp(suffix=".scm")
+    os.close(fd)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(driver)
     env = dict(os.environ)
     env["CHIBI_IGNORE_SYSTEM_PATH"] = "1"
     env["CHIBI_MODULE_PATH"] = CHIBI_LIB
     try:
         proc = subprocess.run(
-            [CHIBI_EXE], input=body.encode("utf-8"),
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            cwd=CHIBI_DIR, timeout=30, env=env,
+            [CHIBI_EXE, path], cwd=CHIBI_DIR, env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
         )
     except FileNotFoundError:
         return None
     except subprocess.TimeoutExpired:
         return Run("<TIMEOUT>", "<TIMEOUT>", -1)
+    finally:
+        os.remove(path)
     out = normalize(proc.stdout)
-    # REPL chrome: drop "> " prompts and leading WARNING lines from stderr.
-    out = out.replace("> ", "").replace(">", "").strip()
-    err = "\n".join(ln for ln in normalize(proc.stderr).split("\n")
-                    if not ln.startswith("WARNING:"))
-    return Run(out, stderr_core(err), proc.returncode)
+    if _CHIBI_ERR in out:
+        value_out, _, msg = out.partition(_CHIBI_ERR)
+        return Run(value_out.rstrip("\n"), msg.strip(), 1)
+    return Run(out, "", 0)
 
 
 def main():
@@ -175,42 +214,59 @@ def main():
         return 2
 
     parity = 0
-    diverged = []
+    diverged = []          # (name, kind) -- ports disagree
+    shared_dev = []        # (name,) -- ports AGREE but both differ from chibi
+    oracle = args.oracle == "chibi"
 
-    print("cross-port differential macro harness")
+    print("cross-port differential macro harness%s" % ("  [+chibi oracle]" if oracle else ""))
     print("  pyScheme  : %s  (cwd=%s)" % (" ".join(py_argv), py_cwd or "."))
     print("  cppScheme2: %s" % " ".join(cpp_argv))
+    if oracle:
+        print("  chibi     : %s" % CHIBI_EXE)
     print()
 
     for cf in case_files:
         name = os.path.basename(cf)
         py = run_file(py_argv, cf, cwd=py_cwd)
         cpp = run_file(cpp_argv, cf)
+        ch = run_chibi(cf) if oracle else None
+
         if py.behaves_like(cpp):
-            parity += 1
-            print("  parity   %s" % name)
-            if args.verbose:
+            # Ports agree.  With the oracle on, still check they agree with the
+            # reference -- a shared deviation is a bug both ports share (which
+            # the cross-port diff alone, by definition, cannot catch).
+            if oracle and ch is not None and not py.matches_oracle(ch):
+                shared_dev.append(name)
+                print("  SHARED!  %s  (both ports agree, but differ from chibi)" % name)
                 _show("py & cpp", py)
+                _show("chibi", ch)
+            else:
+                parity += 1
+                print("  parity   %s" % name)
+                if args.verbose:
+                    _show("py & cpp", py)
         else:
             kind = py.divergence_kind(cpp)
             diverged.append((name, kind))
             print("  DIVERGE  %s  [%s]  (py rc=%d, cpp rc=%d)" % (name, kind, py.rc, cpp.rc))
             _show("pyScheme", py)
             _show("cppScheme2", cpp)
-            if args.oracle == "chibi":
-                ch = run_chibi(cf)
-                if ch is None:
-                    print("          (chibi not found at %s)" % CHIBI_EXE)
-                else:
-                    _show("chibi", ch)
-                    print("          --> chibi agrees with: %s" % _adjudicate(py, cpp, ch))
+            if oracle and ch is not None:
+                _show("chibi", ch)
+                print("          --> chibi agrees with: %s" % _adjudicate(py, cpp, ch))
+            elif oracle:
+                print("          (chibi not found at %s)" % CHIBI_EXE)
 
     print()
-    print("cross-port: %d parity, %d diverged  (of %d cases)"
-          % (parity, len(diverged), len(case_files)))
+    print("cross-port: %d parity, %d diverged%s  (of %d cases)"
+          % (parity, len(diverged),
+             (", %d shared-deviation" % len(shared_dev)) if oracle else "",
+             len(case_files)))
     for name, kind in diverged:
-        print("    %-8s %s" % (kind, name))
-    return 1 if diverged else 0
+        print("    DIVERGE  %-8s %s" % (kind, name))
+    for name in shared_dev:
+        print("    SHARED   %s" % name)
+    return 1 if (diverged or shared_dev) else 0
 
 
 def _show(label, r):
@@ -223,15 +279,15 @@ def _show(label, r):
 
 
 def _adjudicate(py, cpp, ch):
-    py_ok = py.behaves_like(ch)
-    cpp_ok = cpp.behaves_like(ch)
+    py_ok = py.matches_oracle(ch)
+    cpp_ok = cpp.matches_oracle(ch)
     if py_ok and not cpp_ok:
         return "pyScheme  (cppScheme2 is wrong)"
     if cpp_ok and not py_ok:
         return "cppScheme2  (pyScheme is wrong)"
     if py_ok and cpp_ok:
-        return "both (?!  re-check normalization)"
-    return "NEITHER  (both ports differ from chibi -- shared bug, or chibi chrome)"
+        return "both (?!  they diverged yet both match chibi -- likely an ERRMSG-only split)"
+    return "NEITHER  (both ports differ from chibi -- inspect by hand)"
 
 
 if __name__ == "__main__":

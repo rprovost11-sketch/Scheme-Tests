@@ -39,6 +39,15 @@ cppScheme2 reads past the end of the shorter match vector — returning an
 uninitialized `#<unknown>` in the mild case, dereferencing out of bounds (crash)
 when the shorter var is empty.
 
+**cppScheme2 result is nondeterministic — confirming memory-unsafety.** The
+mild case (`(zp (1 2 3) (10 20))`) prints `(3 #<unknown>)` stably when run under
+bash, but errors differently (`empty list () is not a valid expression`) when run
+as a separate-pipe subprocess from the harness: the out-of-bounds read returns
+whatever ambient memory holds, which depends on the invocation context. The
+empty-var case crashes with Windows access violation `0xC0000005` (rc
+3221225477; SIGSEGV / rc 139 on Linux). This is reading uninitialized/OOB memory,
+not merely a wrong-answer logic bug.
+
 **Fix target:** detect mismatched ellipsis match-counts during template
 instantiation and raise a clean Scheme-level syntax error in *both* ports.
 (Matching chibi's silent truncation is the alternative, but a diagnosed error is
