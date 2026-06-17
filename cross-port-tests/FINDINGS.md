@@ -5,6 +5,24 @@ two are mirror implementations, so identical input must behave identically).
 Confirmed bugs get a quarantined repro under `known-bugs/` until fixed, then a
 well-formed regression guard is promoted into `cases/`.
 
+## Hunt status (2026-06-17)
+
+Comprehensive sweep with the full toolkit — `diff.py` cross-port + chibi oracle,
+and `fuzz.py` across 15 shapes (ellipsis core + quasiquote-splice, macro-
+generating-macro, pair-ellipsis, wildcard, arity-error). Two campaigns,
+**~6,000+ generated programs** plus the curated corpus:
+
+- **Valid programs: 0 divergences.** ~5,500 well-formed programs (16 seeds) —
+  the ports agree with each other *and* with chibi on every one.
+- **One bug class found: F1** (below). The fuzzer rediscovers it only with
+  `--allow-mismatch`, always classified `shared`, and maps its full range:
+  `#<unknown>` fabrication (later var non-empty), **segfault** (later var empty),
+  and a nondeterministic plain-error variant — all from the one OOB read.
+
+Conclusion: the expanders are solid on well-formed macros across the shapes
+tried; F1 is the lone open finding. Further coverage would come from new fuzzer
+shapes or a larger (chibi-batched) campaign.
+
 ---
 
 ## F1 — ellipsis length-mismatch: out-of-bounds in both expanders
