@@ -70,6 +70,26 @@ chibi runs each case via a driver that `eval`s the case's forms one-by-one in an
 `define-syntax` is sidestepped. Because chibi is a *different* implementation,
 only its **output and errored-or-not** are compared, never its error *wording*.
 
+## The fuzzer (`fuzz.py`)
+
+`diff.py` checks a curated corpus; `fuzz.py` generates random ones. It emits
+*valid-by-construction* `syntax-rules` programs — a macro plus a USE built to
+match one of its clauses, templates referencing only captured pattern variables
+— so each program runs to a value and a divergence is a real bug, not a parse
+error. The shapes target the ellipsis/hygiene machinery (double-splice, nested
+and folded ellipsis, multiple same-depth vars, broadcast, fixed prefix/suffix,
+vectors, dotted tails, hygienic temporaries, recursion).
+
+    python fuzz.py                      # 200 programs, seed 1, cross-port
+    python fuzz.py --n 1000 --seed 7    # more, fixed seed (repeatable)
+    python fuzz.py --oracle chibi       # also catch bugs BOTH ports share
+    python fuzz.py --allow-mismatch     # emit unequal-length ellipsis uses too
+
+Findings are deduped by signature and bucketed VALUE > EXIT > SHARED > ERRMSG;
+each unique one's program is written to `fuzz-findings/` (gitignored) for triage.
+A clean run finds nothing on valid programs; `--allow-mismatch` rediscovers F1,
+which is how the fuzzer's bug-finding is self-checked.
+
 ## The corpus (`cases/`)
 
 Each case is a self-contained program that **writes its own result(s)**, so a
