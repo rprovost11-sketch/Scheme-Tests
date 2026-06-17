@@ -166,13 +166,61 @@ def shape_let_star(rng, _am):
     return src, "let* k=%d" % k
 
 
+def shape_quasi_splice(rng, _am):
+    """Quasiquote template with unquote-splicing of an ellipsis var."""
+    xs = group(rng, 0, 5)
+    src = _defmac([("(_ (a ...))", "`(start ,@(list a ...) end)")])
+    src += "(write (m (%s)))(newline)\n" % " ".join(xs)
+    return src, "quasi-splice |a|=%d" % len(xs)
+
+
+def shape_nested_gen(rng, _am):
+    """Macro-generating-macro that threads a token into the inner template."""
+    tok = rng.choice(["hello", "tok", "zzz"])
+    arg = datum(rng)
+    src = ("(define-syntax gen\n  (syntax-rules ()\n"
+           "    ((_ mac t)\n     (define-syntax mac\n"
+           "       (syntax-rules () ((_ x) (list 't x)))))))\n")
+    src += "(gen m1 %s)\n(write (m1 %s))(newline)\n" % (tok, arg)
+    return src, "nested-gen tok=%s" % tok
+
+
+def shape_pair_ellipsis(rng, _am):
+    """Ellipsis over a 2-element sub-pattern: (_ (k v) ...)."""
+    n = rng.randint(0, 4)
+    pairs = [(datum(rng), datum(rng)) for _ in range(n)]
+    src = _defmac([("(_ (k v) ...)", "(list (list k v) ...)")])
+    src += "(write (m %s))(newline)\n" % " ".join("(%s %s)" % p for p in pairs)
+    return src, "pair-ellipsis n=%d" % n
+
+
+def shape_wildcard(rng, _am):
+    """Underscore wildcards in fixed positions are ignored, not bound."""
+    a, mid, b = datum(rng), datum(rng), datum(rng)
+    src = _defmac([("(_ a _ b)", "(list a b)")])
+    src += "(write (m %s %s %s))(newline)\n" % (a, mid, b)
+    return src, "wildcard-mid"
+
+
+def shape_arity_error(rng, _am):
+    """Deliberate arity mismatch: a fixed-arity clause called with the wrong
+    count must error -- a port-vs-oracle error-parity probe."""
+    extra = rng.choice([[], [datum(rng)], [datum(rng), datum(rng)]])
+    args = [datum(rng), datum(rng)] + extra if rng.random() < 0.5 else [datum(rng)]
+    src = _defmac([("(_ a b)", "(list a b)")])
+    src += "(write (m %s))(newline)\n" % " ".join(args)
+    return src, "arity-error argc=%d" % len(args)
+
+
 SHAPES = [shape_zip, shape_flatten, shape_transpose, shape_fold, shape_broadcast,
           shape_fixed_tail, shape_vector, shape_dotted, shape_recursive_or,
-          shape_let_star]
+          shape_let_star, shape_quasi_splice, shape_nested_gen,
+          shape_pair_ellipsis, shape_wildcard, shape_arity_error]
 
 
 def classify(py, cpp, ch):
-    """Return (bucket, detail) or (None, None) if all engines agree."""
+    """Cross-port mode: py-vs-cpp first, then a shared deviation vs chibi.
+    Return (bucket, detail) or (None, None) if the engines agree."""
     if not py.behaves_like(cpp):
         kind = py.divergence_kind(cpp)
         return kind, "py rc=%d out=%r | cpp rc=%d out=%r" % (py.rc, py.out, cpp.rc, cpp.out)
@@ -186,6 +234,11 @@ def main():
     ap.add_argument("--n", type=int, default=200, help="number of programs (default 200)")
     ap.add_argument("--seed", type=int, default=1, help="RNG seed (default 1, repeatable)")
     ap.add_argument("--oracle", choices=["chibi"], help="also catch bugs both ports share")
+    ap.add_argument("--fast", action="store_true",
+                    help="fuzz cppScheme2 vs chibi only (both native, no slow Python "
+                         "launches); pull in pyScheme ONLY to classify the cases that "
+                         "flag (cpp-only vs shared).  Relies on the ports being "
+                         "identical mirrors -- which the cross-port sweep confirms.")
     ap.add_argument("--allow-mismatch", action="store_true",
                     help="emit unequal-length ellipsis uses too (rediscovers F1)")
     args = ap.parse_args()
@@ -193,11 +246,12 @@ def main():
     rng = random.Random(args.seed)
     py_argv = [sys.executable, "-m", "pyscheme"]
     cpp_argv = [diff.CPP_EXE]
-    oracle = args.oracle == "chibi"
+    oracle = args.oracle == "chibi" or args.fast
 
-    print("macro fuzzer: n=%d seed=%d%s%s"
-          % (args.n, args.seed, "  [+chibi]" if oracle else "",
-             "  [allow-mismatch]" if args.allow_mismatch else ""))
+    mode = ("fast: cpp-vs-chibi" if args.fast
+            else "cross-port+chibi" if oracle else "cross-port")
+    print("macro fuzzer: n=%d seed=%d  [%s]%s"
+          % (args.n, args.seed, mode, "  [allow-mismatch]" if args.allow_mismatch else ""))
 
     buckets = {"VALUE": [], "EXIT": [], "SHARED": [], "ERRMSG": []}
     seen = set()
@@ -209,15 +263,31 @@ def main():
         cf = os.path.join(tmpdir, "p%05d.scm" % i)
         with open(cf, "w", encoding="utf-8") as f:
             f.write(src)
-        py = diff.run_file(py_argv, cf, cwd=diff.PY_DIR)
-        cpp = diff.run_file(cpp_argv, cf)
-        ch = diff.run_chibi(cf) if oracle else None
-        bucket, detail = classify(py, cpp, ch)
-        if bucket is None:
-            continue
-        # Dedup by (bucket, shape, normalized signature) to avoid 100 copies.
-        sig = (bucket, shape.__name__, py.out, cpp.out, py.rc, cpp.rc)
-        if sig in seen:
+
+        if args.fast:
+            # Fast loop: only the two native engines.  cpp stands in for "the
+            # ports" (they are identical mirrors); chibi is ground truth.
+            cpp = diff.run_file(cpp_argv, cf)
+            ch = diff.run_chibi(cf)
+            if ch is None or cpp.matches_oracle(ch):
+                continue
+            bucket = "VALUE" if cpp.out != ch.out else "EXIT"
+            # Only now spend a pyScheme launch, to classify the finding.
+            py = diff.run_file(py_argv, cf, cwd=diff.PY_DIR)
+            klass = "cpp-only" if py.matches_oracle(ch) else "shared"
+            detail = ("[%s] cpp rc=%d out=%r | chibi rc=%d out=%r | py rc=%d out=%r"
+                      % (klass, cpp.rc, cpp.out, ch.rc, ch.out, py.rc, py.out))
+            sig = (bucket, shape.__name__, klass, cpp.out, cpp.rc)
+        else:
+            py = diff.run_file(py_argv, cf, cwd=diff.PY_DIR)
+            cpp = diff.run_file(cpp_argv, cf)
+            ch = diff.run_chibi(cf) if oracle else None
+            bucket, detail = classify(py, cpp, ch)
+            if bucket is None:
+                continue
+            sig = (bucket, shape.__name__, py.out, cpp.out, py.rc, cpp.rc)
+
+        if sig in seen:   # dedup so one bug class isn't reported 100×
             continue
         seen.add(sig)
         path = os.path.join(FINDINGS_DIR, "%s-%s-%05d.scm" % (bucket, shape.__name__, i))

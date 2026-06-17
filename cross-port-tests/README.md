@@ -83,12 +83,23 @@ vectors, dotted tails, hygienic temporaries, recursion).
     python fuzz.py                      # 200 programs, seed 1, cross-port
     python fuzz.py --n 1000 --seed 7    # more, fixed seed (repeatable)
     python fuzz.py --oracle chibi       # also catch bugs BOTH ports share
+    python fuzz.py --fast               # cpp-vs-chibi only; classify with py
     python fuzz.py --allow-mismatch     # emit unequal-length ellipsis uses too
 
 Findings are deduped by signature and bucketed VALUE > EXIT > SHARED > ERRMSG;
 each unique one's program is written to `fuzz-findings/` (gitignored) for triage.
 A clean run finds nothing on valid programs; `--allow-mismatch` rediscovers F1,
 which is how the fuzzer's bug-finding is self-checked.
+
+`--fast` exploits the ports being identical mirrors (the cross-port sweep finds
+0 divergences across thousands of valid programs): it fuzzes only the two native
+engines — cppScheme2 as stand-in for "the ports", chibi as ground truth — and
+launches pyScheme *only* to classify the cases that flag (`cpp-only` if pyScheme
+matches chibi, `shared` if it too deviates). Measured aside: pyScheme is not the
+bottleneck (~0.03 s/launch); the chibi oracle's per-program process+driver is, so
+`--fast` is a ~10% win and a cleaner port-vs-reference hunt. The big lever for
+very large campaigns would be batching chibi (one process for many programs, as
+`chibi_diff.py` does) — not yet implemented here.
 
 ## The corpus (`cases/`)
 
