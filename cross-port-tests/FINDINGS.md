@@ -27,9 +27,19 @@ shapes or a larger (chibi-batched) campaign.
 
 ## F1 — ellipsis length-mismatch: out-of-bounds in both expanders
 
-**Status:** open. **Repro:** `known-bugs/ellipsis-length-mismatch.scm`.
-**Severity:** cppScheme2 high (memory-unsafe segfault + silently wrong data);
-pyScheme medium (uncaught host exception, no clean diagnostic).
+**Status:** FIXED 2026-06-17 (pyScheme + cppScheme2). **Guard:**
+`cases/18-ellipsis-length-mismatch.scm`. **Was:** cppScheme2 high (memory-unsafe
+segfault + silently wrong data); pyScheme medium (uncaught host exception).
+
+**Fix:** `expand_ellipsis_run` in both ports now checks, before iterating, that
+every ellipsis var combined in the run has the same match count, and raises a
+clean `SchemeSyntaxError` ("syntax-rules: ellipsis pattern variables matched
+unequal numbers of times") on a mismatch — instead of indexing the shorter
+sequence out of bounds. R7RS 4.3.2 calls this "an error", so erroring is
+conformant; we deliberately do NOT copy chibi's lenient truncation (per the
+standard-over-reference-impl principle). Cross-port parity is restored (both
+ports raise the identical message); `--oracle chibi` lists the guard as a
+SHARED-DEVIATION, which is the one intended R7RS-over-chibi divergence.
 
 Two same-depth ellipsis pattern variables of unequal length used together in
 one template — e.g.
