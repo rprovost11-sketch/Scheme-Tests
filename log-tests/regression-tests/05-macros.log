@@ -20,4 +20,12 @@
 ;;;        >>> (expression)
 ;;;        ==> expected             ; or:  %%% %any-error%
 ;;;
-;;; (No regressions recorded yet.)
+; REG 2026-06-17 -- cpp d4b5893 / py 5779403 -- ellipsis match-count mismatch
+; Symptom: two same-depth ellipsis pattern variables matched an unequal number
+;   of times, combined in one template, were indexed out of bounds -- cppScheme2
+;   fabricated #<unknown> and SEGFAULTED when the later var was empty; pyScheme
+;   leaked a host IndexError.  Fixed to a clean syntax error (R7RS 4.3.2: unequal
+;   ellipsis counts is "an error").  The same length check also prevents the
+;   empty-var segfault, so this graceful case guards both.
+>>> (let () (define-syntax zp (syntax-rules () ((_ (a ...) (b ...)) (list (list a b) ...)))) (zp (1 2 3) (10 20)))
+%%% %any-error%
