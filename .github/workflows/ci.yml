@@ -1,0 +1,65 @@
+name: CI
+
+# Test-coverage initiative, Phase 2, wave 2 (GitHub Actions).
+# The scheme-tests umbrella: builds both ports and guards cross-port parity (the
+# oracle-less differential + a repeatable fuzz smoke) plus both full batteries, so a
+# change to the shared test battery is validated on both interpreters at once.
+# Repos are checked out as siblings (scheme-tests, 3PyScheme, 4CPPScheme2) so the
+# harnesses' default path resolution works with no override flags.
+# Cross-repo checkout of the (private) port repos uses the CROSS_REPO_TOKEN secret.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  cross-port:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout scheme-tests
+        uses: actions/checkout@v4
+        with:
+          path: scheme-tests
+      - name: Checkout pyScheme (private)
+        uses: actions/checkout@v4
+        with:
+          repository: rprovost11-sketch/3PyScheme
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          path: 3PyScheme
+      - name: Checkout cppScheme2 (private)
+        uses: actions/checkout@v4
+        with:
+          repository: rprovost11-sketch/4CPPScheme2
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          path: 4CPPScheme2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build cppScheme2 (Release)
+        working-directory: 4CPPScheme2
+        run: |
+          cmake -B build
+          cmake --build build --config Release --target cppscheme2
+
+      - name: Both full batteries (]suites all)
+        shell: bash
+        run: |
+          (cd 3PyScheme && printf ']suites all\n' | python -m pyscheme -T ../scheme-tests 2>&1 | grep -q 'ALL SUITES PASSED') \
+            || { echo '::error::pyScheme battery failed'; exit 1; }
+          (cd 4CPPScheme2 && printf ']suites all\n' | ./build/Release/cppscheme2.exe -T ../scheme-tests 2>&1 | grep -q 'ALL SUITES PASSED') \
+            || { echo '::error::cppScheme2 battery failed'; exit 1; }
+
+      - name: Cross-port differential (cpp vs py, oracle-less)
+        shell: bash
+        working-directory: scheme-tests/cross-port-tests
+        run: python diff.py
+
+      - name: Fuzz smoke (cpp vs py, repeatable seed)
+        shell: bash
+        working-directory: scheme-tests/cross-port-tests
+        run: python fuzz.py --n 30 --seed 1
