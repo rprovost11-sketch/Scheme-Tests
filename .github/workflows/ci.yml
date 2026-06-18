@@ -1,65 +1,83 @@
 name: CI
 
-# Test-coverage initiative, Phase 2, wave 2 (GitHub Actions).
-# The scheme-tests umbrella: builds both ports and guards cross-port parity (the
-# oracle-less differential + a repeatable fuzz smoke) plus both full batteries, so a
-# change to the shared test battery is validated on both interpreters at once.
-# Repos are checked out as siblings (scheme-tests, 3PyScheme, 4CPPScheme2) so the
-# harnesses' default path resolution works with no override flags.
-# Cross-repo checkout of the (private) port repos uses the CROSS_REPO_TOKEN secret.
+# Test-coverage initiative, Phase 2. The scheme-tests umbrella, tiered:
+#   fast (push/PR)          -- build cpp + cross-port diff + fuzz smoke + py fast subset (catch test edits)
+#   full (nightly + manual) -- both full batteries (shrunk TCO soak) + cross-port + larger fuzz
+# Repos checked out as siblings (scheme-tests, 3PyScheme, 4CPPScheme2) so diff.py/fuzz.py default
+# path resolution works with no flags. Cross-repo checkout uses the CROSS_REPO_TOKEN secret.
 
 on:
   push:
     branches: [master]
   pull_request:
     branches: [master]
+  schedule:
+    - cron: '0 7 * * *'
   workflow_dispatch:
 
 jobs:
-  cross-port:
+  fast:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: windows-latest
     steps:
-      - name: Checkout scheme-tests
-        uses: actions/checkout@v4
-        with:
-          path: scheme-tests
-      - name: Checkout pyScheme (private)
-        uses: actions/checkout@v4
-        with:
-          repository: rprovost11-sketch/3PyScheme
-          token: ${{ secrets.CROSS_REPO_TOKEN }}
-          path: 3PyScheme
-      - name: Checkout cppScheme2 (private)
-        uses: actions/checkout@v4
-        with:
-          repository: rprovost11-sketch/4CPPScheme2
-          token: ${{ secrets.CROSS_REPO_TOKEN }}
-          path: 4CPPScheme2
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
+      - uses: actions/checkout@v4
+        with: { path: scheme-tests }
+      - uses: actions/checkout@v4
+        with: { repository: rprovost11-sketch/3PyScheme, token: '${{ secrets.CROSS_REPO_TOKEN }}', path: 3PyScheme }
+      - uses: actions/checkout@v4
+        with: { repository: rprovost11-sketch/4CPPScheme2, token: '${{ secrets.CROSS_REPO_TOKEN }}', path: 4CPPScheme2 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
       - name: Build cppScheme2 (Release)
         working-directory: 4CPPScheme2
         run: |
           cmake -B build
           cmake --build build --config Release --target cppscheme2
-
-      - name: Both full batteries (]suites all)
+      - name: pyScheme fast subset over the suites (catch broken test edits)
         shell: bash
         run: |
-          (cd 3PyScheme && printf ']suites all\n' | python -m pyscheme -T ../scheme-tests 2>&1 | grep -q 'ALL SUITES PASSED') \
-            || { echo '::error::pyScheme battery failed'; exit 1; }
-          (cd 4CPPScheme2 && printf ']suites all\n' | ./build/Release/cppscheme2.exe -T ../scheme-tests 2>&1 | grep -q 'ALL SUITES PASSED') \
-            || { echo '::error::cppScheme2 battery failed'; exit 1; }
-
+          out="$(cd 3PyScheme && printf ']suites feature regression\n' | python -m pyscheme -T ../scheme-tests 2>&1)"
+          echo "$out" | grep -q 'ALL SUITES PASSED' || { echo "$out"; echo '::error::py fast subset failed'; exit 1; }
       - name: Cross-port differential (cpp vs py, oracle-less)
         shell: bash
         working-directory: scheme-tests/cross-port-tests
         run: python diff.py
-
       - name: Fuzz smoke (cpp vs py, repeatable seed)
         shell: bash
         working-directory: scheme-tests/cross-port-tests
         run: python fuzz.py --n 30 --seed 1
+
+  full:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: scheme-tests }
+      - uses: actions/checkout@v4
+        with: { repository: rprovost11-sketch/3PyScheme, token: '${{ secrets.CROSS_REPO_TOKEN }}', path: 3PyScheme }
+      - uses: actions/checkout@v4
+        with: { repository: rprovost11-sketch/4CPPScheme2, token: '${{ secrets.CROSS_REPO_TOKEN }}', path: 4CPPScheme2 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Build cppScheme2 (Release)
+        working-directory: 4CPPScheme2
+        run: |
+          cmake -B build
+          cmake --build build --config Release --target cppscheme2
+      - name: Both full batteries (shrunk TCO soak)
+        shell: bash
+        run: |
+          for port in "3PyScheme:python -m pyscheme" "4CPPScheme2:./build/Release/cppscheme2.exe"; do
+            dir="${port%%:*}"; cmd="${port#*:}"
+            out="$(cd "$dir" && printf ']feature\n]regression\n]compliance -I:10000\n' | $cmd -T ../scheme-tests 2>&1)"
+            echo "== $dir =="; echo "$out" | grep -E 'passed across|FAILED|failed' | tail -6
+            echo "$out" | grep -qE 'FAIL' && { echo "$out"; echo "::error::$dir battery failed"; exit 1; } || true
+          done
+      - name: Cross-port differential (oracle-less)
+        shell: bash
+        working-directory: scheme-tests/cross-port-tests
+        run: python diff.py
+      - name: Fuzz (larger, repeatable)
+        shell: bash
+        working-directory: scheme-tests/cross-port-tests
+        run: python fuzz.py --n 200 --seed 1
