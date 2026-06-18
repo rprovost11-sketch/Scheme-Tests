@@ -1,0 +1,29 @@
+# tests.manifest -- the test registry (single source of truth, backlog #9).
+#
+# run-tests.sh reads this; the REPL (]suites) and Cherry delegate to run-tests.sh,
+# so adding a test here is the ONE place it needs to appear -- it then shows up in
+# the runner, the REPL listing, and the Cherry checklist automatically.
+#
+# Pipe-delimited columns:  name | kind | ports | arg | xfail
+#   kind:
+#     battery = the in-process .log battery, run via  ]suites all  on the interp
+#     cli     = scheme-tests/cli-tests/run.sh, run once per port
+#     pytool  = a python harness under cross-port-tests/, run ONCE (it drives both)
+#     scheme  = a .scm program run by an interpreter:  <interp> <arg>
+#     exe     = a prebuilt binary at <arg>
+#   ports:  py | cpp | both   (which interpreter(s) the test applies to)
+#   arg:    kind-specific payload (a path / extra flags), or - if none
+#   xfail:  comma list of ports expected to fail now (known-open bug), or -
+#
+# Keep this list complete: it IS the catalog the whole arsenal is run from.
+
+battery|battery|both|-|-
+cli-tests|cli|both|-|-
+cross-port|pytool|both|diff.py|-
+fuzz-smoke|pytool|both|fuzz.py --n 30 --seed 1|-
+metamorphic-numbers|scheme|both|application-tests/property-tests/metamorphic-numbers.scm|cpp
+metamorphic-datums|scheme|both|application-tests/property-tests/metamorphic-datums.scm|py,cpp
+metamorphic-compare|scheme|both|application-tests/property-tests/metamorphic-compare.scm|-
+metamorphic-strings|scheme|both|application-tests/property-tests/metamorphic-strings.scm|-
+metamorphic-eval|scheme|both|application-tests/property-tests/metamorphic-eval.scm|-
+gc_test|exe|cpp|4CPPScheme2/build/Release/gc_test.exe|-

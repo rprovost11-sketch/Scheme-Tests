@@ -2,3 +2,4 @@
 hooks/pre-push   text eol=lf
 hooks/install.sh text eol=lf
 run-all-tests.sh text eol=lf
+run-tests.sh     text eol=lf
