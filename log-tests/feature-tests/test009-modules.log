@@ -593,11 +593,11 @@
 ... ; --- include-ci: case-folding identifiers ---
 ==> 77
 
->>> (call-with-output-file "/tmp/scheme_include_ci_test.scm"
+>>> (call-with-output-file "scheme_include_ci_test.scm"
 ...   (lambda (p) (display "(define INCluDe-CI-VAL 42)" p)))
 ==>
 
->>> (include-ci "/tmp/scheme_include_ci_test.scm")
+>>> (include-ci "scheme_include_ci_test.scm")
 ==>
 
 >>> include-ci-val

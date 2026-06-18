@@ -366,7 +366,7 @@ a
 ... ; ==========================================================
 ... ; open-input-file on nonexistent file raises file-error
 ==> (1 2 3 #<eof>)
->>> (let* ((fname "/tmp/scheme_bin_test.txt")
+>>> (let* ((fname "scheme_bin_test.txt")
 ...        (op (open-binary-output-file fname)))
 ...   (display "hello" op)
 ...   (close-port op)
@@ -378,10 +378,10 @@ a
 %%% SchemeTypeError: line 3, col 3: display: argument 2 must be a textual output port
 %%%   (display "hello" op)
 %%%   ^
->>> (output-port? (open-binary-output-file "/tmp/scheme_bin2.txt"))
+>>> (output-port? (open-binary-output-file "scheme_bin2.txt"))
 ==> #t
 
->>> (input-port? (open-binary-input-file "/tmp/scheme_bin2.txt"))
+>>> (input-port? (open-binary-input-file "scheme_bin2.txt"))
 ... ; binary file error on nonexistent file
 ==> #t
 
@@ -398,7 +398,7 @@ a
 ... ; ==========================================================
 ==> #f
 
->>> (let* ((fname "/tmp/scheme_test_io.txt")
+>>> (let* ((fname "scheme_test_io.txt")
 ...        (dummy (call-with-output-file fname
 ...                  (lambda (p) (display "hello file" p)))))
 ...   (call-with-input-file fname read-line))
@@ -419,7 +419,7 @@ a
 %%% (call-with-output-file 5 (lambda (p) p))
 %%% ^
 
->>> (let* ((fname "/tmp/scheme_test_io2.txt")
+>>> (let* ((fname "scheme_test_io2.txt")
 ...        (dummy (with-output-to-file fname
 ...                  (lambda () (display "line1") (newline) (display "line2")))))
 ...   (with-input-from-file fname
@@ -705,7 +705,7 @@ a
 ... ; file-exists? after creating a file
 ==> #f
 
->>> (let* ((fname "/tmp/scheme_fexists_test.txt")
+>>> (let* ((fname "scheme_fexists_test.txt")
 ...        (dummy (call-with-output-file fname (lambda (p) (display "hi" p)))))
 ...   (file-exists? fname))
 ... ; arity error
@@ -722,7 +722,7 @@ a
 %%% (file-exists? 5)
 %%% ^
 
->>> (let* ((fname "/tmp/scheme_del_test.txt")
+>>> (let* ((fname "scheme_del_test.txt")
 ...        (dummy (call-with-output-file fname (lambda (p) (display "x" p)))))
 ...   (delete-file fname)
 ...   (file-exists? fname))
@@ -739,8 +739,8 @@ a
 ... ; delete-file on a missing file (OS message varies)
 %%% %any-error%
 
->>> (let* ((old "/tmp/scheme_rename_old.txt")
-...        (new "/tmp/scheme_rename_new.txt")
+>>> (let* ((old "scheme_rename_old.txt")
+...        (new "scheme_rename_new.txt")
 ...        (dummy (call-with-output-file old (lambda (p) (display "data" p)))))
 ...   (rename-file old new)
 ...   (let ((result (list (file-exists? old) (file-exists? new))))
@@ -749,8 +749,8 @@ a
 ... ; rename preserves content
 ==> (#f #t)
 
->>> (let* ((old "/tmp/scheme_rename_a.txt")
-...        (new "/tmp/scheme_rename_b.txt")
+>>> (let* ((old "scheme_rename_a.txt")
+...        (new "scheme_rename_b.txt")
 ...        (dummy (call-with-output-file old (lambda (p) (display "hello" p)))))
 ...   (rename-file old new)
 ...   (let ((content (call-with-input-file new
@@ -780,7 +780,7 @@ a
 ... ; ==========================================================
 ... ; open-input-file / open-output-file: text file round-trip
 ... ; ==========================================================
->>> (let* ((fname "/tmp/pyscheme_ports_test.txt")
+>>> (let* ((fname "pyscheme_ports_test.txt")
 ...        (op (open-output-file fname)))
 ...   (display "hello ports" op)
 ...   (close-port op)
@@ -791,10 +791,10 @@ a
 ...       line)))
 ==> "hello ports"
 
->>> (output-port? (open-output-file "/tmp/pyscheme_ports_pred.txt"))
+>>> (output-port? (open-output-file "pyscheme_ports_pred.txt"))
 ==> #t
 
->>> (input-port? (open-input-file "/tmp/pyscheme_ports_pred.txt"))
+>>> (input-port? (open-input-file "pyscheme_ports_pred.txt"))
 ==> #t
 
 >>> (file-error?

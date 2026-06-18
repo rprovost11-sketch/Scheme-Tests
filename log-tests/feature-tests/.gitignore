@@ -1,0 +1,11 @@
+# Runtime artifacts from file-I/O test cases that write-without-delete
+# (in test031-ports.log and test009-modules.log). The suite chdir's into this
+# directory to run, so these land here; they are harmless and regenerated each
+# run. Listed by exact name so real tracked .scm/.sld helpers are unaffected.
+pyscheme_ports_pred.txt
+scheme_bin2.txt
+scheme_bin_test.txt
+scheme_fexists_test.txt
+scheme_include_ci_test.scm
+scheme_test_io.txt
+scheme_test_io2.txt
