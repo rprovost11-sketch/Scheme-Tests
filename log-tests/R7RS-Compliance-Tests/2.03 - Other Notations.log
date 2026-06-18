@@ -1193,6 +1193,20 @@
 
 ==> 1
 
+; Infinity and NaN literals are case-insensitive too (read in mixed case).
+
+>>> (= +inf.0 +INF.0)
+
+==> #t
+
+>>> (= -inf.0 -Inf.0)
+
+==> #t
+
+>>> (nan? +NaN.0)
+
+==> #t
+
 
 ; ==========================================================================
 ; ADDITIONAL R7RS COMPLIANCE TESTS

@@ -76,3 +76,15 @@
 >>> (dp (vector 1 (list 2 "s") #\a))
 ... ; display renders strings/chars bare; elements inherit display semantics
 ==> "#(1 (2 s) a)"
+
+; REG 2026-06-18 (scar added; fix py 0f62b73 / cpp c172fcb) -- write must bar-quote
+;   a symbol whose name would otherwise re-read as a number.
+; Symptom: (write (string->symbol "5")) emitted a bare 5, which reads back as the
+;   integer 5 rather than a symbol -- a broken write/read round-trip.
+>>> (wr (string->symbol "5"))
+... ; the symbol named "5" is bar-quoted so it re-reads as a symbol, not a number
+==> "|5|"
+
+>>> (symbol? (read (open-input-string "|5|")))
+... ; confirm the round-trip: |5| reads back as a symbol
+==> #t

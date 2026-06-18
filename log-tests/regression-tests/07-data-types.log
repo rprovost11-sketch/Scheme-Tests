@@ -20,4 +20,12 @@
 ;;;        >>> (expression)
 ;;;        ==> expected             ; or:  %%% %any-error%
 ;;;
-;;; (No regressions recorded yet.)
+; REG 2026-06-18 (scar added; fix cpp 1af8bfd) -- string-set!/string-ref must be
+;   indexed by code point, not by UTF-8 byte, across multibyte characters.
+; Symptom: cppScheme2 indexed string storage by byte, so string-set!/string-ref
+;   on a string containing a multibyte char (e.g. "aλb") addressed the wrong
+;   element and could corrupt the encoding.  (pyScheme was natively correct.)
+;   Asserted via code points so the expected value stays ASCII: λ = U+03BB = 955.
+>>> (let ((s (string-copy "a\x3BB;b"))) (string-set! s 0 #\X) (list (string-length s) (char->integer (string-ref s 1)) (char->integer (string-ref s 0))))
+... ; length stays 3 code points; index 1 is still λ (955); index 0 is now X (88)
+==> (3 955 88)
