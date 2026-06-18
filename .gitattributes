@@ -1,3 +1,4 @@
 # Pre-push hook scripts must stay LF or sh (git-bash) breaks on CR.
 hooks/pre-push   text eol=lf
 hooks/install.sh text eol=lf
+run-all-tests.sh text eol=lf
