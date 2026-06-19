@@ -82,6 +82,13 @@ printf '>>> (+ 1 2)\n\n==> 3\n'        > "$FIX/log-tests/feature-tests/a-allpass
 printf '>>> (* 6 7)\n\n==> 999\n'      > "$FIX/log-tests/feature-tests/b-hasfail.log"
 printf '>>> (list 1 2)\n\n==> (1 2)\n' > "$FIX/log-tests/regression-tests/r-allpass.log"
 
+# ]suites is registry-driven: give the fixture a minimal test-suites.scm
+# defining the two log suites it runs (paths relative to this tests-root).
+cat > "$FIX/test-suites.scm" <<'REG'
+(suite "feature"    (kind log) (path "log-tests/feature-tests"))
+(suite "regression" (kind log) (path "log-tests/regression-tests"))
+REG
+
 printf ']scheme-tests %s\n]suites feature regression\n]quit\n' "$FIX_NATIVE" \
   | $INTERP >/dev/null 2>&1
 
