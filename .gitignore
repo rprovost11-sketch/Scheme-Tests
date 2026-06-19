@@ -1,3 +1,6 @@
 runs/
 *.tmp
 __pycache__/
+
+# ecraven sweep run logs (local artifacts)
+application-tests/ecraven-r7rs-benchmarks/sweep*.log
