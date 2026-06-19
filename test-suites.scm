@@ -178,3 +178,13 @@
   (run        "../4CPPScheme2/build/Release/gc_test.exe")
   (pass       exit-0)
   (desc       "cppScheme2 generational-GC white-box unit tests"))
+
+(suite "plugin-import"
+  (kind       external)
+  (alias      "plug")
+  (categories tools)
+  (ports      cpp)
+  (cwd        ".")
+  (run        "sh" "../4CPPScheme2/undercarriage-tests/plugin-import-test.sh" "{interp}")
+  (pass       exit-0)
+  (desc       "cppScheme2 native .dll-via-import guard (example_plugin -> native-answer => 42)"))
