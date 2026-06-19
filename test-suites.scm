@@ -24,6 +24,15 @@
 ;;;     (categories CAT ...)    group labels; `]suites metamorphic` runs every suite
 ;;;                             so categorised.  Categories are just data -- to make a
 ;;;                             new group, add its string to the relevant suites.
+;;;     (variant "NAME" PROP ...)  an alternative parameterisation that OVERRIDES the
+;;;                             listed props (e.g. (variant "slow" (tco-soak ...))).
+;;;                             The base props are the implicit "quick" variant.  A
+;;;                             `-NAME` suffix on any selector token picks it:
+;;;                             `compliance-slow`, `all-slow` (slow where a suite has
+;;;                             it, base otherwise), `metamorphic-slow`.  No suffix =>
+;;;                             quick, so `all` == `all-quick`.  If a variant overrides
+;;;                             (ports ...) and the current port isn't included, that
+;;;                             suite falls back to its base run instead of the variant.
 ;;;     (ports both | py | cpp)         which interpreter(s) it applies to; default both
 ;;;     (desc  "one-line description")  shown by `]suites list`
 ;;;     (pass  exit-0 | (grep "REGEX")) external pass condition; default exit-0
@@ -59,6 +68,11 @@
   (ports      both)
   (path       "log-tests/R7RS-Compliance-Tests")
   (tco-soak   100000)
+  ;; -slow = the cppScheme2-only high-N TCO soak (a generational-GC stress run,
+  ;; iteration count calibrated to the machine).  pyScheme has no custom GC, so
+  ;; the slow variant is cpp-only; on pyScheme `compliance-slow`/`all-slow` falls
+  ;; back to the base (quick) run.
+  (variant "slow" (ports cpp) (tco-soak calibrate))
   (desc       "R7RS-small compliance tests (+ bounded-space TCO soak)"))
 
 (suite "regression"
