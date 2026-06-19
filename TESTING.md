@@ -43,6 +43,15 @@ them fail *on purpose* until they're fixed:
 3. **`write` doesn't bar-quote `@` / `.9t` symbols** — they write bare and don't re-read. Both ports (`metamorphic-datums` xfails on both).
 4. **`earley` benchmark crashes** — cppScheme2.
 
+The both-ports bugs (1 and 3) are also **pinned as SRFI-64 `test-expect-fail` cases** in
+`application-tests/property-tests/known-open-bugs.scm` (run via `(srfi 64)`, needs
+`-L <repo>/SRFI`). Each reports **XFAIL** today; when a bug is fixed the round-trip
+starts passing and the harness reports **XPASS** — the cue to remove the pin.
+Caveat: `run-tests.sh` only greps `0 failed`, so it marks the file `ok` whether the
+pins XFAIL or XPASS — surfacing an XPASS as `FIXED!` is left to the `]tests` rework
+(see backlog #9 / the SRFI-64 migration), which runs SRFI-64 files in-process and can
+read the runner's xpass-count directly.
+
 ## Coming (backlog #9): one front-end for all of it
 
 The end state is a single declarative test registry that both the REPL (`]suites`)

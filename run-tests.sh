@@ -72,10 +72,10 @@ run_one() {
       done;;
     pytool)   # python harness in cross-port-tests/, drives both ports itself
       if ( cd "$TESTS/cross-port-tests" && python $arg ) >/dev/null 2>&1; then record "$name" both 1 "$xf"; else record "$name" both 0 "$xf"; fi;;
-    scheme)
+    scheme)  # -L "$SRFI" so tests that (import (srfi 64)) resolve; harmless otherwise
       for p in $(ports_of "$ports"); do
-        if [ "$p" = py ]; then out="$(PYTHONPATH="$PYDIR" python -m pyscheme "$TESTS/$arg" 2>&1)"
-        else out="$("$CPPEXE" "$TESTS/$arg" 2>&1)"; fi
+        if [ "$p" = py ]; then out="$(PYTHONPATH="$PYDIR" python -m pyscheme -L "$SRFI" "$TESTS/$arg" 2>&1)"
+        else out="$("$CPPEXE" -L "$SRFI" "$TESTS/$arg" 2>&1)"; fi
         record "$name" "$p" "$(ok_if_grep "$out" '0 failed')" "$xf"
       done;;
     exe)
