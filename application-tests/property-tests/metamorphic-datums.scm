@@ -1,4 +1,4 @@
-;;; metamorphic-datums.scm -- property-based datum round-trip tester (Phase 4).
+;;; metamorphic-datums.scm -- property-based datum round-trip tester (Phase 4), SRFI 64.
 ;;;
 ;;; Sibling of metamorphic-numbers.scm, aimed at the STRUCTURAL/TEXTUAL surface
 ;;; instead of the numeric tower: a deterministic generator builds random datums
@@ -11,18 +11,23 @@
 ;;; The property is the oracle, so it catches reader/printer bugs that BOTH mirror
 ;;; ports share. Numbers are kept to small exact ints here (the numeric tower is
 ;;; metamorphic-numbers.scm's job), so a failure here points at structure/text.
-;;; A read error during the round-trip counts as a failure (guarded).
 ;;;
-;;; Run:  python -m pyscheme metamorphic-datums.scm   (or the cppscheme2 exe)
+;;; Harness: SRFI 64 (run VIA the interpreter, cross-platform; needs -L <repo>/SRFI).
 ;;;
-;;; CURRENT RESULTS (2026-06-18): BOTH ports 500 datums, 2 failed -- a NEW *shared*
-;;; bug (differential testing can't see it, since the ports agree). `write` fails to
-;;; bar-quote symbols whose names are not valid bare identifiers: (write (string->
-;;; symbol "@")) => bare `@` and (write (string->symbol ".9t")) => bare `.9t`, both
-;;; of which then error on read. R7RS requires |@| and |.9t|. The existing bar-quote
-;;; logic handles numeric-looking names (the Phase-3 scar) but not `@`/dot-digit
-;;; names. KNOWN-OPEN (not fixed, per the freeze). When the writer's needs-quoting
-;;; predicate is completed, both ports pass clean and this can join the gated suite.
+;;; KNOWN-OPEN (BOTH ports): `write` fails to bar-quote symbols whose names are not
+;;; valid bare identifiers -- (write (string->symbol "@")) => bare `@`,
+;;; (write (string->symbol ".9t")) => bare `.9t` -- which then error on read (R7RS
+;;; requires |@| and |.9t|).  Rather than hard-code which datums fail, we
+;;; FEATURE-DETECT a non-roundtripping symbol (`symbol-roundtrips?`) and dynamically
+;;; `test-expect-fail` exactly the datums that CONTAIN one.  So a datum with a bad
+;;; symbol reports XFAIL today; when the writer's needs-quoting predicate is
+;;; completed, `symbol-roundtrips?` turns true and those datums pass clean
+;;; automatically (self-promoting, no XPASS noise).  A round-trip failure NOT
+;;; explained by a bad symbol is a real, unexpected FAIL.
+;;;
+;;; Run:  python -m pyscheme -L <repo>/SRFI metamorphic-datums.scm   (or cppscheme2)
+
+(import (scheme base) (scheme read) (scheme write) (srfi 64))
 
 ;; ---- deterministic PRNG ----------------------------------------------------
 (define seed 305419896)
@@ -89,19 +94,31 @@
 (define (write-string-of d)
   (let ((p (open-output-string))) (write d p) (get-output-string p)))
 
-(define total 0)
-(define fails 0)
+;; known-open detector: does this symbol survive write->read?  (False on both
+;; ports for @ / .9t-style names until the writer's bar-quoting is completed.)
+(define (symbol-roundtrips? sym)
+  (guard (e (#t #f))
+    (eqv? sym (read (open-input-string (write-string-of sym))))))
+
+;; does datum d contain a symbol that won't round-trip?  (drives expect-fail)
+(define (datum-known-bad? d)
+  (cond
+    ((symbol? d) (not (symbol-roundtrips? d)))
+    ((pair? d)   (or (datum-known-bad? (car d)) (datum-known-bad? (cdr d))))
+    ((vector? d)
+     (let loop ((i 0))
+       (and (< i (vector-length d))
+            (or (datum-known-bad? (vector-ref d i)) (loop (+ i 1))))))
+    (else #f)))
+
 (define (roundtrip d)
-  (set! total (+ total 1))
-  (let ((s (write-string-of d)))
-    (let ((ok (guard (e (#t #f))
-                (equal? d (read (open-input-string s))))))
-      (if (not ok)
-          (begin (set! fails (+ fails 1))
-                 (display "FAIL: write=>") (write s) (newline))))))
+  (when (datum-known-bad? d) (test-expect-fail 1))       ; both-ports known-open
+  (test-assert (list 'roundtrip (write-string-of d))
+    (guard (e (#t #f))
+      (equal? d (read (open-input-string (write-string-of d)))))))
 
 ;; ---- run -------------------------------------------------------------------
+(test-begin "metamorphic-datums")
 (do ((i 0 (+ i 1))) ((= i 500))
   (roundtrip (gen-datum 4)))
-
-(display total) (display " datums, ") (display fails) (display " failed") (newline)
+(test-end "metamorphic-datums")

@@ -21,8 +21,8 @@ battery|battery|both|-|-
 cli-tests|cli|both|-|-
 cross-port|pytool|both|diff.py|-
 fuzz-smoke|pytool|both|fuzz.py --n 30 --seed 1|-
-metamorphic-numbers|scheme|both|application-tests/property-tests/metamorphic-numbers.scm|cpp
-metamorphic-datums|scheme|both|application-tests/property-tests/metamorphic-datums.scm|py,cpp
+metamorphic-numbers|scheme|both|application-tests/property-tests/metamorphic-numbers.scm|-
+metamorphic-datums|scheme|both|application-tests/property-tests/metamorphic-datums.scm|-
 metamorphic-compare|scheme|both|application-tests/property-tests/metamorphic-compare.scm|-
 metamorphic-strings|scheme|both|application-tests/property-tests/metamorphic-strings.scm|-
 metamorphic-eval|scheme|both|application-tests/property-tests/metamorphic-eval.scm|-
