@@ -1,0 +1,65 @@
+correctness sweep  (timeout=600s/benchmark)
+  cpp: /d/SWDEV/Languages/Lisp/4CPPScheme2/build/Release/cppscheme2.exe
+  py : python -m pyscheme @ /d/SWDEV/Languages/Lisp/3PyScheme
+
+BENCHMARK      CPP        PY         NOTE
+ack            TIMEOUT    TIMEOUT    inconclusive
+array1         TIMEOUT    TIMEOUT    inconclusive
+browse         OK         OK         
+bv2string      OK         OK         
+cat            OK         OK         
+chudnovsky     OK         OK         
+compiler       INCORRECT  INCORRECT  both INCORRECT
+conform        OK         OK         
+cpstak         TIMEOUT    TIMEOUT    inconclusive
+ctak           OK         TIMEOUT    inconclusive
+deriv          OK         OK         
+destruc        OK         OK         
+diviter        OK         OK         
+divrec         OK         OK         
+dynamic        OK         OK         
+earley         CRASH      TIMEOUT    inconclusive
+equal          OK         OK         
+fft            OK         OK         
+fib            OK         TIMEOUT    inconclusive
+fibc           OK         OK         
+fibfp          OK         OK         
+gcbench        OK         TIMEOUT    inconclusive
+graphs         OK         TIMEOUT    inconclusive
+lattice        OK         TIMEOUT    inconclusive
+matrix         OK         OK         
+maze           OK         OK         
+mazefun        OK         OK         
+mbrot          OK         OK         
+mbrotZ         OK         OK         
+mperm          OK         TIMEOUT    inconclusive
+nboyer         OK         TIMEOUT    inconclusive
+nqueens        OK         TIMEOUT    inconclusive
+ntakl          TIMEOUT    TIMEOUT    inconclusive
+nucleic        OK         OK         
+paraffins      OK         OK         
+parsing        TIMEOUT    TIMEOUT    inconclusive
+peval          OK         OK         
+pi             OK         OK         
+pnpoly         OK         OK         
+primes         OK         OK         
+puzzle         OK         OK         
+quicksort      OK         OK         
+ray            OK         OK         
+read0          INCORRECT  INCORRECT  both INCORRECT
+read1          OK         OK         
+sboyer         TIMEOUT    TIMEOUT    inconclusive
+scheme         OK         OK         
+simplex        OK         OK         
+slatex         OK         OK         
+string         OK         OK         
+sum            OK         OK         
+sum1           TIMEOUT    TIMEOUT    inconclusive
+sumfp          OK         OK         
+tail           OK         OK         
+tak            TIMEOUT    TIMEOUT    inconclusive
+takl           TIMEOUT    TIMEOUT    inconclusive
+triangl        OK         OK         
+wc             OK         OK         
+
+summary: 38 agree-OK, 0 DIVERGENCE, 18 inconclusive(timeout/noresult)
