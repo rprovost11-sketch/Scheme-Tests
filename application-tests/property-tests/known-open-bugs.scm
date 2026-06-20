@@ -30,12 +30,8 @@
 ;; expected-fails below are clearly distinguished from a blanket failure.
 (test-assert "roundtrip-plain-datum" (write/read-equal? '(1 2 "three" #\x)))
 
-;; KNOWN-OPEN 1 -- complex inf/nan write doubles the sign:
-;;   (number->string (make-rectangular 3.0 +inf.0)) => "3.0++inf.0i"  (not re-readable)
-(test-expect-fail "complex-inf-write-roundtrip")
-(test-assert "complex-inf-write-roundtrip"
-  (let ((z (string->number (number->string (make-rectangular 3.0 +inf.0)))))
-    (and z (= (real-part z) 3.0) (= (imag-part z) +inf.0))))
+;; (KNOWN-OPEN 1 -- complex inf/nan write doubling -- FIXED 2026-06-19; promoted
+;; to log-tests/regression-tests/02-printer.log.)
 
 ;; KNOWN-OPEN 3 -- write doesn't bar-quote symbols that need it; they write bare
 ;; and don't re-read (read raises).

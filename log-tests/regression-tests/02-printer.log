@@ -88,3 +88,23 @@
 >>> (symbol? (read (open-input-string "|5|")))
 ... ; confirm the round-trip: |5| reads back as a symbol
 ==> #t
+
+; REG 2026-06-19 (fix py / cpp) -- number->string doubled the sign of an inf/nan
+;   imaginary part.
+; Symptom: (number->string (make-rectangular 3.0 +inf.0)) gave "3.0++inf.0i" (write
+;   was already correct), so the string did not re-read.  number->string lacked the
+;   self-signed-imaginary guard PrettyPrinter already had; now they agree.
+>>> (number->string (make-rectangular 3.0 +inf.0))
+==> "3.0+inf.0i"
+
+>>> (number->string (make-rectangular 3.0 +nan.0))
+... ; +nan.0 was doubled too ("3.0++nan.0i")
+==> "3.0+nan.0i"
+
+>>> (number->string (make-rectangular 3.0 -inf.0))
+... ; -inf.0 was already fine (its '-' comes from the magnitude); guard keeps it so
+==> "3.0-inf.0i"
+
+>>> (imag-part (string->number (number->string (make-rectangular 3.0 +inf.0))))
+... ; the fixed string now re-reads (was #f before the fix)
+==> +inf.0
