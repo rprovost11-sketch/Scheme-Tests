@@ -20,4 +20,33 @@
 ;;;        >>> (expression)
 ;;;        ==> expected             ; or:  %%% %any-error%
 ;;;
-;;; (No regressions recorded yet.)
+; REG 2026-06-20 -- known-open #3 -- cppScheme2 number reader used int64 for
+;   rational literals and string->number, so any numerator/denominator past
+;   int64 was mis-read.  The arithmetic tower + number->string were already
+;   bignum-correct; only the READER lagged.  py was always correct.
+; Symptom: (string->number "1/<bignum>") => #f; a bare bignum-integer string
+;   => an inexact double; the bignum-rational literal => "malformed number".
+>>> (string->number "1/170141183460469231731687303715884105728")
+==> 1/170141183460469231731687303715884105728
+
+>>> (string->number "170141183460469231731687303715884105728/3")
+==> 170141183460469231731687303715884105728/3
+
+>>> (string->number "170141183460469231731687303715884105728")
+... ; a too-big integer must read as an EXACT bignum, not an inexact double
+==> 170141183460469231731687303715884105728
+
+>>> (exact? (string->number "170141183460469231731687303715884105728"))
+==> #t
+
+>>> (string->number "#x1/fffffffffffffffffffffffff")
+... ; radix-prefixed bignum rationals must read too
+==> 1/1267650600228229401496703205375
+
+>>> 1/170141183460469231731687303715884105728
+... ; the bignum-rational LITERAL reader (used to be "malformed number")
+==> 1/170141183460469231731687303715884105728
+
+>>> (= 1/170141183460469231731687303715884105728 (/ 1 (expt 2 127)))
+... ; reader and arithmetic agree on the same exact value
+==> #t
