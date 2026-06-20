@@ -198,3 +198,47 @@
   (run        "sh" "../4CPPScheme2/undercarriage-tests/plugin-import-test.sh" "{interp}")
   (pass       exit-0)
   (desc       "cppScheme2 native .dll-via-import guard (example_plugin -> native-answer => 42)"))
+
+;; ---- application-level correctness / conformance suites (run via the interp) -
+;; Programs that exercise the interpreter as an application (relational engine,
+;; R7RS conformance, deep macro hygiene, benchmark correctness).  Each reports
+;; pass/fail on its own (exit code or an "N passed, M failed" summary).
+
+(suite "minikanren"
+  (kind       external)
+  (alias      "mk" "kanren")
+  (categories application)
+  (ports      both)
+  (cwd        "application-tests/miniKanren-R7RS")
+  (run        "sh" "../run-via-interp.sh" "{interp}" "-L" "." "test.scm")
+  (pass       exit-0)
+  (desc       "miniKanren (R7RS) relational-programming correctness suite"))
+
+(suite "macro-hygiene"
+  (kind       scheme)
+  (alias      "mh" "macro")
+  (categories application)
+  (ports      both)
+  (path       "application-tests/Claude-macro-tests/macro-hygiene-nested.scm")
+  (desc       "deep syntax-rules hygiene acceptance battery (Group A regression guard)"))
+
+(suite "chibi-survey"
+  (kind       external)
+  (alias      "chibi" "survey")
+  (categories application)
+  (ports      both)
+  (cwd        "application-tests/Chibi-R7RS-tests")
+  (run        "sh" "../run-via-interp.sh" "{interp}" "-L" "../../../SRFI" "_survey-driver.scm")
+  (pass       exit-0)
+  (desc       "chibi r7rs-tests.scm conformance/parity survey (form-by-form; exit 0 iff 0 failures + 0 FORMERRs)"))
+
+(suite "ecraven"
+  (kind       external)
+  (alias      "ecr" "bench")
+  (categories application)
+  (ports      both)
+  (cwd        "application-tests/ecraven-r7rs-benchmarks")
+  (run        "sh" "correctness-sweep.sh" "8")
+  (variant "slow" (run "sh" "correctness-sweep.sh" "60"))
+  (pass       exit-0)
+  (desc       "ecraven r7rs-benchmarks cpp-vs-py correctness sweep (SLOW; quick=8s/bench, -slow=60s)"))
