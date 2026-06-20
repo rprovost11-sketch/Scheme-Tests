@@ -1,44 +1,30 @@
-;;; known-open-bugs.scm -- SRFI 64 pins for the parked known-open bugs.
+;;; known-open-bugs.scm -- SRFI-64 pins for parked BOTH-PORTS known-open bugs.
 ;;;
-;;; Each known-open bug is wrapped in `test-expect-fail`, so TODAY it reports
-;;; XFAIL (an expected failure, which does NOT fail the run).  When a bug is
-;;; fixed the round-trip starts passing and the harness reports XPASS -- the
-;;; signal to remove the pin (the SRFI-64 analogue of the orchestrator's
-;;; "FIXED!").  These are the BOTH-PORTS bugs, so the file runs identically on
-;;; pyScheme and cppScheme2.  Source of the bug list: scheme-tests/TESTING.md.
+;;; Each parked bug is wrapped in `test-expect-fail` so it reports XFAIL (an
+;;; expected failure that does NOT fail the run) until fixed; when fixed the
+;;; round-trip passes and the harness reports XPASS -- the cue to remove the pin
+;;; and promote it to a regression test.  Runs identically on both ports.
 ;;;
-;;; This file is also the proof-of-concept for `test-expect-fail`: a normal pass
-;;; (sanity) sits alongside three pinned failures, and the summary distinguishes
-;;; them (X passed / 0 failed / 3 expected-fail).
+;;; CURRENT STATUS: no both-ports known-open bugs are pinned right now.  The two
+;;; that lived here -- complex inf/nan write doubling, and symbol bar-quoting of
+;;; @ / .9t -- were fixed 2026-06-19 and promoted to
+;;; log-tests/regression-tests/02-printer.log.  Only a sanity round-trip remains;
+;;; add a (test-expect-fail ...) + (test-assert ...) pair here when the next
+;;; both-ports bug is parked.  (The remaining known-open bugs are cppScheme2-only:
+;;; the bignum-rational literal reader -- feature-detected in metamorphic-numbers
+;;; -- and the ecraven earley crash.)
 ;;;
 ;;; Run (note the -L so (srfi 64) resolves):
-;;;   python -m pyscheme -L <repo>/SRFI known-open-bugs.scm
-;;;   cppscheme2          -L <repo>/SRFI known-open-bugs.scm
+;;;   <interp> -L <repo>/SRFI known-open-bugs.scm
 
-(import (scheme base) (scheme write) (scheme read) (scheme complex) (srfi 64))
+(import (scheme base) (scheme write) (scheme read) (srfi 64))
 
-;; write x to a string, read it back, return #t iff it re-reads equal?.  Any
-;; error during read (e.g. an un-bar-quoted symbol) counts as a failure.
 (define (write/read-equal? x)
   (let ((p (open-output-string)))
     (write x p)
     (equal? (read (open-input-string (get-output-string p))) x)))
 
 (test-begin "known-open-bugs")
-
-;; sanity: a writer round-trip that DOES work, so pass-count is nonzero and the
-;; expected-fails below are clearly distinguished from a blanket failure.
+;; sanity round-trip (also keeps the SRFI-64 harness exercised on both ports).
 (test-assert "roundtrip-plain-datum" (write/read-equal? '(1 2 "three" #\x)))
-
-;; (KNOWN-OPEN 1 -- complex inf/nan write doubling -- FIXED 2026-06-19; promoted
-;; to log-tests/regression-tests/02-printer.log.)
-
-;; KNOWN-OPEN 3 -- write doesn't bar-quote symbols that need it; they write bare
-;; and don't re-read (read raises).
-(test-expect-fail "symbol-@-write-roundtrip")
-(test-assert "symbol-@-write-roundtrip" (write/read-equal? (string->symbol "@")))
-
-(test-expect-fail "symbol-.9t-write-roundtrip")
-(test-assert "symbol-.9t-write-roundtrip" (write/read-equal? (string->symbol ".9t")))
-
 (test-end "known-open-bugs")

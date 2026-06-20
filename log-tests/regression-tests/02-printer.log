@@ -108,3 +108,30 @@
 >>> (imag-part (string->number (number->string (make-rectangular 3.0 +inf.0))))
 ... ; the fixed string now re-reads (was #f before the fix)
 ==> +inf.0
+
+; REG 2026-06-19 (fix py / cpp) -- write must bar-quote a symbol whose name is not
+;   a valid bare identifier: an @-initial name (@ is a <special subsequent>, not an
+;   <initial>), or a leading '.' + digit (".9t" / ".9" lex as numbers).
+; Symptom: (write (string->symbol "@")) and ".9t" emitted bare tokens that errored
+;   or mis-read on read-back -- a broken write/read round-trip.
+>>> (wr (string->symbol "@"))
+==> "|@|"
+
+>>> (wr (string->symbol ".9t"))
+==> "|.9t|"
+
+>>> (wr (string->symbol ".9"))
+... ; ".9" alone lexes as the number 0.9, so the symbol must be quoted too
+==> "|.9|"
+
+>>> (eqv? (string->symbol "@") (read (open-input-string (wr (string->symbol "@")))))
+... ; the @-symbol now round-trips (read of a bare @ used to error)
+==> #t
+
+>>> (wr (string->symbol "a@b"))
+... ; @ as a SUBSEQUENT is valid -- must NOT be over-quoted
+==> "a@b"
+
+>>> (wr (string->symbol ".foo"))
+... ; a leading '.' before a non-digit is a valid identifier -- stays bare
+==> ".foo"

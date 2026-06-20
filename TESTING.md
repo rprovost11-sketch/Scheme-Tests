@@ -54,24 +54,26 @@ kind in `]suites` passes it automatically from each suite's `(libs ...)`.
 
 ## Known-open bugs (handled as SRFI-64 `test-expect-fail`)
 
-These are documented, parked (not yet fixed). The metamorphic testers that expose
-them run under **SRFI 64** and mark the affected cases `test-expect-fail`, so they
-report **XFAIL** (an expected failure — does NOT fail the run) instead of FAIL:
+Parked bugs are marked `test-expect-fail` (report **XFAIL**, which does NOT fail
+the run) until fixed; when fixed the case passes (**XPASS** — the cue to promote
+it to a regression test).
 
-1. **complex inf/nan write doubles the sign** — `(number->string (make-rectangular 3.0 +inf.0))` → `"3.0++inf.0i"` (not re-readable). Both ports.
-2. **bignum-rational literal reader uses int64** — `(string->number "1/<bignum>")` → `#f`. cppScheme2 only.
-3. **`write` doesn't bar-quote `@` / `.9t` symbols** — they write bare and don't re-read. Both ports.
-4. **`earley` benchmark crashes** — cppScheme2 (ecraven sweep; not a metamorphic tester).
+**Remaining (both cppScheme2-only):**
 
-How each tester pins its bug (all **feature-detected**, not port-hardcoded, so they
-self-promote to a clean pass the moment a port fixes the bug — no XPASS noise):
+1. **bignum-rational literal reader uses int64** — `(string->number "1/<bignum>")` → `#f`. cppScheme2 only.
+2. **`earley` benchmark crashes** — cppScheme2 (ecraven sweep; not a metamorphic tester).
 
-- `known-open-bugs.scm` — deterministic pins for the both-ports bugs (1 and 3); 1 pass + 3 XFAIL.
-- `metamorphic-numbers.scm` — detects bug 2 via a probe (`reader-handles-bignum-rational?`)
-  and expect-fails exactly the bignum-rational roundtrips: py 6606/0, cpp 6442 pass + **164 XFAIL**.
-- `metamorphic-datums.scm` — detects bug 3 via `symbol-roundtrips?` and expect-fails datums
-  containing a non-roundtripping symbol: both ports 498 pass + **2 XFAIL**.
+`metamorphic-numbers.scm` feature-detects bug 1 via a probe
+(`reader-handles-bignum-rational?`) and expect-fails exactly the bignum-rational
+roundtrips: py 6606/0, cpp 6442 pass + **164 XFAIL**.  A failure NOT covered by a
+detector is a real, unexpected **FAIL**.
 
-A failure NOT covered by a detector is a real, unexpected **FAIL**. When a port
-fixes a bug, the affected pin starts passing → `]suites` surfaces it as **XPASS**
-(read from the SRFI-64 runner's xpass-count), the cue to remove the pin.
+**Fixed & promoted (2026-06-19):**
+
+- **complex inf/nan write doubling** (`"3.0++inf.0i"`, both ports) — fixed in
+  `number->string`; guarded in `log-tests/regression-tests/02-printer.log`.
+- **`write` not bar-quoting `@` / `.9t` symbols** (both ports) — fixed in the
+  printer's needs-bar-quote predicate; guarded in `02-printer.log`.
+  `metamorphic-datums.scm` (which feature-detects this) self-promoted to a clean
+  pass (both ports now 500/0, no XFAIL).  `known-open-bugs.scm` no longer pins
+  any both-ports bug (sanity round-trip only; ready for the next one).
