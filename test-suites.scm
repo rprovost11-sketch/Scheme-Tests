@@ -179,6 +179,16 @@
   (pass       exit-0)
   (desc       "cppScheme2 generational-GC white-box unit tests"))
 
+(suite "rat_test"
+  (kind       external)
+  (alias      "rat")
+  (categories tools)
+  (ports      cpp)
+  (cwd        ".")
+  (run        "../4CPPScheme2/build/Release/rat_test.exe")
+  (pass       exit-0)
+  (desc       "cppScheme2 numeric-tower (Rat / make_rational_mpz / bignum) white-box unit tests"))
+
 (suite "plugin-import"
   (kind       external)
   (alias      "plug")
