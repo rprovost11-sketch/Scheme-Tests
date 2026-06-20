@@ -17,7 +17,14 @@
 # other is INCORRECT or CRASH.  TIMEOUT on a side is INCONCLUSIVE (a speed
 # difference in a tree-walker, not a correctness bug) and is reported apart.
 #
-# Usage:  bash correctness-sweep.sh [timeout_seconds]   (default 30)
+# Usage:  bash correctness-sweep.sh [quick | timeout_seconds] [benchmark ...]
+#   quick            a short timeout over a curated FAST subset -- a seconds-scale
+#                    smoke (skips the heavy benchmarks that only ever time out in
+#                    a tree-walker, so there's no timeout padding).
+#   timeout_seconds  full sweep over every benchmark at that per-benchmark GNU
+#                    `timeout` (default 30).
+#   benchmark ...    restrict the sweep to the named benchmarks (overrides the
+#                    quick subset / the full list).
 #
 # Builds match `bench`'s make_src_code:
 #   <impl>-prelude? + <name>.scm + common.scm + <impl>-postlude + common-postlude
@@ -34,7 +41,25 @@ LISP_ROOT="$(cd "$HERE/../../.." && pwd)"
 
 CPPSCHEME2="${CPPSCHEME2:-$LISP_ROOT/4CPPScheme2/build/Release/cppscheme2.exe}"
 PYSCHEME_DIR="${PYSCHEME_DIR:-$LISP_ROOT/3PyScheme}"
-TIMELIMIT="${1:-30}"
+
+# QUICK_BENCHES: the benchmarks that complete fast on BOTH ports in correctness
+# mode (run the thunk once) -- i.e. the agree-OK set, empirically derived.  The
+# quick smoke runs only these, so it never pays a timeout for a heavy benchmark
+# that a tree-walker can't finish.  If a benchmark is added it simply won't be in
+# the quick smoke until added here; correctness is unaffected (the full sweep
+# still covers everything).
+QUICK_BENCHES="browse chudnovsky deriv destruc diviter divrec dynamic matrix maze mazefun peval pi pnpoly primes quicksort read1 scheme simplex slatex string sum tail"
+
+QUICK=0
+if [ "${1:-}" = "quick" ]; then
+  QUICK=1
+  TIMELIMIT=10
+  shift
+else
+  TIMELIMIT="${1:-30}"
+  if [ "$#" -ge 1 ]; then shift; fi
+fi
+SELECT="$*"   # any remaining args = an explicit benchmark list
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -80,8 +105,15 @@ classify () {
   echo NORESULT
 }
 
-benches="$(ls "$INPUTS"/*.input 2>/dev/null | xargs -n1 basename | sed 's/\.input//' | sort)"
-printf 'correctness sweep  (timeout=%ss/benchmark)\n  cpp: %s\n  py : python -m pyscheme @ %s\n\n' \
+if [ -n "$SELECT" ]; then
+  benches="$SELECT"
+elif [ "$QUICK" = 1 ]; then
+  benches="$QUICK_BENCHES"
+else
+  benches="$(ls "$INPUTS"/*.input 2>/dev/null | xargs -n1 basename | sed 's/\.input//' | sort)"
+fi
+printf 'correctness sweep  (%s, timeout=%ss/benchmark)\n  cpp: %s\n  py : python -m pyscheme @ %s\n\n' \
+  "$([ "$QUICK" = 1 ] && echo 'quick subset' || echo 'full')" \
   "$TIMELIMIT" "$CPPSCHEME2" "$PYSCHEME_DIR"
 printf '%-14s %-10s %-10s %s\n' BENCHMARK CPP PY NOTE
 
