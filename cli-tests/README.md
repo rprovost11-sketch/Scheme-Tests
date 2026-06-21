@@ -1,8 +1,13 @@
 # cli-tests — process-boundary tests
 
-Shell-level tests for the interpreters' **CLI and process-boundary**
-behavior: command-line argument handling, exit codes, stdin piping, startup
-banner suppression, and the `.run` report files a suite run writes to disk.
+Tests for the interpreters' **CLI and process-boundary** behavior:
+command-line argument handling, exit codes, stdin piping, startup banner
+suppression, and the `.run` report files a suite run writes to disk.
+
+The runner (`cli-tests.scm`) is itself a Scheme program — **no shell**. It
+relaunches its own interpreter with `(interpreter-argv)` + `(run-process …)`,
+capturing each child's exit code and output directly. So it runs anywhere the
+interpreter does (Windows / Linux / macOS), with nothing but the interpreter.
 
 ## Why this is its own category (a sister of `application-tests/`, not a child)
 
@@ -28,26 +33,26 @@ must pass.
 
 ## Running
 
-`run.sh` takes the interpreter invocation as its single argument (passed
-verbatim, so it may contain spaces) and runs the same contract against it.
-Exits non-zero if any check fails.
+Through the registry (preferred — it sets the working directory so the fixture
+resolves):
 
-    # pyScheme (run from its package dir so `python -m pyscheme` resolves)
-    (cd ../../../3PyScheme && bash ../scheme-tests/cli-tests/run.sh "python -m pyscheme")
+    ]suites cli-tests
 
-    # cppscheme2
-    bash run.sh "/d/SWDEV/Languages/Lisp/4CPPScheme2/build/Release/cppscheme2.exe"
+Or directly, run from this directory so the relative fixture path resolves:
+
+    <interp> cli-tests.scm        # exits non-zero if any check fails
 
 The two ports differ only in the program-name prefix of error/usage text
 (`pyscheme:` vs `cppscheme2:`) and the `.run` filename suffix
 (`PyScheme.run` vs `CPPScheme2.run`); the harness asserts on the shared
 message content and exit codes, never on those.
 
-The `.run`-report checks build a throwaway tests-root in a temp dir (one
+The `.run`-report checks use a **committed** fixture tests-root, `runfix/` (one
 all-passing feature file, one with a deliberate failure, one all-passing
-regression file), run `]suites feature regression` against it, and inspect
-`runs/`. This needs Git Bash with `cygpath` (to hand the interpreter a
-native-form path); the temp tree is removed afterward.
+regression file — no temp dir, since R7RS has no `mkdir`). The runner drives a
+listener session that points `]scheme-tests` at it, runs `]suites feature
+regression`, and reads back the combined report whose path the listener prints
+as `Test output: …`. The `runs/*.run` it writes there are git-ignored.
 
 The whole run is deliberately cheap — a handful of process launches plus one
 tiny fixture suite, well under a second per port — so it belongs in the

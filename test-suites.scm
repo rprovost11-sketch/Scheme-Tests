@@ -144,10 +144,13 @@
   (alias      "cli")
   (categories tools)
   (ports      both)
-  (cwd        ".")
-  (run        "sh" "cli-tests/run.sh" "{interp}")
-  (pass       (grep "0 failed"))
-  (desc       "process-boundary tests: argv, exit codes, stdin (separate launches)"))
+  ;; cwd = this dir so the runner reaches the committed fixture tests-root runfix/.
+  ;; No shell: the runner relaunches the interpreter via (interpreter-argv) +
+  ;; run-process and checks exit code + captured output directly.
+  (cwd        "cli-tests")
+  (run        "{interp}" "cli-tests.scm")
+  (pass       exit-0)
+  (desc       "process-boundary tests (argv, exit codes, stdin, .run reports) -- in-process, no shell"))
 
 (suite "cross-port"
   (kind       external)

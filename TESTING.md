@@ -38,7 +38,7 @@ Each is reachable through `]suites <name>`; the direct invocation is also listed
 |---|---|---|
 | **feature / compliance / regression** (~11.9k cases) | R7RS conformance + features + regression tripwires, in-process | `]feature` / `]compliance` / `]regression` (or `]suites battery`) |
 | One `.log` file | a single suite file | `]feature test031-ports.log` (etc.) |
-| **cli-tests** (15 checks) | argv, exit codes, stdin, `.run` reports | `bash scheme-tests/cli-tests/run.sh "<interp>"` — py needs `PYTHONPATH=<3PyScheme>`; cpp: pass the exe path |
+| **cli-tests** (15 checks) | argv, exit codes, stdin, `.run` reports | `]suites cli-tests` (in-process Scheme via `run-process`; no shell) |
 | **cross-port** | cppScheme2 vs pyScheme agree on macro programs | `cd scheme-tests/cross-port-tests && python diff.py` (add `--oracle chibi`) |
 | **fuzz-smoke** | generated syntax-rules programs, cross-port (+ chibi) | `python fuzz.py --n 50 --seed 1` (add `--fast --oracle chibi`) |
 | **metamorphic-{numbers,datums,compare,strings,eval}** | numeric / datum / ordering / string-UTF8 / eval properties — the *property* is the oracle, so they catch bugs BOTH ports share | `<interp> -L <repo>/SRFI application-tests/property-tests/<name>.scm` |
