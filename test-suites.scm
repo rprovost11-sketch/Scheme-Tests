@@ -210,7 +210,7 @@
   (categories application)
   (ports      both)
   (cwd        "application-tests/miniKanren-R7RS")
-  (run        "sh" "../run-via-interp.sh" "{interp}" "-L" "." "test.scm")
+  (run        "{interp}" "-L" "." "test.scm")
   (pass       exit-0)
   (desc       "miniKanren (R7RS) relational-programming correctness suite"))
 
@@ -228,7 +228,7 @@
   (categories application)
   (ports      both)
   (cwd        "application-tests/Chibi-R7RS-tests")
-  (run        "sh" "../run-via-interp.sh" "{interp}" "-L" "../../../SRFI" "_survey-driver.scm")
+  (run        "{interp}" "-L" "../../../SRFI" "_survey-driver.scm")
   (pass       exit-0)
   (desc       "chibi r7rs-tests.scm conformance/parity survey (form-by-form; exit 0 iff 0 failures + 0 FORMERRs)"))
 
