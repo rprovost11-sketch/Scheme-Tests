@@ -156,11 +156,15 @@
   (kind       external)
   (alias      "xp" "xport")
   (categories tools)
-  (ports      both)
+  ;; py-hosted: the differential launches BOTH ports via run-process; the py child
+  ;; needs the pyscheme package importable, which works because the listener sets
+  ;; PYTHONPATH for the suite and run-process children inherit it.  cpp is reached
+  ;; by a known relative path.  The comparison is symmetric, so one host suffices.
+  (ports      py)
   (cwd        "cross-port-tests")
-  (run        "python" "diff.py")
+  (run        "{interp}" "diff.scm")
   (pass       exit-0)
-  (desc       "cpp-vs-py differential harness over syntax-rules cases"))
+  (desc       "cpp-vs-py differential over syntax-rules cases (in-process driver; no python)"))
 
 (suite "fuzz-smoke"
   (kind       external)
