@@ -240,7 +240,14 @@
   (categories application)
   (ports      both)
   (cwd        "application-tests/ecraven-r7rs-benchmarks")
-  (run        "sh" "correctness-sweep.sh" "quick")
+  ;; Quick path is now SHELL-FREE: the interpreter itself runs the in-process
+  ;; runner (loads each self-checking benchmark into a fresh make-environment).
+  ;; {interp} + cwd are set by the spawn (no shell `cd`); cwd lets benchmarks that
+  ;; open relative aux inputs (cat->inputs/bib, dynamic->inputs/dynamic.data) work.
+  (run        "{interp}" "correctness-inprocess.scm")
+  ;; -slow = full timed cpp-vs-py DIFFERENTIAL sweep; still needs subprocess +
+  ;; timeout, so it stays on the shell driver (a dev-tier meta-test) pending the
+  ;; run-process primitive.
   (variant "slow" (run "sh" "correctness-sweep.sh" "60"))
   (pass       exit-0)
-  (desc       "ecraven r7rs-benchmarks cpp-vs-py correctness sweep (quick=fast subset; -slow=full sweep, 60s/bench)"))
+  (desc       "ecraven r7rs-benchmarks correctness smoke -- quick subset run in-process (no shell); -slow = full timed cpp-vs-py differential sweep"))
