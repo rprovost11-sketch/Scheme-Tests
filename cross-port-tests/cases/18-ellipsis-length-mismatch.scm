@@ -6,9 +6,9 @@
 ;;; var was empty).  This case asserts the two ports stay in lockstep on it.
 ;;;
 ;;; NOTE: this intentionally diverges from chibi, which leniently TRUNCATES to
-;;; the shorter sequence.  So `diff.py --oracle chibi` will list this as a
-;;; SHARED-DEVIATION -- that is the one deliberate R7RS-over-chibi choice, not a
-;;; bug.  The default cross-port run (no oracle) is the gate, and it is parity.
+;;; the shorter sequence -- a deliberate R7RS-over-chibi choice, not a bug (a
+;;; chibi oracle would flag it as a SHARED-DEVIATION).  The cross-port gate
+;;; (]suites cross-port) compares the two ports only, and they stay in lockstep.
 (define-syntax zp
   (syntax-rules ()
     ((_ (a ...) (b ...)) (list (list a b) ...))))

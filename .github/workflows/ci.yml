@@ -1,10 +1,11 @@
 name: CI
 
 # Test-coverage initiative, Phase 2. The scheme-tests umbrella, tiered:
-#   fast (push/PR)          -- build cpp + cross-port diff + fuzz smoke + py fast subset (catch test edits)
+#   fast (push/PR)          -- build cpp + py fast subset + cross-port diff + fuzz smoke (catch test edits)
 #   full (nightly + manual) -- both full batteries (shrunk TCO soak) + cross-port + larger fuzz
-# Repos checked out as siblings (scheme-tests, 3PyScheme, 4CPPScheme2) so diff.py/fuzz.py default
-# path resolution works with no flags. Cross-repo checkout uses the CROSS_REPO_TOKEN secret.
+# Repos checked out as siblings (scheme-tests, 3PyScheme, 4CPPScheme2) so the cross-port/fuzz
+# suites resolve the sibling cpp exe by relative path. Cross-repo checkout uses CROSS_REPO_TOKEN.
+# cross-port + fuzz now run via `]suites` (shell-free Scheme drivers, py-hosted).
 
 on:
   push:
@@ -33,19 +34,12 @@ jobs:
         run: |
           cmake -B build
           cmake --build build --config Release --target cppscheme2
-      - name: pyScheme fast subset over the suites (catch broken test edits)
+      - name: Fast subset + cross-port + fuzz smoke (py-hosted; catch broken test edits)
         shell: bash
         run: |
-          out="$(cd 3PyScheme && printf ']suites feature regression\n' | python -m pyscheme -T ../scheme-tests 2>&1)"
-          echo "$out" | grep -q 'ALL SUITES PASSED' || { echo "$out"; echo '::error::py fast subset failed'; exit 1; }
-      - name: Cross-port differential (cpp vs py, oracle-less)
-        shell: bash
-        working-directory: scheme-tests/cross-port-tests
-        run: python diff.py
-      - name: Fuzz smoke (cpp vs py, repeatable seed)
-        shell: bash
-        working-directory: scheme-tests/cross-port-tests
-        run: python fuzz.py --n 30 --seed 1
+          out="$(cd 3PyScheme && printf ']suites feature regression cross-port fuzz-smoke\n' | python -m pyscheme -T ../scheme-tests 2>&1)"
+          echo "$out" | tail -8
+          echo "$out" | grep -q 'ALL SUITES PASSED' || { echo "$out"; echo '::error::fast suite failed'; exit 1; }
 
   full:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -73,11 +67,10 @@ jobs:
             echo "== $dir =="; echo "$out" | grep -E 'passed across|FAILED|failed' | tail -6
             echo "$out" | grep -qE 'FAIL' && { echo "$out"; echo "::error::$dir battery failed"; exit 1; } || true
           done
-      - name: Cross-port differential (oracle-less)
+      - name: Cross-port differential + larger fuzz (py-hosted)
         shell: bash
-        working-directory: scheme-tests/cross-port-tests
-        run: python diff.py
-      - name: Fuzz (larger, repeatable)
-        shell: bash
-        working-directory: scheme-tests/cross-port-tests
-        run: python fuzz.py --n 200 --seed 1
+        env: { FUZZ_N: '200' }
+        run: |
+          out="$(cd 3PyScheme && printf ']suites cross-port fuzz-smoke\n' | python -m pyscheme -T ../scheme-tests 2>&1)"
+          echo "$out" | tail -8
+          echo "$out" | grep -q 'ALL SUITES PASSED' || { echo "$out"; echo '::error::cross-port/fuzz failed'; exit 1; }

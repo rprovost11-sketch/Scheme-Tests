@@ -170,11 +170,11 @@
   (kind       external)
   (alias      "fuzz")
   (categories tools)
-  (ports      both)
+  (ports      py)            ; py-hosted, same as cross-port (PYTHONPATH for the py child)
   (cwd        "cross-port-tests")
-  (run        "python" "fuzz.py" "--n" "30" "--seed" "1")
+  (run        "{interp}" "fuzz.scm")
   (pass       exit-0)
-  (desc       "grammar-based syntax-rules fuzzer (smoke subset)"))
+  (desc       "grammar-based syntax-rules fuzzer, cpp-vs-py differential (in-process driver; no python)"))
 
 (suite "gc_test"
   (kind       external)

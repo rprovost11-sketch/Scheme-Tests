@@ -39,8 +39,8 @@ Each is reachable through `]suites <name>`; the direct invocation is also listed
 | **feature / compliance / regression** (~11.9k cases) | R7RS conformance + features + regression tripwires, in-process | `]feature` / `]compliance` / `]regression` (or `]suites battery`) |
 | One `.log` file | a single suite file | `]feature test031-ports.log` (etc.) |
 | **cli-tests** (15 checks) | argv, exit codes, stdin, `.run` reports | `]suites cli-tests` (in-process Scheme via `run-process`; no shell) |
-| **cross-port** | cppScheme2 vs pyScheme agree on macro programs | `cd scheme-tests/cross-port-tests && python diff.py` (add `--oracle chibi`) |
-| **fuzz-smoke** | generated syntax-rules programs, cross-port (+ chibi) | `python fuzz.py --n 50 --seed 1` (add `--fast --oracle chibi`) |
+| **cross-port** | cppScheme2 vs pyScheme agree on macro programs | `]suites cross-port` (in-process Scheme driver via run-process; no python) |
+| **fuzz-smoke** | generated syntax-rules programs, cross-port | `]suites fuzz-smoke` (`FUZZ_N` env overrides the program count) |
 | **metamorphic-{numbers,datums,compare,strings,eval}** | numeric / datum / ordering / string-UTF8 / eval properties — the *property* is the oracle, so they catch bugs BOTH ports share | `<interp> -L <repo>/SRFI application-tests/property-tests/<name>.scm` |
 | **known-open-bugs** | SRFI-64 pins for the parked known-open bugs | `<interp> -L <repo>/SRFI application-tests/property-tests/known-open-bugs.scm` |
 | **ecraven correctness sweep** | ~55 Gabriel/Gambit benchmarks, cpp vs py | `cd scheme-tests/application-tests/ecraven-r7rs-benchmarks && bash correctness-sweep.sh 600` |

@@ -42,37 +42,36 @@ false positive, because the two ports' error chrome always differs.
 
 ## Running
 
-    # from this directory
-    python diff.py                      # all cases in cases/ (cross-port only)
-    python diff.py cases/06-recursive-or.scm   # one (or several) cases
-    python diff.py -v                   # show stdout even for parity cases
-    python diff.py --oracle chibi       # add chibi as a third engine (see below)
+The harness is now **pure Scheme** — `diff.scm` and `fuzz.scm`, sharing the
+compare/normalize engine in `cross-port-common.scm`. They depend only on the
+interpreter (no python), launching each port via `(run-process …)`:
 
-The harness path-discovers both interpreters relative to its own location
-(`../../3PyScheme`, `../../4CPPScheme2/build/Release/cppscheme2.exe`); override
-with `--py "<invocation>"` / `--cpp "<invocation>"`. Exit status is non-zero if
-any case diverges, so it gates like the cli-tests.
+    ]suites cross-port        # the curated cases/ corpus
+    ]suites fuzz-smoke        # generated programs (FUZZ_N env overrides the count)
 
-## The chibi oracle (`--oracle chibi`)
+Both are **py-hosted** (registry: `ports py`): the suite runs inside pyScheme,
+which lets its py child inherit `PYTHONPATH` from the listener; the cpp side is
+the sibling exe by a known relative path (`../../4CPPScheme2/build/Release/
+cppscheme2.exe`). The comparison is symmetric, so one host suffices. Exit status
+is non-zero on any divergence, so they gate like the cli-tests.
+
+To run a driver directly (from this directory, hosted on pyScheme):
+
+    <pyscheme> diff.scm
+    FUZZ_N=200 FUZZ_SEED=7 <pyscheme> fuzz.scm
+
+## The chibi oracle (not yet ported)
 
 The bare cross-port diff cannot catch a bug **both** ports share — if they are
-wrong the same way, they still agree. `--oracle chibi` adds chibi-scheme (the
-R7RS reference) as a third engine consulted on **every** case, so:
+wrong the same way, they still agree. A third engine (chibi-scheme, the R7RS
+reference) consulted on every case adjudicates *which* port is wrong on a
+divergence, and flags a **`SHARED-DEVIATION`** on parity. The Scheme drivers do
+**not** implement this yet; the original Python chibi differ (`chibi_diff.py`)
+remains as the manual tool for that, pending a Scheme port.
 
-- on a cross-port **divergence**, it adjudicates *which* port is wrong;
-- on cross-port **parity**, it still checks the agreed answer against chibi — a
-  mismatch is a **`SHARED-DEVIATION`** (a bug both ports share, or a chibi
-  quirk), which the diff alone would silently pass.
+## The fuzzer (`fuzz.scm`)
 
-chibi runs each case via a driver that `eval`s the case's forms one-by-one in an
-`interaction-environment`, so the program's own output lands on clean stdout
-(no REPL prompt chrome) and chibi's file-compiler quirk with macro-generated
-`define-syntax` is sidestepped. Because chibi is a *different* implementation,
-only its **output and errored-or-not** are compared, never its error *wording*.
-
-## The fuzzer (`fuzz.py`)
-
-`diff.py` checks a curated corpus; `fuzz.py` generates random ones. It emits
+`diff.scm` checks a curated corpus; `fuzz.scm` generates random ones. It emits
 *valid-by-construction* `syntax-rules` programs — a macro plus a USE built to
 match one of its clauses, templates referencing only captured pattern variables
 — so each program runs to a value and a divergence is a real bug, not a parse
@@ -80,16 +79,12 @@ error. The shapes target the ellipsis/hygiene machinery (double-splice, nested
 and folded ellipsis, multiple same-depth vars, broadcast, fixed prefix/suffix,
 vectors, dotted tails, hygienic temporaries, recursion).
 
-    python fuzz.py                      # 200 programs, seed 1, cross-port
-    python fuzz.py --n 1000 --seed 7    # more, fixed seed (repeatable)
-    python fuzz.py --oracle chibi       # also catch bugs BOTH ports share
-    python fuzz.py --fast               # cpp-vs-chibi only; classify with py
-    python fuzz.py --allow-mismatch     # emit unequal-length ellipsis uses too
-
-Findings are deduped by signature and bucketed VALUE > EXIT > SHARED > ERRMSG;
-each unique one's program is written to `fuzz-findings/` (gitignored) for triage.
-A clean run finds nothing on valid programs; `--allow-mismatch` rediscovers F1,
-which is how the fuzzer's bug-finding is self-checked.
+A seeded LCG drives generation (deterministic per seed; the exact sequence
+differs from the old Python RNG, which does not matter). `N`/`SEED` default to
+30/1 and are overridden by the `FUZZ_N`/`FUZZ_SEED` environment variables
+(interpreters reject extra argv, so CI's larger run sets `FUZZ_N=200`). On a
+divergence the offending program is printed to stdout for triage; a clean run
+finds nothing on valid programs.
 
 `--fast` exploits the ports being identical mirrors (the cross-port sweep finds
 0 divergences across thousands of valid programs): it fuzzes only the two native

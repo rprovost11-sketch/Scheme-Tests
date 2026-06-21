@@ -9,26 +9,20 @@
 REPO="$(git rev-parse --show-toplevel)"
 LISP="$(dirname "$REPO")"
 PY_DIR="$LISP/3PyScheme"
-CPT="$REPO/cross-port-tests"
 
 fail() { echo "pre-push: $1 -- push BLOCKED (use --no-verify to override)" >&2; exit 1; }
 
-# 1) pyScheme fast subset against the (possibly just-edited) suites in THIS repo.
+# pyScheme fast subset + the cpp-vs-py differential (cross-port + fuzz), all via
+# ]suites (shell-free Scheme drivers).  cross-port/fuzz are py-hosted and launch the
+# sibling cpp exe; py-hosting lets their py child inherit PYTHONPATH from the listener.
+# Needs the sibling 3PyScheme and a cppScheme2 Release build.
 if [ -d "$PY_DIR/pyscheme" ]; then
-    echo "pre-push: pyScheme fast subset (feature + regression) over these suites..."
-    out="$(cd "$PY_DIR" && printf ']suites feature regression\n' | python -m pyscheme -T "$REPO" 2>&1)"
-    echo "$out" | grep -E 'passed|FAIL' | tail -3
-    echo "$out" | grep -q 'ALL SUITES PASSED' || fail "suite failure"
+    echo "pre-push: pyScheme fast subset + cross-port + fuzz over these suites..."
+    out="$(cd "$PY_DIR" && printf ']suites feature regression cross-port fuzz-smoke\n' | python -m pyscheme -T "$REPO" 2>&1)"
+    echo "$out" | grep -E 'passed|FAIL|parity|diverg|fuzz|cross-port' | tail -6
+    echo "$out" | grep -q 'ALL SUITES PASSED' || fail "suite/differential failure"
 else
     echo "pre-push: sibling 3PyScheme not found -- skipping suite check." >&2
-fi
-
-# 2) Cross-port differential (cpp vs py, oracle-less). diff.py exits nonzero on divergence.
-if [ -f "$CPT/diff.py" ]; then
-    echo "pre-push: cross-port differential (cpp vs py)..."
-    dout="$(cd "$CPT" && python diff.py 2>&1)"; drc=$?
-    echo "$dout" | tail -2
-    [ "$drc" -eq 0 ] || fail "cross-port divergence"
 fi
 
 echo "pre-push: OK"
