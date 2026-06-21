@@ -1,0 +1,5 @@
+# thing.dll is staged at test time (a copy of the build's example_plugin.dll); the
+# committed fixture is only thing.sld.  See ../plugin-import.scm.
+thing.dll
+thing.so
+thing.dylib

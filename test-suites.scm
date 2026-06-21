@@ -190,13 +190,15 @@
   (desc       "cppScheme2 numeric-tower (Rat / make_rational_mpz / bignum) white-box unit tests"))
 
 (suite "plugin-import"
-  (kind       external)
+  (kind       scheme)
   (alias      "plug")
   (categories tools)
   (ports      cpp)
-  (cwd        ".")
-  (run        "sh" "../4CPPScheme2/undercarriage-tests/plugin-import-test.sh" "{interp}")
-  (pass       exit-0)
+  (path       "application-tests/plugin-import/plugin-import.scm")
+  ;; first lib dir holds demo/thing.sld (so (demo thing) resolves + the test stages
+  ;; thing.dll there); second resolves (srfi 64).  No shell: the .scm locates the
+  ;; exe via (interpreter-executable-path) and copies the plugin with R7RS binary ports.
+  (libs       "application-tests/plugin-import" "../SRFI")
   (desc       "cppScheme2 native .dll-via-import guard (example_plugin -> native-answer => 42)"))
 
 ;; ---- application-level correctness / conformance suites (run via the interp) -
