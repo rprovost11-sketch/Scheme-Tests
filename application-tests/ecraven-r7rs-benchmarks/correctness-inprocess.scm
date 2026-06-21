@@ -9,8 +9,8 @@
 ;;; It is a PER-PORT correctness check: each benchmark validates its result against
 ;;; its own built-in ok? predicate (the canonical answer), so running this on cpp
 ;;; and on py independently covers correctness on both.  The explicit cpp-vs-py
-;;; differential + full timed sweep (which need subprocess + timeout) stay in
-;;; correctness-sweep.sh as a dev-tier meta-test pending the run-process primitive.
+;;; differential + full timed sweep (subprocess + per-benchmark timeout) live in
+;;; correctness-slow.scm (the `ecraven-slow` variant), run via run-process.
 ;;;
 ;;; NOTE: deliberately NOT SRFI 64.  SRFI 64 exports `test` as a MACRO, but several
 ;;; benchmarks (peval, simplex, ...) define `(define (test ...) ...)` as procedures;

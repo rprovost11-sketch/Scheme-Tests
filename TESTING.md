@@ -43,7 +43,7 @@ Each is reachable through `]suites <name>`; the direct invocation is also listed
 | **fuzz-smoke** | generated syntax-rules programs, cross-port | `]suites fuzz-smoke` (`FUZZ_N` env overrides the program count) |
 | **metamorphic-{numbers,datums,compare,strings,eval}** | numeric / datum / ordering / string-UTF8 / eval properties — the *property* is the oracle, so they catch bugs BOTH ports share | `<interp> -L <repo>/SRFI application-tests/property-tests/<name>.scm` |
 | **known-open-bugs** | SRFI-64 pins for the parked known-open bugs | `<interp> -L <repo>/SRFI application-tests/property-tests/known-open-bugs.scm` |
-| **ecraven correctness sweep** | ~55 Gabriel/Gambit benchmarks, cpp vs py | `cd scheme-tests/application-tests/ecraven-r7rs-benchmarks && bash correctness-sweep.sh 600` |
+| **ecraven correctness sweep** | ~55 Gabriel/Gambit benchmarks, cpp vs py | `]suites ecraven` (quick, in-process) / `]suites ecraven-slow` (full timed differential; `ECRAVEN_TIMEOUT` env) |
 | **gc_test** (white-box GC, 49 cases) | cppScheme2 generational GC internals | run `4CPPScheme2/build/Release/gc_test.exe` |
 | **Coverage** | line/branch coverage per port | py: `python -m coverage run -m pyscheme -T <tests>` then `coverage report`; cpp: `pwsh -File 4CPPScheme2/coverage.ps1` |
 | **CI (GitHub Actions)** | fast subset on every push; full battery + coverage nightly | automatic on push; view in each repo's Actions tab |

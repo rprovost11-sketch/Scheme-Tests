@@ -6,3 +6,4 @@ out
 
 .dotnet
 .local/share/NuGet
+correctness-slow-scratch.scm

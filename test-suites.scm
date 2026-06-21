@@ -252,9 +252,10 @@
   ;; {interp} + cwd are set by the spawn (no shell `cd`); cwd lets benchmarks that
   ;; open relative aux inputs (cat->inputs/bib, dynamic->inputs/dynamic.data) work.
   (run        "{interp}" "correctness-inprocess.scm")
-  ;; -slow = full timed cpp-vs-py DIFFERENTIAL sweep; still needs subprocess +
-  ;; timeout, so it stays on the shell driver (a dev-tier meta-test) pending the
-  ;; run-process primitive.
-  (variant "slow" (run "sh" "correctness-sweep.sh" "60"))
+  ;; -slow = full timed cpp-vs-py DIFFERENTIAL over every benchmark, run via
+  ;; run-process with a per-benchmark timeout (no shell).  py-hosted (PYTHONPATH for
+  ;; the py child; cpp by relative path); on cpp `ecraven-slow` falls back to the
+  ;; quick in-process base.  ECRAVEN_TIMEOUT env overrides the 60s/benchmark default.
+  (variant "slow" (ports py) (run "{interp}" "correctness-slow.scm"))
   (pass       exit-0)
   (desc       "ecraven r7rs-benchmarks correctness smoke -- quick subset run in-process (no shell); -slow = full timed cpp-vs-py differential sweep"))
