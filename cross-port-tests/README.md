@@ -60,14 +60,23 @@ To run a driver directly (from this directory, hosted on pyScheme):
     <pyscheme> diff.scm
     FUZZ_N=200 FUZZ_SEED=7 <pyscheme> fuzz.scm
 
-## The chibi oracle (not yet ported)
+## The chibi oracle (opt-in: `CROSS_PORT_ORACLE=chibi`)
 
 The bare cross-port diff cannot catch a bug **both** ports share — if they are
-wrong the same way, they still agree. A third engine (chibi-scheme, the R7RS
-reference) consulted on every case adjudicates *which* port is wrong on a
-divergence, and flags a **`SHARED-DEVIATION`** on parity. The Scheme drivers do
-**not** implement this yet; the original Python chibi differ (`chibi_diff.py`)
-remains as the manual tool for that, pending a Scheme port.
+wrong the same way, they still agree. Set `CROSS_PORT_ORACLE=chibi` and chibi
+(the R7RS reference) is consulted on every case: on a **divergence** it
+adjudicates *which* port is wrong, and on **parity** it flags a
+**`SHARED-DEVIATION`** when both ports agree yet differ from chibi.
+
+It is **off by default** (so the registry/CI, which have no chibi, are
+unaffected) and **skip-if-absent** (the oracle only engages when
+`chibi-scheme.exe` is found — at `CHIBI_EXE`, default
+`D:/SWDEV/tools/chibi-scheme/chibi-scheme.exe`, with `-I CHIBI_LIB`). chibi runs
+each case via an `eval`-in-`interaction-environment` driver (so the program's own
+output lands on clean stdout and chibi's file-compiler quirk with macro-generated
+`define-syntax` is sidestepped); only its **output and errored-or-not** are
+compared, never its error *wording*. With the oracle on, the suite reports
+exactly one `SHARED` — case 18, the one deliberate R7RS-over-chibi choice.
 
 ## The fuzzer (`fuzz.scm`)
 

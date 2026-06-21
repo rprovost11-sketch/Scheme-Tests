@@ -120,3 +120,74 @@
             (string-split-newline (if (string=? (out-of r) "") "<no stdout>" (out-of r))))
   (unless (string=? (err-of r) "")
     (display "            err| ") (display (err-of r)) (newline)))
+
+;; ---- optional chibi oracle (opt-in: CROSS_PORT_ORACLE=chibi; skip-if-absent) ---
+;; The bare cross-port diff cannot catch a bug BOTH ports share.  With the oracle
+;; on, chibi (the R7RS reference) is consulted on every case: it adjudicates which
+;; port is wrong on a divergence, and flags a SHARED-DEVIATION on parity (both
+;; ports agree but differ from chibi).  Off by default so the registry/CI (which
+;; have no chibi) are unaffected.  Needs (scheme file) + (scheme process-context)
+;; from the loader.
+
+(define chibi-exe
+  (or (get-environment-variable "CHIBI_EXE") "D:/SWDEV/tools/chibi-scheme/chibi-scheme.exe"))
+(define chibi-lib
+  (or (get-environment-variable "CHIBI_LIB") "D:/SWDEV/tools/chibi-scheme/lib"))
+(define oracle?
+  (and (equal? (get-environment-variable "CROSS_PORT_ORACLE") "chibi")
+       (file-exists? chibi-exe)))
+
+(define %chibi-sentinel "<<<CHIBI-ERR>>>")
+
+;; substring search -> index or #f
+(define (str-find s sub from)
+  (let ((sn (string-length s)) (un (string-length sub)))
+    (let loop ((i from))
+      (cond ((> (+ i un) sn) #f)
+            ((string=? (substring s i (+ i un)) sub) i)
+            (else (loop (+ i 1)))))))
+
+;; Run CASEFILE through chibi via an eval-in-interaction-env driver (so the
+;; program's own output lands on clean stdout and chibi's file-compiler quirk with
+;; macro-generated define-syntax is sidestepped).  The driver READS the case file
+;; directly (no string escaping).  Returns (vector out errored?) or #f if absent.
+(define (run-chibi casefile)
+  (if (not oracle?) #f
+      (let ((driver (string-append
+              "(import (scheme base) (scheme write) (scheme eval) (scheme repl) (scheme read)"
+              " (scheme file) (scheme char) (scheme inexact) (scheme complex) (scheme cxr)"
+              " (scheme lazy) (scheme case-lambda))\n"
+              "(define ie (interaction-environment))\n"
+              "(define (e->s e) (if (error-object? e) (error-object-message e)"
+              " (let ((p (open-output-string))) (write e p) (get-output-string p))))\n"
+              "(guard (e (#t (write-string \"" %chibi-sentinel "\") (write-string (e->s e))))\n"
+              "  (call-with-input-file \"" casefile "\"\n"
+              "    (lambda (p) (let loop () (let ((f (read p)))\n"
+              "      (unless (eof-object? f) (eval f ie) (loop)))))))\n"))
+            (df "chibi-driver-scratch.scm"))
+        (when (file-exists? df) (delete-file df))
+        (call-with-output-file df (lambda (p) (write-string driver p)))
+        (call-with-values
+          (lambda () (run-process (list chibi-exe "-I" chibi-lib df) #f 30))
+          (lambda (code out err)
+            (let* ((o (normalize out)) (s (str-find o %chibi-sentinel 0)))
+              (if s (vector (rstrip-newlines (substring o 0 s)) #t)
+                  (vector o #f))))))))
+
+;; Coarse agreement of a port result with chibi: same output AND same errored-or-not
+;; (error WORDING is never compared -- chibi phrases its own way).
+(define (matches-oracle? port-r chibi-r)
+  (and (string=? (out-of port-r) (vector-ref chibi-r 0))
+       (eq? (not (= (rc-of port-r) 0)) (vector-ref chibi-r 1))))
+
+(define (show-chibi ch)
+  (display "          [chibi errored=") (display (vector-ref ch 1)) (display "]") (newline)
+  (for-each (lambda (ln) (display "            out| ") (display ln) (newline))
+            (string-split-newline (if (string=? (vector-ref ch 0) "") "<no stdout>" (vector-ref ch 0)))))
+
+(define (adjudicate py cpp ch)
+  (let ((py-ok (matches-oracle? py ch)) (cpp-ok (matches-oracle? cpp ch)))
+    (cond ((and py-ok (not cpp-ok)) "chibi agrees with pyScheme (cppScheme2 is wrong)")
+          ((and cpp-ok (not py-ok)) "chibi agrees with cppScheme2 (pyScheme is wrong)")
+          ((and py-ok cpp-ok) "both match chibi (ERRMSG-only split?)")
+          (else "NEITHER matches chibi -- inspect by hand"))))
