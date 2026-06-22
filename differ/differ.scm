@@ -38,14 +38,27 @@
         (substring s 0 i))))
 
 ;; ---- interpreter descriptor ----------------------------------------------------
-;; run : item -> result.  result is OPAQUE to the core; only compare understands it.
+;; run : (state item) -> result.  result is OPAQUE to the core; only compare reads it.
+;; init : () -> state, called ONCE per differ-run (per source), so a live interpreter
+;; can hold per-source state (e.g. a fresh environment) across the source's cycles.
 
 (define-record-type <interp>
-  (make-interp name family run)
+  (make-interp* name family init run)
   interp?
   (name   interp-name)
   (family interp-family)
+  (init   interp-init)
   (run    interp-run))
+
+;; Stateless interpreter: RUN1 maps item -> result (no per-run state).  This is what
+;; the .log playback and mock interpreters use; preserves the simple ctor signature.
+(define (make-interp name family run1)
+  (make-interp* name family (lambda () #f) (lambda (state item) (run1 item))))
+
+;; Stateful interpreter: INIT produces per-source state (once per differ-run, e.g. a
+;; fresh make-environment); RUN maps (state item) -> result.
+(define (make-stateful-interp name family init run)
+  (make-interp* name family init run))
 
 ;; ---- per-cycle result (one shape of result; the core never looks inside) -------
 
@@ -85,6 +98,27 @@
                (lambda (entry)
                  (make-cycle (entry-output entry) (entry-retval entry)
                              (entry-error entry) #f))))
+
+;; ---- live host runner (in-process; increment 3) --------------------------------
+;; The HOST port (whichever interpreter is running this differ) executes each entry's
+;; input in a fresh make-environment -- ONE per source, state persisting across
+;; cycles, matching the .log runner's reboot-per-file semantics -- via the eval-cycle
+;; primitive, which captures output / return value / error using the SAME formatting
+;; the .log test runner uses (so results are byte-identical, including error class +
+;; line/col).  Honours the entry's fold-case flag exactly as the runner does.
+
+(define host-cycle-timeout 120)   ; seconds; matches the .log runner's per-entry limit
+
+(define (make-host-interp name family)
+  (make-stateful-interp name family
+    (lambda () (make-environment))                 ; fresh env per source
+    (lambda (env entry)
+      (let ((input (if (entry-fold-case entry)
+                       (string-append "#!fold-case\n" (entry-input entry))
+                       (entry-input entry))))
+        (call-with-values
+          (lambda () (eval-cycle input env host-cycle-timeout))
+          make-cycle)))))
 
 ;; ---- compare strategies for cycle results --------------------------------------
 ;; All comparisons live OUTSIDE the core.  The core passes (compare a b); in
@@ -161,16 +195,19 @@
     (else (error "differ-run: unknown mode (expected 'peer or 'reference)" mode))))
 
 ;; Run every interpreter on every item; return a list of verdicts (item order).
-;; In REFERENCE mode the FIRST interpreter is the reference/oracle.
+;; In REFERENCE mode the FIRST interpreter is the reference/oracle.  Each
+;; interpreter's init runs once up front; its state is threaded across all items.
 (define (differ-run items interps mode compare)
-  (let loop ((items items) (i 0) (acc '()))
-    (if (null? items)
-        (reverse acc)
-        (let ((named (map (lambda (ip)
-                            (cons (interp-name ip) ((interp-run ip) (car items))))
-                          interps)))
-          (loop (cdr items) (+ i 1)
-                (cons (classify-item i (car items) named mode compare) acc))))))
+  (let ((primed (map (lambda (ip) (cons ip ((interp-init ip)))) interps)))
+    (let loop ((items items) (i 0) (acc '()))
+      (if (null? items)
+          (reverse acc)
+          (let ((named (map (lambda (p)
+                              (cons (interp-name (car p))
+                                    ((interp-run (car p)) (cdr p) (car items))))
+                            primed)))
+            (loop (cdr items) (+ i 1)
+                  (cons (classify-item i (car items) named mode compare) acc)))))))
 
 ;; ---- reporting (convenience; renders cycle results) ----------------------------
 
