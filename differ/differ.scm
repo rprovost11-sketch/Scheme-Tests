@@ -111,7 +111,7 @@
 
 (define (make-host-interp name family)
   (make-stateful-interp name family
-    (lambda () (make-environment))                 ; fresh env per source
+    (lambda () (make-toplevel-environment))        ; fresh self-global env per source
     (lambda (env entry)
       (let ((input (if (entry-fold-case entry)
                        (string-append "#!fold-case\n" (entry-input entry))

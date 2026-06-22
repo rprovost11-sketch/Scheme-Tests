@@ -13,7 +13,11 @@
 ;;; Exits 0 iff all agree.
 
 (import (scheme base) (scheme write) (scheme file) (scheme process-context))
-(load "differ.scm")
+
+;; DIFFER_HOME locates differ.scm (so the harness can run from another cwd, e.g.
+;; the suite dir, to match the .log runner's chdir-to-test-dir environment).
+(define differ-home (or (get-environment-variable "DIFFER_HOME") "."))
+(load (string-append differ-home "/differ.scm"))
 
 (define suite-dir
   (or (get-environment-variable "DIFFER_SUITE") "../log-tests/feature-tests"))
