@@ -176,6 +176,21 @@
   (pass       exit-0)
   (desc       "grammar-based syntax-rules fuzzer, cpp-vs-py differential (in-process driver; no python)"))
 
+(suite "differ-feature"
+  (kind       external)
+  (alias      "df" "differ")
+  (categories tools)
+  ;; The feature golden battery re-run THROUGH the universal differ engine
+  ;; (scheme-tests/differ): reference = the .log golden, subject = this port's live
+  ;; in-process host (eval-cycle), compare = the .log match semantics.  A cross-check
+  ;; that the differ reproduces the authoritative runner's verdict; runs ALONGSIDE the
+  ;; listener's own .log runner, not replacing it.  --no-rc gives the pristine global
+  ;; the runner reboots into; cwd = the suite dir resolves cycles' relative paths.
+  (cwd        "log-tests/feature-tests")
+  (run        "{interp}" "--no-rc" "../../differ/differ-battery.scm")
+  (pass       exit-0)
+  (desc       "feature golden battery re-run through the universal differ (reference mode, pristine host)"))
+
 (suite "gc_test"
   (kind       external)
   (alias      "gc")

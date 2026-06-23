@@ -81,5 +81,11 @@ divergences and returns `#t` when everything agrees.
 4. ✅ retrofit cross-port diff / fuzz onto the engine (peer, whole-program) —
    `../cross-port-tests/{diff,fuzz}.scm` now `load` `differ.scm` and classify via
    `differ-run` / `classify-item` over `#(out err rc)` results.
-5. wire `]suites` (golden battery via differ reference-mode; chibi/Chez variants).
+5. ◑ wire `]suites` (golden battery via differ reference-mode; chibi/Chez variants).
+   - ✅ `--no-rc` flag (both ports) → pristine global, and `differ-battery.scm` runs a
+     `.log` suite as differ(reference = golden, subject = in-process host, compare =
+     `.log` match). Wired as `]suites differ-feature` (cwd = the suite dir + `--no-rc`);
+     reproduces the golden verdict 4897/4897 (feature) + 81/81 (regression), both ports.
+   - ☐ remaining: `.run` reports (per-channel `log-match-detail`), chibi/Chez coarse
+     conformance variants.
 6. retire `chibi_diff.py` (subsumed).
