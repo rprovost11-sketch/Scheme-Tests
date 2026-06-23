@@ -43,22 +43,32 @@
 ;; can hold per-source state (e.g. a fresh environment) across the source's cycles.
 
 (define-record-type <interp>
-  (make-interp* name family init run)
+  (make-interp* name family init run run-source)
   interp?
-  (name   interp-name)
-  (family interp-family)
-  (init   interp-init)
-  (run    interp-run))
+  (name       interp-name)
+  (family     interp-family)
+  (init       interp-init)
+  (run        interp-run)
+  (run-source interp-run-source))   ; (items) -> list of results (item order), or #f
 
 ;; Stateless interpreter: RUN1 maps item -> result (no per-run state).  This is what
 ;; the .log playback and mock interpreters use; preserves the simple ctor signature.
 (define (make-interp name family run1)
-  (make-interp* name family (lambda () #f) (lambda (state item) (run1 item))))
+  (make-interp* name family (lambda () #f) (lambda (state item) (run1 item)) #f))
 
 ;; Stateful interpreter: INIT produces per-source state (once per differ-run, e.g. a
 ;; fresh make-environment); RUN maps (state item) -> result.
 (define (make-stateful-interp name family init run)
-  (make-interp* name family init run))
+  (make-interp* name family init run #f))
+
+;; Batch interpreter: RUN-SRC maps the WHOLE item list -> a list of results (item
+;; order, same length).  For runners that must process a source in one shot -- e.g. a
+;; subprocess that takes all entries at once to amortise the spawn and keep state.
+(define (make-source-interp name family run-src)
+  (make-interp* name family
+                (lambda () #f)
+                (lambda (s i) (error "source-interp has no per-item run"))
+                run-src))
 
 ;; ---- per-cycle result (one shape of result; the core never looks inside) -------
 
@@ -119,6 +129,50 @@
         (call-with-values
           (lambda () (eval-cycle input env host-cycle-timeout))
           make-cycle)))))
+
+;; ---- live sibling runner (subprocess; increment 3b) ----------------------------
+;; Run ANOTHER interpreter that also has eval-cycle / make-toplevel-environment /
+;; (read) (i.e. the sibling port) as a subprocess, driven by sibling-driver.scm.  The
+;; parent serialises each entry's (input fold-case?) to the child's stdin; the driver
+;; runs every entry through the SAME eval-cycle path (one make-toplevel-environment,
+;; state preserved) and writes a clean (output retval error timed-out?) per cycle to
+;; stdout.  No REPL chrome (eval-cycle gives golden-format errors), no argv length
+;; limit (entries go via stdin, not -e), one spawn per source.  LAUNCH-ARGV is how to
+;; start the sibling (e.g. (interpreter-argv) for the same port, or a sibling exe
+;; path); DRIVER-PATH is the path to sibling-driver.scm.
+
+(define (entries->driver-input items)
+  (let ((p (open-output-string)))
+    (for-each (lambda (e)
+                (write (list (entry-input e) (entry-fold-case e)) p)
+                (newline p))
+              items)
+    (get-output-string p)))
+
+;; Read exactly N (output retval error timed-out?) forms from the driver's stdout into
+;; <cycle> results; if the child emitted fewer (e.g. it crashed), pad with an error
+;; cycle so the result list always matches the item count.
+(define (parse-driver-output text n)
+  (let ((p (open-input-string text)))
+    (let loop ((k 0) (acc '()))
+      (if (>= k n)
+          (reverse acc)
+          (let ((form (read p)))
+            (if (eof-object? form)
+                (loop (+ k 1)
+                      (cons (make-cycle "" "" "differ: no result from subprocess" #f) acc))
+                (loop (+ k 1)
+                      (cons (make-cycle (list-ref form 0) (list-ref form 1)
+                                        (list-ref form 2) (list-ref form 3)) acc))))))))
+
+(define (make-sibling-interp name family launch-argv driver-path)
+  (make-source-interp name family
+    (lambda (items)
+      (call-with-values
+        (lambda () (run-process (append launch-argv (list driver-path))
+                                (entries->driver-input items)))
+        (lambda (code out err)
+          (parse-driver-output out (length items)))))))
 
 ;; ---- compare strategies for cycle results --------------------------------------
 ;; All comparisons live OUTSIDE the core.  The core passes (compare a b); in
@@ -194,19 +248,33 @@
                      (cons (map car matchers) (map car mismatchers)))))
     (else (error "differ-run: unknown mode (expected 'peer or 'reference)" mode))))
 
-;; Run every interpreter on every item; return a list of verdicts (item order).
-;; In REFERENCE mode the FIRST interpreter is the reference/oracle.  Each
-;; interpreter's init runs once up front; its state is threaded across all items.
+;; Apply RUN to each item in ORDER (not map -- R7RS map's order is unspecified, but a
+;; live runner mutating shared state needs strict left-to-right).
+(define (run-each-ordered run state items)
+  (let loop ((items items) (acc '()))
+    (if (null? items)
+        (reverse acc)
+        (loop (cdr items) (cons (run state (car items)) acc)))))
+
+;; All of one interpreter's results for the whole source, in item order.  A batch
+;; (run-source) interpreter produces them in one shot; otherwise init once and run
+;; each item with the threaded state.
+(define (interp-results ip items)
+  (let ((rsrc (interp-run-source ip)))
+    (if rsrc
+        (rsrc items)
+        (run-each-ordered (interp-run ip) ((interp-init ip)) items))))
+
+;; Run every interpreter over the whole source, then classify per item; return a list
+;; of verdicts (item order).  In REFERENCE mode the FIRST interpreter is the oracle.
 (define (differ-run items interps mode compare)
-  (let ((primed (map (lambda (ip) (cons ip ((interp-init ip)))) interps)))
-    (let loop ((items items) (i 0) (acc '()))
+  (let ((rbi (map (lambda (ip) (cons (interp-name ip) (interp-results ip items)))
+                  interps)))           ; rbi = list of (name . results-list)
+    (let loop ((items items) (rls (map cdr rbi)) (i 0) (acc '()))
       (if (null? items)
           (reverse acc)
-          (let ((named (map (lambda (p)
-                              (cons (interp-name (car p))
-                                    ((interp-run (car p)) (cdr p) (car items))))
-                            primed)))
-            (loop (cdr items) (+ i 1)
+          (let ((named (map (lambda (nr rl) (cons (car nr) (car rl))) rbi rls)))
+            (loop (cdr items) (map cdr rls) (+ i 1)
                   (cons (classify-item i (car items) named mode compare) acc)))))))
 
 ;; ---- reporting (convenience; renders cycle results) ----------------------------
