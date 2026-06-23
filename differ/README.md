@@ -9,9 +9,9 @@ replayed by `parse-log-file`. One engine then subsumes three tools by varying
 
 | Tool | = differ with |
 |------|---------------|
-| the `.log` golden test runner | reference = `.log`, subjects = cpp/py, strict |
-| `chibi_diff` conformance | reference = `.log`, subject = chibi, coarse |
-| cross-port diff / fuzz | peer mode over cpp+py, strict |
+| the `.log` golden test runner | reference = `.log`, subjects = cpp/py, strict — `differ-battery.scm` |
+| chibi conformance (was `chibi_diff.py`) | reference = `.log`, subject = chibi, conformance — `differ-conformance.scm` |
+| cross-port diff / fuzz | peer mode over cpp+py, strict — `../cross-port-tests/{diff,fuzz}.scm` |
 
 See the `universal-interpreter-differ` design note for the full rationale (why
 this *supersedes* the `.log`→SRFI-64 migration for the golden battery).
@@ -59,7 +59,7 @@ this *supersedes* the `.log`→SRFI-64 migration for the golden battery).
   global) and cwd = the suite dir (relative-path cycles); the registry entry sets both.
   Reproduces the golden 4897/4897 (feature) + 81/81 (regression), both ports.
 - **`chibi-driver.scm`** / **`differ-conformance.scm`** — the **cross-implementation
-  conformance** arm (the standalone tool that subsumes `chibi_diff.py`). The driver
+  conformance** arm (the standalone tool that replaced the retired `chibi_diff.py`). The driver
   runs each cycle through chibi — which has no `eval-cycle` — in one
   `(interaction-environment)`, capturing output/value/error with portable R7RS, and
   speaks the sibling stdin protocol so `make-sibling-interp` drives it (with a
@@ -121,4 +121,5 @@ divergences and returns `#t` when everything agrees.
      chibi is a different impl with hundreds of legitimate cross-impl diffs, so wiring
      it into `]suites all` would slow every run and flood it. `CONF_EXE`/`CONF_DRIVER`
      point it at Chez et al.
-6. retire `chibi_diff.py` (subsumed by `differ-conformance.scm`) — NEXT.
+6. ✅ retire `chibi_diff.py` (subsumed by `differ-conformance.scm`) — deleted; the
+   differ initiative is complete.

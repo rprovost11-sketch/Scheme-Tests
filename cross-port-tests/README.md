@@ -112,8 +112,9 @@ launches pyScheme *only* to classify the cases that flag (`cpp-only` if pyScheme
 matches chibi, `shared` if it too deviates). Measured aside: pyScheme is not the
 bottleneck (~0.03 s/launch); the chibi oracle's per-program process+driver is, so
 `--fast` is a ~10% win and a cleaner port-vs-reference hunt. The big lever for
-very large campaigns would be batching chibi (one process for many programs, as
-`chibi_diff.py` does) — not yet implemented here.
+very large campaigns would be batching chibi (one process for many programs) —
+not done here, but the differ's `../differ/chibi-driver.scm` works that way (one
+chibi process per `.log` file, all cycles fed over stdin).
 
 ## The corpus (`cases/`)
 

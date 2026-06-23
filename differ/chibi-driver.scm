@@ -10,7 +10,8 @@
 ;;; value(s) via write, and any error via guard; then writes one
 ;;; (output retval error timed-out?) form per cycle to stdout -- exactly the 4-tuple
 ;;; the parent's parse-driver-output reads back.  The capture logic mirrors the proven
-;;; chibi_diff.py driver.  error = "" means no error (so cycle-errored? is #f); a
+;;; (now-retired) chibi_diff.py driver.  error = "" means no error (so cycle-errored?
+;;; is #f); a
 ;;; chibi stderr warning about an unported lib lands on stderr and is ignored.
 ;;;
 ;;; Run by the conformance harness as:  chibi-scheme -I <lib> chibi-driver.scm  < specs

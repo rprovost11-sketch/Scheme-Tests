@@ -2,8 +2,8 @@
 ;;; oracle (chibi by default) and report where it disagrees with the golden.  This is
 ;;; differ(reference = .log golden, subject = chibi, COARSE/conformance) -- the same
 ;;; engine as differ-battery, but the subject is a different Scheme that formats values
-;;; its own way, so the compare is a CONFORMANCE verdict (mirroring chibi_diff.py, the
-;;; tool this subsumes) rather than a byte-strict match:
+;;; its own way, so the compare is a CONFORMANCE verdict (mirroring the verdict of the
+;;; now-retired chibi_diff.py, which this replaced) rather than a byte-strict match:
 ;;;   * golden says %optional-error%      -> always agree (R7RS "it is an error")
 ;;;   * golden expects an error           -> agree iff the oracle raised ANY error
 ;;;   * golden expects a return value     -> agree iff oracle didn't error and its
