@@ -165,14 +165,19 @@
                       (cons (make-cycle (list-ref form 0) (list-ref form 1)
                                         (list-ref form 2) (list-ref form 3)) acc))))))))
 
-(define (make-sibling-interp name family launch-argv driver-path)
-  (make-source-interp name family
-    (lambda (items)
-      (call-with-values
-        (lambda () (run-process (append launch-argv (list driver-path))
-                                (entries->driver-input items)))
-        (lambda (code out err)
-          (parse-driver-output out (length items)))))))
+;; Optional TIMEOUT (seconds, or #f) caps the subprocess so a hanging cycle -- e.g. a
+;; cross-family oracle that has no eval-cycle timeout, or a test that blocks on (read)
+;; -- can't wedge the whole run; on timeout run-process returns whatever the child
+;; emitted and parse-driver-output pads the rest as error cycles.
+(define (make-sibling-interp name family launch-argv driver-path . opt)
+  (let ((timeout (if (pair? opt) (car opt) #f)))
+    (make-source-interp name family
+      (lambda (items)
+        (call-with-values
+          (lambda () (run-process (append launch-argv (list driver-path))
+                                  (entries->driver-input items) timeout))
+          (lambda (code out err)
+            (parse-driver-output out (length items))))))))
 
 ;; ---- compare strategies for cycle results --------------------------------------
 ;; All comparisons live OUTSIDE the core.  The core passes (compare a b); in

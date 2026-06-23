@@ -86,6 +86,12 @@ divergences and returns `#t` when everything agrees.
      `.log` suite as differ(reference = golden, subject = in-process host, compare =
      `.log` match). Wired as `]suites differ-feature` (cwd = the suite dir + `--no-rc`);
      reproduces the golden verdict 4897/4897 (feature) + 81/81 (regression), both ports.
-   - ☐ remaining: `.run` reports (per-channel `log-match-detail`), chibi/Chez coarse
-     conformance variants.
+   - ✅ `.run` reports: on a divergence `differ-battery.scm` prints the listener
+     runner's failure format (file header + per-channel expected/actual, decided by the
+     `log-match-detail` primitive) + an `N of M FAILED` footer.
+   - ◑ chibi/Chez coarse conformance: `chibi-driver.scm` (captures a cycle's
+     output/value/error under chibi via `interaction-environment`, no `eval-cycle`) +
+     `differ-conformance.scm` = differ(reference = golden, subject = chibi, conformance
+     compare). Reports where the oracle differs from the golden (informational, exit 0;
+     skip-if-absent). `CONF_EXE`/`CONF_DRIVER` point it at Chez et al.
 6. retire `chibi_diff.py` (subsumed).
