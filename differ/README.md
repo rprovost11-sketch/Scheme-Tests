@@ -29,6 +29,28 @@ this *supersedes* the `.log`→SRFI-64 migration for the golden battery).
   Exits 0 if every check passes. Uses mock (canned) interpreters to exercise
   classification independently of live execution, plus a real `.log` fixture
   driven through `parse-log-file`/`log-match?`.
+- **`differ-validate.scm`** — reference-mode validation: the live in-process **host**
+  runner (`eval-cycle` per cycle) vs the `.log` golden over a whole suite.
+- **`sibling-driver.scm`** — the subprocess driver for the live **sibling** runner;
+  reads `(input fold-case?)` specs on stdin, runs each through `eval-cycle` in one
+  `(interaction-environment)`, writes `(output retval error timed-out?)` per cycle.
+- **`differ-subprocess-validate.scm`** — peer validation of the in-process host vs a
+  **same-port** subprocess sibling (should agree on every cycle; isolates the
+  subprocess mechanism).
+- **`differ-crossport-validate.scm`** — the **cross-port** demo: one port in-process
+  (host) vs the **other** port as a subprocess sibling, peer, over a whole suite. The
+  host is whichever port runs the script; the sibling is launched from the other
+  port's exe argv. Run with cwd = this directory and `PYTHONPATH` set (the py child
+  needs it; cpp ignores it):
+  - cpp host / py sibling: `PYTHONPATH=<3PyScheme> cppscheme2.exe differ-crossport-validate.scm`
+  - py host / cpp sibling: `PYTHONPATH=<3PyScheme> python -m pyscheme differ-crossport-validate.scm`
+
+  Both ports are mirror implementations, so they agree on all but a small, fully
+  explained set. Over the feature suite (4897 cycles), **strict** comparison flags 8
+  cycles — 2 from `~/.pyschemerc` defining `fold-left` (cpp has no rc) and 6 from
+  OS/codec error-**message tails** the golden itself marks as varying — symmetric in
+  both directions. **Coarse** (`DIFFER_STRICT=0`: output + errored-or-not) drops the 6
+  cosmetic error-wording cases, isolating the 2 genuine rc-pollution divergences.
 
 ## Design (the core is deliberately tiny)
 

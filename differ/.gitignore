@@ -1,0 +1,13 @@
+# Runtime artifacts from feature-suite file-I/O test cases that write-without-delete
+# (test031-ports.log, test009-modules.log). The differ validation scripts
+# (differ-validate.scm, differ-subprocess-validate.scm, differ-crossport-validate.scm)
+# run those suites with cwd = this directory, so the scratch files land here; they are
+# harmless and regenerated each run. Listed by exact name so tracked .scm helpers are
+# unaffected. Mirrors log-tests/feature-tests/.gitignore.
+pyscheme_ports_pred.txt
+scheme_bin2.txt
+scheme_bin_test.txt
+scheme_fexists_test.txt
+scheme_include_ci_test.scm
+scheme_test_io.txt
+scheme_test_io2.txt
