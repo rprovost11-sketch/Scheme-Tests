@@ -51,6 +51,33 @@ this *supersedes* the `.log`→SRFI-64 migration for the golden battery).
   OS/codec error-**message tails** the golden itself marks as varying — symmetric in
   both directions. **Coarse** (`DIFFER_STRICT=0`: output + errored-or-not) drops the 6
   cosmetic error-wording cases, isolating the 2 genuine rc-pollution divergences.
+- **`differ-battery.scm`** — the **golden battery via the differ**: a `.log` suite as
+  `differ(reference = golden, subject = the live in-process host, compare = .log
+  match)`. Per file a pass/fail line; on a divergence the listener runner's `.run`
+  failure format (file header + per-channel expected/actual via `log-match-detail` +
+  `N of M FAILED`). Wired as `]suites differ-feature`. Needs `--no-rc` (pristine
+  global) and cwd = the suite dir (relative-path cycles); the registry entry sets both.
+  Reproduces the golden 4897/4897 (feature) + 81/81 (regression), both ports.
+- **`chibi-driver.scm`** / **`differ-conformance.scm`** — the **cross-implementation
+  conformance** arm (the standalone tool that subsumes `chibi_diff.py`). The driver
+  runs each cycle through chibi — which has no `eval-cycle` — in one
+  `(interaction-environment)`, capturing output/value/error with portable R7RS, and
+  speaks the sibling stdin protocol so `make-sibling-interp` drives it (with a
+  per-file timeout). `differ-conformance.scm` is `differ(reference = golden, subject =
+  oracle, conformance compare)` — a different impl formats values its own way, so the
+  compare is value-normalised + error-or-not (mirroring `chibi_diff`'s verdict), not
+  byte-strict. **Informational**: disagreements are cross-impl differences for a human
+  to review, so it exits 0 (and skips if the oracle exe is absent) — it is deliberately
+  *not* a `]suites` pass/fail entry. Run from the suite dir with `--no-rc`:
+
+      cd scheme-tests/log-tests/R7RS-Compliance-Tests
+      <interp> --no-rc ../../differ/differ-conformance.scm
+
+  Over compliance (6952 cycles) chibi agrees on ~93%; the rest are real R7RS
+  differences (chibi lenient on improper-list args where the ports error), chibi
+  lacking the ports' extensions (`help`, records sugar), heavy tests timing out, and a
+  few procs chibi keeps in srfi-1. Point `CONF_EXE`/`CONF_LIB`/`CONF_DRIVER` at another
+  R7RS Scheme (e.g. Chez + a `chez-driver.scm`) to reuse the whole harness.
 
 ## Design (the core is deliberately tiny)
 
@@ -81,7 +108,7 @@ divergences and returns `#t` when everything agrees.
 4. ✅ retrofit cross-port diff / fuzz onto the engine (peer, whole-program) —
    `../cross-port-tests/{diff,fuzz}.scm` now `load` `differ.scm` and classify via
    `differ-run` / `classify-item` over `#(out err rc)` results.
-5. ◑ wire `]suites` (golden battery via differ reference-mode; chibi/Chez variants).
+5. ✅ wire `]suites` (golden battery via differ reference-mode; chibi/Chez variants).
    - ✅ `--no-rc` flag (both ports) → pristine global, and `differ-battery.scm` runs a
      `.log` suite as differ(reference = golden, subject = in-process host, compare =
      `.log` match). Wired as `]suites differ-feature` (cwd = the suite dir + `--no-rc`);
@@ -89,9 +116,9 @@ divergences and returns `#t` when everything agrees.
    - ✅ `.run` reports: on a divergence `differ-battery.scm` prints the listener
      runner's failure format (file header + per-channel expected/actual, decided by the
      `log-match-detail` primitive) + an `N of M FAILED` footer.
-   - ◑ chibi/Chez coarse conformance: `chibi-driver.scm` (captures a cycle's
-     output/value/error under chibi via `interaction-environment`, no `eval-cycle`) +
-     `differ-conformance.scm` = differ(reference = golden, subject = chibi, conformance
-     compare). Reports where the oracle differs from the golden (informational, exit 0;
-     skip-if-absent). `CONF_EXE`/`CONF_DRIVER` point it at Chez et al.
-6. retire `chibi_diff.py` (subsumed).
+   - ✅ chibi/Chez conformance: `chibi-driver.scm` + `differ-conformance.scm` (see the
+     Files section). A standalone informational tool (not a `]suites` pass/fail entry):
+     chibi is a different impl with hundreds of legitimate cross-impl diffs, so wiring
+     it into `]suites all` would slow every run and flood it. `CONF_EXE`/`CONF_DRIVER`
+     point it at Chez et al.
+6. retire `chibi_diff.py` (subsumed by `differ-conformance.scm`) — NEXT.
