@@ -57,7 +57,11 @@
              (errmsg  "")
              (retval  ""))
         (guard (e (#t (set! errored #t) (set! errmsg (err->string e))))
-          (let ((vals (parameterize ((current-output-port sp))
+          ;; current-input-port is rebound to an EMPTY string port for the eval so a
+          ;; test's own (read) yields eof instead of stealing this driver's stdin spec
+          ;; stream (which would corrupt every following cycle).
+          (let ((vals (parameterize ((current-output-port sp)
+                                     (current-input-port (open-input-string "")))
                         (let lp ((fs (read-all src)) (last '()))
                           (if (null? fs)
                               last
