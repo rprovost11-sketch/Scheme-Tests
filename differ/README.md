@@ -78,6 +78,8 @@ divergences and returns `#t` when everything agrees.
 2. ✅ **differ core** — gather + classify (peer/reference, strict/coarse). *(this dir)*
 3. live runners: host in-process via `make-environment` per cycle; others via
    `run-process` subprocess with a marker driver.
-4. retrofit cross-port diff / fuzz onto the engine (peer, whole-program).
+4. ✅ retrofit cross-port diff / fuzz onto the engine (peer, whole-program) —
+   `../cross-port-tests/{diff,fuzz}.scm` now `load` `differ.scm` and classify via
+   `differ-run` / `classify-item` over `#(out err rc)` results.
 5. wire `]suites` (golden battery via differ reference-mode; chibi/Chez variants).
 6. retire `chibi_diff.py` (subsumed).

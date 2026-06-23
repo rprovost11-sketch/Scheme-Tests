@@ -5,6 +5,17 @@
 ;;; extension primitives.  This is the Scheme analogue of fuzz.py's `import diff`:
 ;;; the normalization, stderr-core stripping, per-case run, and divergence
 ;;; classification live here so both harnesses compare the two ports identically.
+;;;
+;;; Increment 4: the divergence CLASSIFICATION is now routed through the shared
+;;; universal-differ core (../differ/differ.scm).  Each port is wrapped as an
+;;; <interp>; a whole-program result is the #(out err rc) vector run-case produces,
+;;; behaves-like? is the peer compare, and classify-item / differ-run partition each
+;;; program's two results into agreement classes.  The cross-port harness thus stops
+;;; owning its own divergence loop -- it declares interpreters + compare and lets the
+;;; engine classify (the same core the .log differ uses).  The chibi oracle stays a
+;;; separate adjudication layer, consulted on the classified results.
+
+(load "../differ/differ.scm")      ; differ core: make-interp, classify-item, differ-run, <verdict>
 
 ;; ---- small helpers (R7RS-small lacks filter / string ops) ----------------------
 
@@ -120,6 +131,30 @@
             (string-split-newline (if (string=? (out-of r) "") "<no stdout>" (out-of r))))
   (unless (string=? (err-of r) "")
     (display "            err| ") (display (err-of r)) (newline)))
+
+;; ---- differ-engine retrofit (increment 4) --------------------------------------
+;; Each port as an <interp> whose run maps a case-file path -> the #(out err rc)
+;; whole-program result.  classify-ports runs ONE program's two results through the
+;; engine's peer classifier (partition-peer / <verdict>); diff.scm drives the whole
+;; corpus through differ-run (batch), fuzz.scm classifies each generated program one
+;; at a time -- both via the same core, neither owning a divergence loop.
+
+(define py-interp  (make-interp "pyScheme"   'py  (lambda (cf) (run-case py-argv  cf))))
+(define cpp-interp (make-interp "cppScheme2" 'cpp (lambda (cf) (run-case cpp-argv cf))))
+(define cross-port-interps (list py-interp cpp-interp))
+
+;; Pull a named port's result out of a verdict (results = alist (name . result)).
+(define (verdict-result v name)
+  (let ((p (assoc name (verdict-results v)))) (and p (cdr p))))
+(define (verdict-py  v) (verdict-result v "pyScheme"))
+(define (verdict-cpp v) (verdict-result v "cppScheme2"))
+
+;; Classify one program (already run on both ports) through the engine.  LABEL is the
+;; item recorded in the verdict (a case name or a fuzz note); PY-R / CPP-R the results.
+(define (classify-ports index label py-r cpp-r)
+  (classify-item index label
+                 (list (cons "pyScheme" py-r) (cons "cppScheme2" cpp-r))
+                 'peer behaves-like?))
 
 ;; ---- optional chibi oracle (opt-in: CROSS_PORT_ORACLE=chibi; skip-if-absent) ---
 ;; The bare cross-port diff cannot catch a bug BOTH ports share.  With the oracle

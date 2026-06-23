@@ -46,6 +46,16 @@ The harness is now **pure Scheme** — `diff.scm` and `fuzz.scm`, sharing the
 compare/normalize engine in `cross-port-common.scm`. They depend only on the
 interpreter (no python), launching each port via `(run-process …)`:
 
+The **divergence classification** is routed through the shared universal-differ
+core (`../differ/differ.scm`): each port is wrapped as an `<interp>`, a
+whole-program result is the `#(out err rc)` vector, `behaves-like?` is the peer
+compare, and `differ-run` / `classify-item` partition each program's two results
+into agreement classes (`diff.scm` drives the whole corpus through `differ-run`;
+`fuzz.scm` classifies each generated program with `classify-item`). The harness no
+longer owns a divergence loop — it declares interpreters + compare and lets the
+engine classify (the same core the `.log` differ uses). The chibi oracle stays a
+separate adjudication layer consulted on the classified results.
+
     ]suites cross-port        # the curated cases/ corpus
     ]suites fuzz-smoke        # generated programs (FUZZ_N env overrides the count)
 

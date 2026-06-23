@@ -18,8 +18,8 @@
 ;;;
 ;;; Run (from cross-port-tests/, hosted on pyScheme):  <pyscheme> fuzz.scm
 
-(import (scheme base) (scheme write) (scheme file) (scheme process-context))
-(load "cross-port-common.scm")     ; run-case, behaves-like?, divergence-kind, show, py/cpp-argv
+(import (scheme base) (scheme write) (scheme read) (scheme file) (scheme process-context))
+(load "cross-port-common.scm")     ; differ core + run-case, classify-ports, divergence-kind, show
 
 ;; ---- seeded PRNG (LCG; R7RS has no seeded RNG -- exact sequence is irrelevant,
 ;;      only determinism per seed) -------------------------------------------------
@@ -202,11 +202,12 @@
            (note (cdr sn)))
       (when (file-exists? scratch) (delete-file scratch))   ; fresh file each program
       (call-with-output-file scratch (lambda (p) (write-string src p)))
-      (let ((py (run-case py-argv scratch))
-            (cpp (run-case cpp-argv scratch))
-            (ch (run-chibi scratch)))            ; #f unless oracle?
+      (let* ((py (run-case py-argv scratch))
+             (cpp (run-case cpp-argv scratch))
+             (ch (run-chibi scratch))            ; #f unless oracle?
+             (v (classify-ports i note py cpp)))  ; route through the differ core
         (cond
-          ((not (behaves-like? py cpp))
+          ((not (verdict-agree? v))
            (set! findings (+ findings 1))
            (display "  DIVERGE [") (display (divergence-kind py cpp)) (display "]  ")
            (display note) (newline)

@@ -19,11 +19,14 @@
 ;;;
 ;;; Run (from cross-port-tests/, hosted on pyScheme):  <pyscheme> diff.scm
 
-(import (scheme base) (scheme write) (scheme file) (scheme process-context))
-(load "cross-port-common.scm")     ; normalize, run-case, behaves-like?, chibi oracle, ...
+(import (scheme base) (scheme write) (scheme read) (scheme file) (scheme process-context))
+(load "cross-port-common.scm")     ; differ core + normalize, run-case, behaves-like?, oracle, ...
 
 (define cases
-  (xfilter (lambda (n) (string-suffix? ".scm" n)) (directory-files "cases")))
+  (map (lambda (n) (string-append "cases/" n))
+       (xfilter (lambda (n) (string-suffix? ".scm" n)) (directory-files "cases"))))
+
+(define (case-name cf) (substring cf 6 (string-length cf)))   ; drop "cases/"
 
 (display "cross-port differential macro harness") (newline)
 (display "  pyScheme  : ") (for-each (lambda (a) (display a) (display " ")) py-argv) (newline)
@@ -31,18 +34,23 @@
 
 (when oracle? (display "  [+chibi oracle]") (newline))
 
+;; The engine runs both ports over the whole corpus and partitions each case's two
+;; results; we read the verdicts and overlay reporting + the chibi oracle.
+(define verdicts (differ-run cases cross-port-interps 'peer behaves-like?))
+
 (define parity 0)
 (define diverged '())
 (define shared '())          ; both ports agree but differ from chibi
 
 (for-each
- (lambda (name)
-   (let* ((cf (string-append "cases/" name))
-          (py (run-case py-argv cf))
-          (cpp (run-case cpp-argv cf))
-          (ch (run-chibi cf)))                 ; #f unless oracle?
+ (lambda (v)
+   (let* ((cf   (verdict-item v))
+          (name (case-name cf))
+          (py   (verdict-py v))
+          (cpp  (verdict-cpp v))
+          (ch   (run-chibi cf)))                ; #f unless oracle?
      (cond
-       ((behaves-like? py cpp)
+       ((verdict-agree? v)
         (if (and ch (not (matches-oracle? py ch)))
             (begin (set! shared (cons name shared))
                    (display "  SHARED   ") (display name)
@@ -59,7 +67,7 @@
           (show "pyScheme" py) (show "cppScheme2" cpp)
           (when ch (show-chibi ch)
                 (display "          --> ") (display (adjudicate py cpp ch)) (newline)))))))
- cases)
+ verdicts)
 
 (newline)
 (display "cross-port: ") (display parity) (display " parity, ")
