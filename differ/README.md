@@ -57,7 +57,25 @@ this *supersedes* the `.log`→SRFI-64 migration for the golden battery).
   failure format (file header + per-channel expected/actual via `log-match-detail` +
   `N of M FAILED`). Wired as `]suites differ-feature`. Needs `--no-rc` (pristine
   global) and cwd = the suite dir (relative-path cycles); the registry entry sets both.
-  Reproduces the golden 4897/4897 (feature) + 81/81 (regression), both ports.
+  Reproduces the golden 4897/4897 (feature) + 81/81 (regression), both ports. Also
+  registered as `]suites differ-regression`. (`differ-compliance` is intentionally not
+  registered — the compliance corpus exercises `define-library`/`import`/cross-cycle
+  macros the in-process host's isolated `make-toplevel-environment` can't resolve; a
+  faithful version must drive the subprocess sibling.)
+- **`differ-portability{,-body,-chez,-run}.scm`** — the **differ-core portability
+  test**: proof that the pure-R7RS classification core runs byte-identically on *any*
+  Scheme, not just the two ports. `differ-portability-body.scm` `(include)`s the real
+  `differ.scm` and exercises only the core with mock interpreters (no extension
+  primitive is ever called — stubs give them a binding so the include succeeds on a
+  minimal R7RS host), printing one canonical line. `differ-portability.scm` is the
+  R7RS wrapper (`import (scheme base)`); `differ-portability-chez.scm` is the bare-Chez
+  wrapper (a vector-backed R7RS `define-record-type` shim, since Chez's native one is
+  R6RS). `differ-portability-run.scm` launches it on every available interpreter and
+  checks they all print the same all-correct line, skipping absent externals. Validated
+  on **five**: cppScheme2, pyScheme, Gauche, Chibi, Chez — all emit
+  `(peer-agree #t peer-diverge #t ref-ok #t ref-bad #t coarse #t strict #t)`. Wired as
+  `]suites differ-portability` (alias `dp`); widen with `GOSH_EXE` / `CHIBI_EXE` +
+  `CHIBI_LIB` / `CHEZ_EXE`.
 - **`chibi-driver.scm`** / **`differ-conformance.scm`** — the **cross-implementation
   conformance** arm (the standalone tool that replaced the retired `chibi_diff.py`). The driver
   runs each cycle through chibi — which has no `eval-cycle` — in one
@@ -76,8 +94,12 @@ this *supersedes* the `.log`→SRFI-64 migration for the golden battery).
   Over compliance (6952 cycles) chibi agrees on ~93%; the rest are real R7RS
   differences (chibi lenient on improper-list args where the ports error), chibi
   lacking the ports' extensions (`help`, records sugar), heavy tests timing out, and a
-  few procs chibi keeps in srfi-1. Point `CONF_EXE`/`CONF_LIB`/`CONF_DRIVER` at another
-  R7RS Scheme (e.g. Chez + a `chez-driver.scm`) to reuse the whole harness.
+  few procs chibi keeps in srfi-1. The driver is **generic R7RS**, so **Gauche** drops
+  in unchanged via `CONF_EXE=gosh.exe CONF_PREFLAGS=-r7 CONF_NAME=gauche`
+  (`CONF_PREFLAGS` = the flags between the oracle exe and the driver; default
+  `-I <CONF_LIB>` for chibi). Over the feature suite Gauche agrees on 3992/4897 (~81%).
+  Bare **Chez is not usable as a conformance oracle** — it has no `(scheme base)` / R7RS
+  libraries — but it *is* exercised by the portability test above, which needs none.
 
 ## Design (the core is deliberately tiny)
 
