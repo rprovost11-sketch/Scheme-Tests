@@ -51,17 +51,26 @@ this *supersedes* the `.log`→SRFI-64 migration for the golden battery).
   OS/codec error-**message tails** the golden itself marks as varying — symmetric in
   both directions. **Coarse** (`DIFFER_STRICT=0`: output + errored-or-not) drops the 6
   cosmetic error-wording cases, isolating the 2 genuine rc-pollution divergences.
-- **`differ-battery.scm`** — the **golden battery via the differ**: a `.log` suite as
-  `differ(reference = golden, subject = the live in-process host, compare = .log
-  match)`. Per file a pass/fail line; on a divergence the listener runner's `.run`
-  failure format (file header + per-channel expected/actual via `log-match-detail` +
-  `N of M FAILED`). Wired as `]suites differ-feature`. Needs `--no-rc` (pristine
-  global) and cwd = the suite dir (relative-path cycles); the registry entry sets both.
-  Reproduces the golden 4897/4897 (feature) + 81/81 (regression), both ports. Also
-  registered as `]suites differ-regression`. (`differ-compliance` is intentionally not
-  registered — the compliance corpus exercises `define-library`/`import`/cross-cycle
-  macros the in-process host's isolated `make-toplevel-environment` can't resolve; a
-  faithful version must drive the subprocess sibling.)
+- **`differ-battery.scm`** / **`differ-battery-core.scm`** / **`differ-compliance.scm`**
+  — the **golden battery via the differ**: a `.log` suite as `differ(reference = golden,
+  subject = a live runner, compare = .log match)`. Per file a pass/fail line; on a
+  divergence the listener runner's `.run` failure format (file header + per-channel
+  expected/actual via `log-match-detail` + `N of M FAILED`). The shared body is
+  `differ-battery-core.scm`; two thin wrappers pick the **subject**:
+  - **`differ-battery.scm`** — subject = the in-process **host** (`eval-cycle` in a
+    fresh `make-toplevel-environment` per file). Wired as `]suites differ-feature`
+    and `]suites differ-regression`. Reproduces the golden 4897/4897 (feature) +
+    81/81 (regression), both ports.
+  - **`differ-compliance.scm`** — subject = a subprocess **sibling** (one same-port
+    process per file, `--no-rc`, driven by `sibling-driver.scm` in the real
+    `(interaction-environment)`). The compliance corpus exercises
+    `define-library`/`import`/cross-cycle `define-syntax` macros the isolated host
+    env can't resolve, so it needs the sibling; reproduces the compliance golden
+    **6952/6952**, both ports. *Not* registered in `]suites` (a subprocess per file
+    is ~30 s on cpp, minutes on py — too heavy for `]suites all`); run on demand:
+    `cd .../R7RS-Compliance-Tests && <interp> --no-rc ../../differ/differ-compliance.scm`.
+
+  Both need `--no-rc` (pristine global) and cwd = the suite dir (relative-path cycles).
 - **`differ-portability{,-body,-chez,-run}.scm`** — the **differ-core portability
   test**: proof that the pure-R7RS classification core runs byte-identically on *any*
   Scheme, not just the two ports. `differ-portability-body.scm` `(include)`s the real

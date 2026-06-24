@@ -201,9 +201,11 @@
   ;; differ reproduces the authoritative runner's verdict on the regression pins; runs
   ;; ALONGSIDE the listener's own .log runner, not replacing it.  --no-rc + cwd = the
   ;; suite dir give the pristine global and relative-path resolution the runner uses.
-  ;; (differ-compliance is intentionally NOT registered: the compliance corpus has
-  ;; high-N TCO soaks and at least one very slow cycle through the in-process host, so
-  ;; it would bloat `]suites all`; run it on demand via DIFFER_SUITE if needed.)
+  ;; (differ-compliance.scm exists and reproduces the compliance golden 6952/6952 via
+  ;; the SUBPROCESS SIBLING subject -- the in-process host can't resolve the corpus's
+  ;; imported macros.  It is NOT registered: a subprocess per file is ~30s on cpp and
+  ;; minutes on py, which would bloat `]suites all`.  Run it on demand from the suite
+  ;; dir: `<interp> --no-rc ../../differ/differ-compliance.scm`.)
   (cwd        "log-tests/regression-tests")
   (run        "{interp}" "--no-rc" "../../differ/differ-battery.scm")
   (pass       exit-0)
