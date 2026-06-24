@@ -15,9 +15,12 @@
 ;;; clean run regardless of the disagreement count (nonzero only if the oracle can't
 ;;; be launched).  Skips with exit 0 if the oracle exe is absent.
 ;;;
-;;; Oracle via env (defaults = chibi): CONF_EXE, CONF_LIB (one -I dir), CONF_DRIVER
-;;; (the matching driver; chibi-driver.scm by default).  Point CONF_EXE/CONF_DRIVER at
-;;; another R7RS Scheme (e.g. Chez with a chez-driver.scm) to reuse the whole harness.
+;;; Oracle via env (defaults = chibi): CONF_EXE, CONF_PREFLAGS (flags before the
+;;; driver; default "-I <CONF_LIB>"), CONF_DRIVER (default chibi-driver.scm), CONF_NAME.
+;;; chibi-driver.scm is GENERIC R7RS, so to use Gauche as the oracle just set
+;;;   CONF_EXE=.../gosh.exe  CONF_PREFLAGS=-r7  CONF_NAME=gauche
+;;; (Bare Chez is NOT usable here: it has no (scheme base) / R7RS libraries.  Chez is
+;;;  exercised instead by the differ-core portability test, which needs no libraries.)
 ;;;
 ;;; Run from the suite dir with --no-rc (like differ-battery):
 ;;;   cd scheme-tests/log-tests/feature-tests
@@ -36,6 +39,22 @@
 (define conf-driver (or (get-environment-variable "CONF_DRIVER")
                         (string-append differ-home "/chibi-driver.scm")))
 (define conf-name (or (get-environment-variable "CONF_NAME") "chibi"))
+
+(define (split-ws s)                           ; split on spaces -> non-empty tokens
+  (let ((n (string-length s)))
+    (let loop ((i 0) (start 0) (acc '()))
+      (define (emit end) (if (> end start) (cons (substring s start end) acc) acc))
+      (cond ((>= i n) (reverse (emit n)))
+            ((char=? (string-ref s i) #\space) (loop (+ i 1) (+ i 1) (emit i)))
+            (else (loop (+ i 1) start acc))))))
+
+;; Pre-driver flags (placed between the oracle exe and the driver script).  Default is
+;; chibi's "-I <lib>"; the SAME generic R7RS driver (chibi-driver.scm) also drives
+;; Gauche -- set CONF_EXE=gosh.exe, CONF_PREFLAGS="-r7".  (Bare Chez is NOT usable as a
+;; conformance oracle: it lacks (scheme base) and the R7RS libraries the tests need.)
+(define conf-preflags
+  (let ((v (get-environment-variable "CONF_PREFLAGS")))
+    (if v (split-ws v) (list "-I" conf-lib))))
 
 (when (not (file-exists? conf-exe))
   (display "differ-conformance: oracle not found (") (display conf-exe)
@@ -91,7 +110,7 @@
     (or (and e (string->number e)) 20)))
 
 (define oracle (make-sibling-interp conf-name 'oracle
-                                    (list conf-exe "-I" conf-lib) conf-driver
+                                    (cons conf-exe conf-preflags) conf-driver
                                     conf-timeout))
 (define golden (make-log-playback "golden"))
 
