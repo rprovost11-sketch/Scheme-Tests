@@ -119,16 +119,26 @@
 
 (define host-cycle-timeout 120)   ; seconds; matches the .log runner's per-entry limit
 
-(define (make-host-interp name family)
-  (make-stateful-interp name family
-    (lambda () (make-toplevel-environment))        ; fresh self-global env per source
-    (lambda (env entry)
-      (let ((input (if (entry-fold-case entry)
-                       (string-append "#!fold-case\n" (entry-input entry))
-                       (entry-input entry))))
-        (call-with-values
-          (lambda () (eval-cycle input env host-cycle-timeout))
-          make-cycle)))))
+;; PRELUDE: optional list of input strings evaluated in the fresh per-source env
+;; BEFORE its cycles, so the env can be seeded the way the .log runner seeds it (e.g.
+;; the runner defines %MAX_TCO_ITER_COUNT% in every file's env -- Listener.cpp:1310).
+;; Kept generic: WHAT to seed is the caller's business; the engine just runs it.
+(define make-host-interp
+  (case-lambda
+    ((name family) (make-host-interp name family '()))
+    ((name family prelude)
+     (make-stateful-interp name family
+       (lambda ()
+         (let ((env (make-toplevel-environment)))   ; fresh self-global env per source
+           (for-each (lambda (inp) (eval-cycle inp env host-cycle-timeout)) prelude)
+           env))
+       (lambda (env entry)
+         (let ((input (if (entry-fold-case entry)
+                          (string-append "#!fold-case\n" (entry-input entry))
+                          (entry-input entry))))
+           (call-with-values
+             (lambda () (eval-cycle input env host-cycle-timeout))
+             make-cycle)))))))
 
 ;; ---- live sibling runner (subprocess; increment 3b) ----------------------------
 ;; Run ANOTHER interpreter that also has eval-cycle / make-toplevel-environment /

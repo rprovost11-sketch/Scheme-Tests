@@ -191,6 +191,24 @@
   (pass       exit-0)
   (desc       "feature golden battery re-run through the universal differ (reference mode, pristine host)"))
 
+(suite "differ-regression"
+  (kind       external)
+  (alias      "dr")
+  (categories tools)
+  ;; The regression golden battery re-run THROUGH the universal differ engine, like
+  ;; differ-feature: reference = the .log golden, subject = this port's live in-process
+  ;; host (eval-cycle), compare = the .log match semantics.  A cross-check that the
+  ;; differ reproduces the authoritative runner's verdict on the regression pins; runs
+  ;; ALONGSIDE the listener's own .log runner, not replacing it.  --no-rc + cwd = the
+  ;; suite dir give the pristine global and relative-path resolution the runner uses.
+  ;; (differ-compliance is intentionally NOT registered: the compliance corpus has
+  ;; high-N TCO soaks and at least one very slow cycle through the in-process host, so
+  ;; it would bloat `]suites all`; run it on demand via DIFFER_SUITE if needed.)
+  (cwd        "log-tests/regression-tests")
+  (run        "{interp}" "--no-rc" "../../differ/differ-battery.scm")
+  (pass       exit-0)
+  (desc       "regression golden battery re-run through the universal differ (reference mode, pristine host)"))
+
 (suite "gc_test"
   (kind       external)
   (alias      "gc")

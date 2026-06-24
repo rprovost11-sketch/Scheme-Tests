@@ -26,7 +26,8 @@
 ;;;   cd scheme-tests/log-tests/regression-tests
 ;;;   <interp> --no-rc ../../differ/differ-battery.scm
 
-(import (scheme base) (scheme write) (scheme file) (scheme process-context) (scheme read))
+(import (scheme base) (scheme write) (scheme file) (scheme process-context)
+        (scheme read) (scheme time))
 
 ;; DIFFER_HOME locates differ.scm; default is the differ dir as seen from a suite cwd
 ;; (log-tests/<suite> is two levels under scheme-tests, same as differ).  DIFFER_SUITE
@@ -44,7 +45,50 @@
 ;; reference = the .log golden (replays recorded channels, honouring ==> X or ==> Y /
 ;; %%% * / %any-error% / %optional-error%); subject = this port's live host runner.
 (define golden    (make-log-playback "golden"))
-(define host-of   (make-host-interp "host" 'host))
+;; The .log runner binds %MAX_TCO_ITER_COUNT% in EVERY file's fresh env (Listener.cpp:
+;; 1310) so 3.05's proper-tail-recursion soak loops can size themselves; harmless in
+;; suites that don't reference it.  Seed the host env the same way so the compliance
+;; battery doesn't hit an unbound variable.  We use a SMALL count (not the runner's
+;; 100000): the soak goldens return count-independent values (`done` / `#t` -- both
+;; sides of every comparison use the same N), and this battery is a SELF-CONSISTENCY
+;; check (golden and host are the SAME port, so they agree at any count) rather than a
+;; memory soak -- the runner's `compliance-slow` variant owns the real high-N TCO
+;; proof.  The small count keeps differ-compliance fast enough to live in `]suites all`.
+(define host-of   (make-host-interp "host" 'host
+                                    (list "(define %MAX_TCO_ITER_COUNT% 1000)")))
+
+;; ---- .run artifact identity -----------------------------------------------------
+;; The failure report is written to a runs/ dir like the listener runner's, but the
+;; filename is STAMPED with the interpreter name AND version so a stored .run can be
+;; cross-referenced to the exact build that produced it.  NAME comes from
+;; interpreter-argv (the same probe the cross-port differ uses); VERSION from the
+;; interpreter-version primitive; the leading epoch-seconds keeps successive runs
+;; distinct.  Output dir defaults to runs/ under the cwd (globally gitignored in
+;; scheme-tests), overridable via DIFFER_RUNS_DIR.  No new CLI arg -- config stays on
+;; the env-var channel the differ already uses (DIFFER_HOME/DIFFER_SUITE/...).
+(define (string-suffix? suf s)
+  (let ((ls (string-length s)) (lu (string-length suf)))
+    (and (>= ls lu) (string=? (substring s (- ls lu) ls) suf))))
+;; NB: named this-interp-* to avoid shadowing differ.scm's <interp> record accessor
+;; `interp-name`, which the core applies as a procedure.
+(define this-interp-name
+  (if (string-suffix? "cppscheme2.exe" (car (interpreter-argv))) "CPPScheme2" "PyScheme"))
+(define this-interp-ver (interpreter-version))
+(define runs-dir    (or (get-environment-variable "DIFFER_RUNS_DIR") "runs"))
+(define run-path
+  (string-append runs-dir "/"
+                 (number->string (exact (round (current-second))))
+                 "-differ-" this-interp-name "-" this-interp-ver ".run"))
+(create-directory runs-dir)
+(define run-port (open-output-file run-path))
+
+;; One-time header documenting the run; per-file failure detail is appended below.
+(parameterize ((current-output-port run-port))
+  (display "=== differ golden battery .run report ===") (newline)
+  (display "suite:       ") (display suite-dir) (newline)
+  (display "interpreter: ") (display this-interp-name) (display " ") (display this-interp-ver) (newline)
+  (display "(failure-only detail follows; stdout carries the full pass/fail summary)")
+  (newline))
 
 ;; ---- .run-style per-channel failure report ------------------------------------
 ;; Mirrors the listener runner's failure-only report (Listener sessionLog_test): a
@@ -159,15 +203,25 @@
          (begin (set! files-failed (+ files-failed 1))
                 (display nf) (display " of ") (display n) (display " FAILED")))
      (newline)
-     (when (> nf 0) (emit-run-report (path-join suite-dir name) verdicts))))
+     (when (> nf 0)
+       (parameterize ((current-output-port run-port))
+         (emit-run-report (path-join suite-dir name) verdicts)))))
  files)
 
-(newline)
-(display "=== differ golden battery: ") (display suite-dir) (display " ===") (newline)
-(display "cycles=") (display total-cycles)
-(display "  failed=") (display total-failed)
-(display "  files-with-failure=") (display files-failed) (newline)
-(if (= total-failed 0)
-    (begin (display "  ALL ") (display total-cycles) (display " CYCLES MATCHED THE GOLDEN") (newline))
-    (begin (display "  *** ") (display total-failed) (display " CYCLE(S) DIVERGED FROM THE GOLDEN ***") (newline)))
+;; The grand-total summary goes to BOTH the .run file and stdout (the file documents
+;; the run; stdout is what ]suites surfaces).
+(define (write-summary)
+  (newline)
+  (display "=== differ golden battery: ") (display suite-dir) (display " ===") (newline)
+  (display "cycles=") (display total-cycles)
+  (display "  failed=") (display total-failed)
+  (display "  files-with-failure=") (display files-failed) (newline)
+  (if (= total-failed 0)
+      (begin (display "  ALL ") (display total-cycles) (display " CYCLES MATCHED THE GOLDEN") (newline))
+      (begin (display "  *** ") (display total-failed) (display " CYCLE(S) DIVERGED FROM THE GOLDEN ***") (newline))))
+
+(parameterize ((current-output-port run-port)) (write-summary))
+(close-output-port run-port)
+(write-summary)
+(display "Test output: ") (display run-path) (newline)
 (exit (if (= total-failed 0) 0 1))
