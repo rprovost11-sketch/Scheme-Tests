@@ -209,6 +209,21 @@
   (pass       exit-0)
   (desc       "regression golden battery re-run through the universal differ (reference mode, pristine host)"))
 
+(suite "differ-portability"
+  (kind       external)
+  (alias      "dp" "portability")
+  (categories tools)
+  ;; Proof that the differ's pure-R7RS classification CORE runs byte-identically on
+  ;; EVERY available Scheme, not just the two ports.  The runner launches
+  ;; differ-portability.scm on cppScheme2 + pyScheme (always) and chibi / Chez / Gauche
+  ;; (skip-if-absent), and checks they all print the same all-correct canonical line.
+  ;; Validates the "universal differ" claim; widen it by installing the external
+  ;; Schemes (exe paths overridable via GOSH_EXE / CHIBI_EXE+CHIBI_LIB / CHEZ_EXE).
+  (cwd        "differ")
+  (run        "{interp}" "differ-portability-run.scm")
+  (pass       exit-0)
+  (desc       "differ-core portability: classification core runs identically on cpp/py + chibi/Chez/Gauche (skip-if-absent)"))
+
 (suite "gc_test"
   (kind       external)
   (alias      "gc")
