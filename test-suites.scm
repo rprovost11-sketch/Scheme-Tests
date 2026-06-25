@@ -260,6 +260,24 @@
   (pass       exit-0)
   (desc       "pure-Scheme parse-log/log-match validated byte-for-byte vs native primitives over the whole .log corpus"))
 
+(suite "differ-evalcycle"
+  (kind       external)
+  (alias      "dec" "evalcycle")
+  (categories tools)
+  ;; Differential proof that the pure-Scheme scheme-eval-cycle (differ/eval-cycle.scm,
+  ;; a thin wrapper over the new checked-eval primitive) reproduces the native
+  ;; (eval-cycle ...) primitive BYTE-FOR-BYTE on every channel (output, return value,
+  ;; runner-formatted error text, timed-out?) over the feature + regression corpora.
+  ;; Step 4 of self-hosting the differ: checked-eval shrinks the host floor from "the
+  ;; whole REPL cycle" to "checked evaluation + raw capture", moving value formatting
+  ;; into Scheme; the native eval-cycle stays in place (ADDITIVE).  A handful of
+  ;; destructive-filesystem cycles can't be replayed by the double-run validator and
+  ;; are counted as FS artifacts, not faults.  Needs -L <SRFI> for (srfi 152).
+  (cwd        "differ")
+  (run        "{interp}" "--no-rc" "-L" "../../SRFI" "eval-cycle-validate.scm")
+  (pass       exit-0)
+  (desc       "pure-Scheme scheme-eval-cycle (on checked-eval) validated byte-for-byte vs native eval-cycle over the corpus"))
+
 (suite "gc_test"
   (kind       external)
   (alias      "gc")
