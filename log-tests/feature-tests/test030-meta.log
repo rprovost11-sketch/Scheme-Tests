@@ -121,6 +121,13 @@
 %%% line 1, col 8: empty list () is not a valid expression; use (quote ()) for the empty list
 %%% (eval '())
 %%%        ^
+>>> (guard (e (#t (list 'caught (error-object-message e)))) (eval (read (open-input-string "(lambda (1) 1)")) (interaction-environment)))
+... ;;; A malformed special form analyzed DURING (eval ...) raises a clean,
+... ;;; guard-CATCHABLE error -- not a process crash (cppScheme2 used to fault
+... ;;; with "bad variant access") nor an escape past guard (pyScheme used to let
+... ;;; the analyze error propagate).  Both ports now agree.  Regression guard for
+... ;;; the eval/analyze parity fix.
+==> (caught "expected an identifier in lambda parameter list, got 1")
 >>> (interaction-environment)
 ==> #<environment>
 
