@@ -1,0 +1,51 @@
+;;; ============================================================
+;;; SRFI 19 -- Time Data Types and Procedures
+;;; Pure-Scheme (srfi 19) from the SRFI repo (loaded via -L); byte-identical
+;;; output on both ports, so ONE golden serves both.  Run through the differ
+;;; (]suites differ-srfi).  Exercises only DETERMINISTIC procedures -- make-time/
+;;; make-date, date->string, string->date, julian/modified-julian conversions,
+;;; tai<->utc leap-second math, time arithmetic/comparison -- NOT current-time/
+;;; current-date (wall-clock, non-deterministic).
+;;; ============================================================
+>>> (import (srfi 19))
+==>
+>>> (define d (make-date 0 0 0 12 1 1 2000 0))
+==>
+>>> (date->string d "~Y-~m-~dT~H:~M:~S~z")
+==> "2000-01-01T12:00:00Z"
+>>> (date->string d "~A, ~B ~d ~Y")
+==> "Saturday, January 01 2000"
+>>> (date-week-day d)
+==> 6
+>>> (date-year-day d)
+==> 1
+>>> (date->julian-day d)
+==> 2451545
+>>> (date->string (julian-day->date 2451545 0) "~Y-~m-~dT~H:~M:~SZ")
+==> "2000-01-01T12:00:00Z"
+>>> (define de (make-date 0 5 30 13 4 7 2021 -18000))
+==>
+>>> (date->string de "~Y-~m-~dT~H:~M:~S~z")
+==> "2021-07-04T13:30:05-0500"
+>>> (date->string de "~a ~b ~e ~I:~M:~S ~p")
+==> "Sun Jul  4 01:30:05 PM"
+>>> (date->string de "~A ~j ~w ~y")
+==> "Sunday 185 0 21"
+>>> (date->modified-julian-day (make-date 0 0 0 0 1 1 2000 0))
+==> 51544
+>>> (date-year (string->date "2021-07-04T13:30:05+00:00" "~Y-~m-~dT~H:~M:~S~z"))
+==> 2021
+>>> (date->string (string->date "2021-07-04T13:30:05+00:00" "~Y-~m-~dT~H:~M:~S~z") "~Y-~m-~d ~H:~M:~S")
+==> "2021-07-04 13:30:05"
+>>> (time-second (time-utc->time-tai (make-time time-utc 0 915148800)))
+==> 915148832
+>>> (date->string (time-tai->date (make-time time-tai 0 (+ 1483228800 36)) 0) "~Y-~m-~dT~H:~M:~S")
+==> "2016-12-31T23:59:60"
+>>> (time-second (time-difference (make-time time-utc 0 100) (make-time time-utc 0 40)))
+==> 60
+>>> (time<? (make-time time-utc 0 40) (make-time time-utc 0 100))
+==> #t
+>>> (time-second (add-duration (make-time time-utc 500000000 1000) (make-time time-duration 0 90)))
+==> 1090
+>>> (time-second (subtract-duration (make-time time-utc 500000000 1000) (make-time time-duration 0 90)))
+==> 910
