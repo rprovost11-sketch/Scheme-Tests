@@ -329,6 +329,15 @@
 ... ; helper is defined inside the library but not exported
 ==> 27
 
+>>> (define-library (lib macros) (import (scheme base)) (export mk-pt pt-sum safe-div scaled) (begin (define-record-type pt (mk-pt x y) pt? (x px) (y py)) (define (pt-sum p) (+ (px p) (py p))) (define (safe-div a b) (guard (e (#t 'div-error)) (/ a b))) (define scale (make-parameter 1)) (define (scaled n) (parameterize ((scale 10)) (* n (scale)))))) (import (lib macros)) (list (pt-sum (mk-pt 3 4)) (safe-div 10 0) (scaled 5))
+... ; ============================================================
+... ; Standard MACROS inside a define-library body: define-record-type, guard
+... ; and parameterize expand to %-helper primitives (%make-record*, %guard-eval,
+... ; %with-parameters) that must be importable from (scheme base).  Regression
+... ; guard -- these used to fail with "unbound variable: %make-record-type" etc.
+... ; ============================================================
+==> (7 div-error 50)
+
 >>> (define-library (my priv)
 ...   (import (scheme base))
 ...   (export public-fn)
