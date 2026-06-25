@@ -243,6 +243,23 @@
   (pass       exit-0)
   (desc       "SRFI library .log goldens ((srfi 28)/(srfi 48) format) run through the differ"))
 
+(suite "differ-parselog"
+  (kind       external)
+  (alias      "dpl" "parselog")
+  (categories tools)
+  ;; Differential proof that the PURE-SCHEME .log parser + match semantics
+  ;; (differ/parse-log.scm, written on (srfi 152)) are byte-for-byte equivalent to
+  ;; the NATIVE parse-log-file / log-match-detail primitives over the WHOLE real
+  ;; .log corpus (feature + regression + compliance + srfi).  Step 3 of self-hosting
+  ;; the differ: the Scheme versions are ADDITIVE -- the native primitives stay; this
+  ;; suite is the faithfulness check that lets the differ switch to the Scheme path.
+  ;; Needs -L <SRFI repo> for (srfi 152) (like differ-srfi); the native primitives are
+  ;; the oracle, so the script depends on the port providing them (both do).
+  (cwd        "differ")
+  (run        "{interp}" "--no-rc" "-L" "../../SRFI" "parse-log-validate.scm")
+  (pass       exit-0)
+  (desc       "pure-Scheme parse-log/log-match validated byte-for-byte vs native primitives over the whole .log corpus"))
+
 (suite "gc_test"
   (kind       external)
   (alias      "gc")
