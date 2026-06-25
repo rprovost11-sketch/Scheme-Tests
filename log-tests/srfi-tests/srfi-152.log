@@ -1,0 +1,32 @@
+;;; ============================================================
+;;; SRFI 152 -- String Library (reduced), partial core
+;;; Loaded from the SRFI repo via -L; byte-identical on both ports,
+;;; so ONE golden serves both.  Run through the differ
+;;; (]suites differ-srfi) or any -L-aware .log runner.
+;;; ============================================================
+>>> (import (srfi 152))
+==>
+>>> (string-prefix? ">>> " ">>> foo")
+==> #t
+>>> (string-suffix? "lo" "hello")
+==> #t
+>>> (string-contains "hello world" "wor")
+==> 6
+>>> (string-contains "abc" "z")
+==> #f
+>>> (string-trim-both "  hi  ")
+==> "hi"
+>>> (string-take "hello" 2)
+==> "he"
+>>> (string-drop "hello" 2)
+==> "llo"
+>>> (string-split "a,b,c" ",")
+==> ("a" "b" "c")
+>>> (string-split ">>> x\n==> 1\n" "\n" 'suffix)
+==> (">>> x" "==> 1")
+>>> (string-join (list "a" "b" "c") ",")
+==> "a,b,c"
+>>> (string-index "abc,def" (lambda (c) (char=? c #\,)))
+==> 3
+>>> (string-count "aXbXcX" (lambda (c) (char=? c #\X)))
+==> 3
