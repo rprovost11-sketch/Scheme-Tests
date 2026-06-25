@@ -1,0 +1,18 @@
+;;; ============================================================
+;;; SRFI 28 -- Basic Format Strings
+;;; Loaded from the SRFI repo via -L; format produces byte-identical
+;;; output on both ports, so ONE golden serves both.  Run through the
+;;; differ (]suites differ-srfi) or any -L-aware .log runner.
+;;; ============================================================
+>>> (import (srfi 28))
+==>
+>>> (format "~a + ~a = ~a" 1 2 3)
+==> "1 + 2 = 3"
+>>> (format "~s" "hi")
+==> "\"hi\""
+>>> (format "list ~a str ~s" (list 1 2 3) "x")
+==> "list (1 2 3) str \"x\""
+>>> (format "tilde ~~ done")
+==> "tilde ~ done"
+>>> (format "a~%b")
+==> "a\nb"

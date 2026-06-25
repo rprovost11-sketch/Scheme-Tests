@@ -226,6 +226,23 @@
   (pass       exit-0)
   (desc       "differ-core portability: classification core runs identically on cpp/py + chibi/Chez/Gauche (skip-if-absent)"))
 
+(suite "differ-srfi"
+  (kind       external)
+  (alias      "ds" "srfi")
+  (categories tools)
+  ;; SRFI library tests as .log goldens, run THROUGH the differ: reference = the .log
+  ;; golden, subject = this port's in-process host, which imports the SRFI from the
+  ;; sibling SRFI repo (put on the library path with -L ../../../SRFI) and exercises
+  ;; it.  The pure-Scheme SRFIs produce byte-identical output on both ports, so ONE
+  ;; golden serves both.  This establishes the .log-based SRFI testing pattern --
+  ;; add a new log-tests/srfi-tests/srfi-<n>.log as each SRFI lands.  (The .log files
+  ;; are runner-agnostic data; the differ supplies -L via this external (run ...),
+  ;; which the in-process .log runner cannot.)
+  (cwd        "log-tests/srfi-tests")
+  (run        "{interp}" "--no-rc" "-L" "../../../SRFI" "../../differ/differ-battery.scm")
+  (pass       exit-0)
+  (desc       "SRFI library .log goldens ((srfi 28)/(srfi 48) format) run through the differ"))
+
 (suite "gc_test"
   (kind       external)
   (alias      "gc")
