@@ -73,6 +73,16 @@
   (lambda (out code)
     (assert-contains "stdin: (read) at EOF returns the eof object" out "#<eof>")))
 
+;; stdin is a UTF-8 byte transport: run-process writes the child's stdin as UTF-8,
+;; so a non-ASCII char read back must round-trip byte-faithfully.  Regression for
+;; the Windows bug where the child decoded stdin with the locale code page, turning
+;; the UTF-8 of "λ" (#xCE #xBB) into mojibake that (string->utf8 ...) re-encoded.
+(call-with-values
+  (lambda () (run-interp "\x3bb;\n" '("-e" "(string->utf8 (read-line))")))
+  (lambda (out code)
+    (assert-contains "stdin: non-ASCII char round-trips UTF-8 (no locale-codepage mangling)"
+                     out "#u8(206 187)")))
+
 ;; ---- argv rejection / exit codes ----------------------------------------
 (call-with-values (lambda () (run-interp "" '("-e" "(+ 1 2)" "some-target.scm")))
   (lambda (out code)
