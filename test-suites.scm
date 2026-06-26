@@ -243,6 +243,21 @@
   (pass       exit-0)
   (desc       "SRFI library .log goldens ((srfi 28)/(srfi 48) format) run through the differ"))
 
+(suite "srfi-166"
+  (kind       external)
+  (alias      "s166")
+  (categories tools)
+  ;; SRFI 166 (the `show` combinator library) is macro-heavy (with/with!/fn), and the
+  ;; differ's in-process host cannot resolve macros imported across eval cycles, so it
+  ;; is NOT a differ-srfi .log golden.  Instead a self-checking program asserts EXACT
+  ;; expected strings in a real interaction environment (a child interp loads it as its
+  ;; main program); passing on both ports proves byte-identical behaviour.  Needs
+  ;; -L <SRFI repo> for (srfi 166).
+  (cwd        "log-tests/srfi-tests")
+  (run        "{interp}" "--no-rc" "-L" "../../../SRFI" "srfi-166-test.scm")
+  (pass       exit-0)
+  (desc       "(srfi 166) `show` combinator conformance (self-checking, exact-output)"))
+
 (suite "differ-parselog"
   (kind       external)
   (alias      "dpl" "parselog")
