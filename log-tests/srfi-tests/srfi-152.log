@@ -1,32 +1,153 @@
 ;;; ============================================================
-;;; SRFI 152 -- String Library (reduced), partial core
+;;; SRFI 152 -- String Library (reduced), COMPLETE procedure set
 ;;; Loaded from the SRFI repo via -L; byte-identical on both ports,
 ;;; so ONE golden serves both.  Run through the differ
 ;;; (]suites differ-srfi) or any -L-aware .log runner.
 ;;; ============================================================
 >>> (import (srfi 152))
 ==>
->>> (string-prefix? ">>> " ">>> foo")
+;;; --- predicates ---
+>>> (string-null? "")
 ==> #t
->>> (string-suffix? "lo" "hello")
-==> #t
->>> (string-contains "hello world" "wor")
-==> 6
->>> (string-contains "abc" "z")
+>>> (string-null? "a")
 ==> #f
->>> (string-trim-both "  hi  ")
-==> "hi"
+>>> (string-any char-numeric? "abc4")
+==> #t
+>>> (string-any char-numeric? "abc")
+==> #f
+>>> (string-every char-alphabetic? "abc")
+==> #t
+>>> (string-any char-numeric? "ab4c5" 3)
+==> #t
+;;; --- constructors ---
+>>> (string-tabulate (lambda (i) (integer->char (+ 65 i))) 5)
+==> "ABCDE"
+>>> (string-unfold (lambda (x) (= x 5)) (lambda (x) (integer->char (+ 48 x))) (lambda (x) (+ x 1)) 0)
+==> "01234"
+>>> (string-unfold (lambda (x) (= x 3)) (lambda (x) #\*) (lambda (x) (+ x 1)) 0 "<" (lambda (x) ">"))
+==> "<***>"
+>>> (string-unfold-right (lambda (x) (= x 5)) (lambda (x) (integer->char (+ 48 x))) (lambda (x) (+ x 1)) 0)
+==> "43210"
+;;; --- conversion ---
+>>> (reverse-list->string (list #\a #\b #\c))
+==> "cba"
+;;; --- selection ---
 >>> (string-take "hello" 2)
 ==> "he"
 >>> (string-drop "hello" 2)
 ==> "llo"
->>> (string-split "a,b,c" ",")
-==> ("a" "b" "c")
->>> (string-split ">>> x\n==> 1\n" "\n" 'suffix)
-==> (">>> x" "==> 1")
->>> (string-join (list "a" "b" "c") ",")
-==> "a,b,c"
+>>> (string-take-right "hello" 2)
+==> "lo"
+>>> (string-drop-right "hello" 2)
+==> "hel"
+>>> (string-pad "42" 5)
+==> "   42"
+>>> (string-pad "123456" 4)
+==> "3456"
+>>> (string-pad "42" 5 #\0)
+==> "00042"
+>>> (string-pad-right "42" 5)
+==> "42   "
+>>> (string-pad-right "123456" 4)
+==> "1234"
+>>> (string-trim "  hi  ")
+==> "hi  "
+>>> (string-trim-right "  hi  ")
+==> "  hi"
+>>> (string-trim-both "xxhixx" (lambda (c) (char=? c #\x)))
+==> "hi"
+;;; --- replacement ---
+>>> (string-replace "abcd" "XY" 1 3)
+==> "aXYd"
+>>> (string-replace "abcd" "QXYZ" 1 1 1 3)
+==> "aXYbcd"
+;;; --- comparison (re-exported R7RS) ---
+>>> (string-ci=? "ABC" "abc")
+==> #t
+;;; --- prefixes & suffixes ---
+>>> (string-prefix-length "abcx" "abcy")
+==> 3
+>>> (string-suffix-length "xabc" "yabc")
+==> 3
+>>> (string-prefix? ">>> " ">>> foo")
+==> #t
+>>> (string-suffix? "lo" "hello")
+==> #t
+>>> (string-prefix? "ax" "abc")
+==> #f
+;;; --- searching ---
 >>> (string-index "abc,def" (lambda (c) (char=? c #\,)))
 ==> 3
+>>> (string-index-right "abca" (lambda (c) (char=? c #\a)))
+==> 3
+>>> (string-skip "  ab" char-whitespace?)
+==> 2
+>>> (string-skip-right "ab  " char-whitespace?)
+==> 1
+>>> (string-contains "hello world" "wor")
+==> 6
+>>> (string-contains "abc" "z")
+==> #f
+>>> (string-contains-right "abcabc" "bc")
+==> 4
+>>> (string-take-while "123abc" char-numeric?)
+==> "123"
+>>> (string-take-while-right "abc123" char-numeric?)
+==> "123"
+>>> (string-drop-while "123abc" char-numeric?)
+==> "abc"
+>>> (string-drop-while-right "abc123" char-numeric?)
+==> "abc"
+>>> (call-with-values (lambda () (string-span "123abc" char-numeric?)) list)
+==> ("123" "abc")
+>>> (call-with-values (lambda () (string-break "abc123" char-numeric?)) list)
+==> ("abc" "123")
+;;; --- concatenation ---
+>>> (string-concatenate (list "a" "b" "c"))
+==> "abc"
+>>> (string-concatenate-reverse (list "a" "b" "c"))
+==> "cba"
+>>> (string-concatenate-reverse (list "a" "b") "Z")
+==> "baZ"
+>>> (string-join (list "a" "b" "c") ",")
+==> "a,b,c"
+>>> (string-join (list "a" "b") "-" 'suffix)
+==> "a-b-"
+>>> (string-join (list "a" "b") "-" 'prefix)
+==> "-a-b"
+>>> (string-join '() "-")
+==> ""
+;;; --- fold, map & friends ---
+>>> (string-fold cons '() "abc")
+==> (#\c #\b #\a)
+>>> (string-fold-right cons '() "abc")
+==> (#\a #\b #\c)
 >>> (string-count "aXbXcX" (lambda (c) (char=? c #\X)))
 ==> 3
+>>> (string-filter char-numeric? "a1b2c3")
+==> "123"
+>>> (string-remove char-numeric? "a1b2c3")
+==> "abc"
+>>> (string-map char-upcase "abc")
+==> "ABC"
+;;; --- replication & splitting ---
+>>> (string-replicate "abc" 0 7)
+==> "abcabca"
+>>> (string-replicate "abcdef" 2 5)
+==> "cde"
+>>> (string-replicate "abc" -2 2)
+==> "bcab"
+>>> (string-segment "abcdefg" 3)
+==> ("abc" "def" "g")
+>>> (string-segment "" 3)
+==> ()
+>>> (string-split "a,b,c" ",")
+==> ("a" "b" "c")
+>>> (string-split "a,b,c" "," 'infix 1)
+==> ("a" "b,c")
+>>> (string-split ">>> x\n==> 1\n" "\n" 'suffix)
+==> (">>> x" "==> 1")
+>>> (string-split "" ",")
+==> ("")
+>>> (string-split "abc" "")
+==> ("a" "b" "c")

@@ -1,0 +1,24 @@
+;;; ============================================================
+;;; (scheme string) -- R7RS-large (Red Edition), = SRFI 152
+;;; Loaded from the SRFI repo via -L (scheme/string.sld); byte-identical
+;;; on both ports, so ONE golden serves both.  Run through the differ
+;;; (]suites differ-srfi) or any -L-aware .log runner.
+;;; ============================================================
+>>> (import (scheme string))
+==>
+>>> (string-take "hello" 2)
+==> "he"
+>>> (string-trim-both "  hi  ")
+==> "hi"
+>>> (string-contains "hello world" "wor")
+==> 6
+>>> (string-join (list "a" "b" "c") "-")
+==> "a-b-c"
+>>> (string-split "a,b,c" ",")
+==> ("a" "b" "c")
+>>> (string-segment "abcdefg" 3)
+==> ("abc" "def" "g")
+>>> (string-replicate "abc" 0 7)
+==> "abcabca"
+>>> (string-filter char-numeric? "a1b2c3")
+==> "123"

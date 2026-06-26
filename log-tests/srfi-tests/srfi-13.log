@@ -1,0 +1,48 @@
+;;; ============================================================
+;;; SRFI 13 -- String Library (compatibility shim over SRFI 152)
+;;; Loaded from the SRFI repo via -L; byte-identical on both ports,
+;;; so ONE golden serves both.  Run through the differ
+;;; (]suites differ-srfi) or any -L-aware .log runner.
+;;; ============================================================
+>>> (import (srfi 13))
+==>
+;;; --- re-exported from SRFI 152 (same name + signature) ---
+>>> (string-prefix? "ab" "abc")
+==> #t
+>>> (string-suffix? "bc" "abc")
+==> #t
+>>> (string-contains "hello" "ll")
+==> 2
+>>> (string-index "hello" (lambda (c) (char=? c #\l)))
+==> 2
+>>> (string-take "hello" 2)
+==> "he"
+>>> (string-pad "42" 5)
+==> "   42"
+>>> (string-join (list "a" "b" "c") ",")
+==> "a,b,c"
+;;; --- SRFI-13-only procedures ---
+>>> (string-reverse "abcde")
+==> "edcba"
+>>> (string-reverse "abcde" 1 4)
+==> "dcb"
+>>> (let ((s (string-copy "abcde"))) (string-reverse! s) s)
+==> "edcba"
+>>> (string-titlecase "hello WORLD foo")
+==> "Hello World Foo"
+>>> (string-titlecase "  abc-def")
+==> "  Abc-Def"
+>>> (let ((s (string-copy "hello world"))) (string-titlecase! s) s)
+==> "Hello World"
+>>> (string-tokenize "  the quick  fox ")
+==> ("the" "quick" "fox")
+>>> (string-tokenize "a1b2c3" char-numeric?)
+==> ("1" "2" "3")
+>>> (xsubstring "abc" 0 7)
+==> "abcabca"
+>>> (xsubstring "abcdef" 1)
+==> "bcdefa"
+>>> (string-delete char-numeric? "a1b2c3")
+==> "abc"
+>>> (string-filter char-numeric? "a1b2c3")
+==> "123"
