@@ -7,7 +7,8 @@
 # Enable:  git config core.hooksPath hooks
 
 REPO="$(git rev-parse --show-toplevel)"
-LISP="$(dirname "$REPO")"
+COMMON="$(dirname "$REPO")"          # the pyscheme-cppscheme2-common container
+LISP="$(dirname "$COMMON")"          # workspace root holding the interpreters
 PY_DIR="$LISP/3PyScheme"
 
 fail() { echo "pre-push: $1 -- push BLOCKED (use --no-verify to override)" >&2; exit 1; }

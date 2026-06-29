@@ -104,7 +104,14 @@
 ;; ---- the two ports + per-case run/compare --------------------------------------
 
 (define py-argv (interpreter-argv))                       ; self (py); PYTHONPATH inherited
-(define cpp-argv (list "../../4CPPScheme2/build/Release/cppscheme2.exe"))  ; sibling, known path
+;; The sibling cpp exe.  Prefer $LISP_ROOT (exported by the suite runner; robust
+;; whether scheme-tests sits inside the common dir or beside the interpreters);
+;; fall back to the layout-relative path for a direct run outside the runner.
+(define cpp-argv
+  (let ((root (get-environment-variable "LISP_ROOT")))
+    (list (if (and root (not (string=? root "")))
+              (string-append root "/4CPPScheme2/build/Release/cppscheme2.exe")
+              "../../../4CPPScheme2/build/Release/cppscheme2.exe"))))
 
 ;; run one case file through ARGV in file mode -> (vector out-norm err-core rc)
 (define (run-case argv casefile)

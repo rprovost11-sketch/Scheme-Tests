@@ -45,9 +45,13 @@
 ;;;   `list` is the one reserved action token -- it DISPLAYS the catalog (it runs
 ;;;   nothing), so it likewise may not be a suite name/alias/category.
 ;;;
-;;;   PATHS are relative to the scheme-tests root (this file's directory); use ../
-;;;   for sibling repos (SRFI, 4CPPScheme2).  Placeholders the runner substitutes in
-;;;   an external (run ...): {interp} = this interpreter's own launch invocation.
+;;;   PATHS are relative to the scheme-tests root (this file's directory).  Two
+;;;   placeholders the runner substitutes in an external (run ...): {interp} = this
+;;;   interpreter's own launch invocation; {lisp-root} = the workspace dir holding
+;;;   the interpreter repos (4CPPScheme2/3PyScheme), resolved by the runner so a
+;;;   suite reaches a sibling repo's executable whether scheme-tests sits inside the
+;;;   common dir (local) or beside the interpreters (CI).  The runner also exports
+;;;   $LISP_ROOT for Scheme-level test code that needs that same path.
 ;;;
 ;;;   Current categories:  battery (the .log suites) · metamorphic (the 5 generators)
 ;;;                        · property (metamorphic + known-open-bugs) · tools (external)
@@ -299,7 +303,7 @@
   (categories tools)
   (ports      cpp)
   (cwd        ".")
-  (run        "../4CPPScheme2/build/Release/gc_test.exe")
+  (run        "{lisp-root}/4CPPScheme2/build/Release/gc_test.exe")
   (pass       exit-0)
   (desc       "cppScheme2 generational-GC white-box unit tests"))
 
@@ -309,7 +313,7 @@
   (categories tools)
   (ports      cpp)
   (cwd        ".")
-  (run        "../4CPPScheme2/build/Release/rat_test.exe")
+  (run        "{lisp-root}/4CPPScheme2/build/Release/rat_test.exe")
   (pass       exit-0)
   (desc       "cppScheme2 numeric-tower (Rat / make_rational_mpz / bignum) white-box unit tests"))
 
